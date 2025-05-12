@@ -1,0 +1,484 @@
+{
+    "symmetry": {
+        "001_non_overlap_soloar_sys_shape_1": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "002_non_overlap_soloar_sys_shape_2": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "003_non_overlap_soloar_sys_shape_3": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "004_non_overlap_soloar_sys_shape_4": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "005_non_overlap_soloar_sys_color_1": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "006_non_overlap_soloar_sys_color_2": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "007_non_overlap_soloar_sys_color_3": {
+            "accuracy": 0.0,
+            "f1_score": 0.0
+        },
+        "008_non_overlap_soloar_sys_color_4": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666666
+        },
+        "009_non_overlap_soloar_sys_size_1": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "010_non_overlap_soloar_sys_size_2": {
+            "accuracy": 80.0,
+            "f1_score": 0.7619047619047619
+        },
+        "011_non_overlap_soloar_sys_size_3": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "012_non_overlap_soloar_sys_size_4": {
+            "accuracy": 60.0,
+            "f1_score": 0.5833333333333333
+        },
+        "013_non_overlap_soloar_sys_count_1": {
+            "accuracy": 60.0,
+            "f1_score": 0.375
+        },
+        "014_non_overlap_soloar_sys_count_2": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "015_non_overlap_soloar_sys_count_3": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "016_non_overlap_soloar_sys_count_4": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "017_non_overlap_soloar_sys_shape_color_1": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "018_non_overlap_soloar_sys_shape_color_2": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666666
+        },
+        "019_non_overlap_soloar_sys_shape_color_3": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "020_non_overlap_soloar_sys_shape_color_4": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "021_non_overlap_soloar_sys_shape_size_1": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "022_non_overlap_soloar_sys_shape_size_2": {
+            "accuracy": 0.0,
+            "f1_score": 0.0
+        },
+        "023_non_overlap_soloar_sys_shape_size_3": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "024_non_overlap_soloar_sys_shape_size_4": {
+            "accuracy": 0.0,
+            "f1_score": 0.0
+        },
+        "025_non_overlap_soloar_sys_shape_count_1": {
+            "accuracy": 100.0,
+            "f1_score": 1.0
+        },
+        "026_non_overlap_soloar_sys_shape_count_2": {
+            "accuracy": 60.0,
+            "f1_score": 0.5833333333333333
+        },
+        "027_non_overlap_soloar_sys_shape_count_3": {
+            "accuracy": 100.0,
+            "f1_score": 1.0
+        },
+        "028_non_overlap_soloar_sys_shape_count_4": {
+            "accuracy": 40.0,
+            "f1_score": 0.4
+        },
+        "029_non_overlap_soloar_sys_color_size_1": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "030_non_overlap_soloar_sys_color_size_2": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "031_non_overlap_soloar_sys_color_size_3": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666666
+        },
+        "032_non_overlap_soloar_sys_color_size_4": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "033_non_overlap_soloar_sys_color_count_1": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "034_non_overlap_soloar_sys_color_count_2": {
+            "accuracy": 100.0,
+            "f1_score": 1.0
+        },
+        "035_non_overlap_soloar_sys_color_count_3": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "036_non_overlap_soloar_sys_color_count_4": {
+            "accuracy": 60.0,
+            "f1_score": 0.5833333333333333
+        },
+        "037_non_overlap_soloar_sys_size_count_1": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "038_non_overlap_soloar_sys_size_count_2": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "039_non_overlap_soloar_sys_size_count_3": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "040_non_overlap_soloar_sys_size_count_4": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "041_non_overlap_soloar_sys_shape_color_size_1": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "042_non_overlap_soloar_sys_shape_color_size_2": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "043_non_overlap_soloar_sys_shape_color_size_3": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "044_non_overlap_soloar_sys_shape_color_size_4": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "045_non_overlap_soloar_sys_shape_color_count_1": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "046_non_overlap_soloar_sys_shape_color_count_2": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "047_non_overlap_soloar_sys_shape_color_count_3": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "048_non_overlap_soloar_sys_shape_color_count_4": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "049_non_overlap_soloar_sys_shape_size_count_1": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "050_non_overlap_soloar_sys_shape_size_count_2": {
+            "accuracy": 60.0,
+            "f1_score": 0.5833333333333333
+        },
+        "051_non_overlap_soloar_sys_shape_size_count_3": {
+            "accuracy": 40.0,
+            "f1_score": 0.4
+        },
+        "052_non_overlap_soloar_sys_shape_size_count_4": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "053_non_overlap_soloar_sys_color_size_count_1": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "054_non_overlap_soloar_sys_color_size_count_2": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "055_non_overlap_soloar_sys_color_size_count_3": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "056_non_overlap_soloar_sys_color_size_count_4": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666666
+        },
+        "057_non_overlap_soloar_sys_shape_color_size_count_1": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "058_non_overlap_soloar_sys_shape_color_size_count_2": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "059_non_overlap_soloar_sys_shape_color_size_count_3": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "060_non_overlap_soloar_sys_shape_color_size_count_4": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "061_feature_symmetry_circle_shape_1": {
+            "accuracy": 40.0,
+            "f1_score": 0.4
+        },
+        "062_feature_symmetry_circle_shape_2": {
+            "accuracy": 80.0,
+            "f1_score": 0.7619047619047619
+        },
+        "063_feature_symmetry_circle_shape_3": {
+            "accuracy": 80.0,
+            "f1_score": 0.7619047619047619
+        },
+        "064_feature_symmetry_circle_shape_4": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "065_feature_symmetry_circle_color_1": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "066_feature_symmetry_circle_color_2": {
+            "accuracy": 60.0,
+            "f1_score": 0.5833333333333333
+        },
+        "067_feature_symmetry_circle_color_3": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "068_feature_symmetry_circle_color_4": {
+            "accuracy": 100.0,
+            "f1_score": 1.0
+        },
+        "069_feature_symmetry_circle_size_1": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "070_feature_symmetry_circle_size_2": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666666
+        },
+        "071_feature_symmetry_circle_size_3": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "072_feature_symmetry_circle_size_4": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "073_feature_symmetry_circle_count_1": {
+            "accuracy": 100.0,
+            "f1_score": 1.0
+        },
+        "074_feature_symmetry_circle_count_2": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "075_feature_symmetry_circle_count_3": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666666
+        },
+        "076_feature_symmetry_circle_count_4": {
+            "accuracy": 100.0,
+            "f1_score": 1.0
+        },
+        "077_feature_symmetry_circle_shape_color_1": {
+            "accuracy": 60.0,
+            "f1_score": 0.5833333333333333
+        },
+        "078_feature_symmetry_circle_shape_color_2": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "079_feature_symmetry_circle_shape_color_3": {
+            "accuracy": 60.0,
+            "f1_score": 0.5833333333333333
+        },
+        "080_feature_symmetry_circle_shape_color_4": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "081_feature_symmetry_circle_shape_size_1": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "082_feature_symmetry_circle_shape_size_2": {
+            "accuracy": 80.0,
+            "f1_score": 0.8
+        },
+        "083_feature_symmetry_circle_shape_size_3": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666666
+        },
+        "084_feature_symmetry_circle_shape_size_4": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "085_feature_symmetry_circle_shape_count_1": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "086_feature_symmetry_circle_shape_count_2": {
+            "accuracy": 40.0,
+            "f1_score": 0.4
+        },
+        "087_feature_symmetry_circle_shape_count_3": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "088_feature_symmetry_circle_shape_count_4": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "089_feature_symmetry_circle_color_size_1": {
+            "accuracy": 40.0,
+            "f1_score": 0.4
+        },
+        "090_feature_symmetry_circle_color_size_2": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "091_feature_symmetry_circle_color_size_3": {
+            "accuracy": 80.0,
+            "f1_score": 0.8
+        },
+        "092_feature_symmetry_circle_color_size_4": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "093_feature_symmetry_circle_color_count_1": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "094_feature_symmetry_circle_color_count_2": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "095_feature_symmetry_circle_color_count_3": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "096_feature_symmetry_circle_color_count_4": {
+            "accuracy": 100.0,
+            "f1_score": 1.0
+        },
+        "097_feature_symmetry_circle_size_count_1": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "098_feature_symmetry_circle_size_count_2": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "099_feature_symmetry_circle_size_count_3": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "100_feature_symmetry_circle_size_count_4": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "101_feature_symmetry_circle_shape_color_size_1": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "102_feature_symmetry_circle_shape_color_size_2": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "103_feature_symmetry_circle_shape_color_size_3": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "104_feature_symmetry_circle_shape_color_size_4": {
+            "accuracy": 40.0,
+            "f1_score": 0.4
+        },
+        "105_feature_symmetry_circle_shape_color_count_1": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "106_feature_symmetry_circle_shape_color_count_2": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "107_feature_symmetry_circle_shape_color_count_3": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666666
+        },
+        "108_feature_symmetry_circle_shape_color_count_4": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "109_feature_symmetry_circle_shape_size_count_1": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "110_feature_symmetry_circle_shape_size_count_2": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "111_feature_symmetry_circle_shape_size_count_3": {
+            "accuracy": 40.0,
+            "f1_score": 0.4
+        },
+        "112_feature_symmetry_circle_shape_size_count_4": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "113_feature_symmetry_circle_color_size_count_1": {
+            "accuracy": 80.0,
+            "f1_score": 0.8
+        },
+        "114_feature_symmetry_circle_color_size_count_2": {
+            "accuracy": 60.0,
+            "f1_score": 0.375
+        },
+        "115_feature_symmetry_circle_color_size_count_3": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "116_feature_symmetry_circle_color_size_count_4": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "117_feature_symmetry_circle_shape_color_size_count_1": {
+            "accuracy": 0.0,
+            "f1_score": 0.0
+        },
+        "118_feature_symmetry_circle_shape_color_size_count_2": {
+            "accuracy": 100.0,
+            "f1_score": 1.0
+        },
+        "119_feature_symmetry_circle_shape_color_size_count_3": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "120_feature_symmetry_circle_shape_color_size_count_4": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        }
+    }
+}

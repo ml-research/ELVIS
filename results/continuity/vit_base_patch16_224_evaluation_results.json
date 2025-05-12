@@ -1,0 +1,904 @@
+{
+    "continuity": {
+        "001_non_overlap_one_split_n_shape_2_s": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "002_non_overlap_one_split_n_shape_2_m": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "003_non_overlap_one_split_n_shape_2_l": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "004_non_overlap_one_split_n_color_2_s": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "005_non_overlap_one_split_n_color_2_m": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "006_non_overlap_one_split_n_color_2_l": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "007_non_overlap_one_split_n_size_2_s": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "008_non_overlap_one_split_n_size_2_m": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "009_non_overlap_one_split_n_size_2_l": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "010_non_overlap_one_split_n_count_2_s": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "011_non_overlap_one_split_n_count_2_m": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "012_non_overlap_one_split_n_count_2_l": {
+            "accuracy": 0.0,
+            "f1_score": 0.0
+        },
+        "013_non_overlap_one_split_n_shape_color_2_s": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "014_non_overlap_one_split_n_shape_color_2_m": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "015_non_overlap_one_split_n_shape_color_2_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "016_non_overlap_one_split_n_shape_size_2_s": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "017_non_overlap_one_split_n_shape_size_2_m": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "018_non_overlap_one_split_n_shape_size_2_l": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "019_non_overlap_one_split_n_shape_count_2_s": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "020_non_overlap_one_split_n_shape_count_2_m": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "021_non_overlap_one_split_n_shape_count_2_l": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "022_non_overlap_one_split_n_color_size_2_s": {
+            "accuracy": 100.0,
+            "f1_score": 1.0
+        },
+        "023_non_overlap_one_split_n_color_size_2_m": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "024_non_overlap_one_split_n_color_size_2_l": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "025_non_overlap_one_split_n_color_count_2_s": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "026_non_overlap_one_split_n_color_count_2_m": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "027_non_overlap_one_split_n_color_count_2_l": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "028_non_overlap_one_split_n_size_count_2_s": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "029_non_overlap_one_split_n_size_count_2_m": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "030_non_overlap_one_split_n_size_count_2_l": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "031_non_overlap_one_split_n_shape_color_size_2_s": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "032_non_overlap_one_split_n_shape_color_size_2_m": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "033_non_overlap_one_split_n_shape_color_size_2_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "034_non_overlap_one_split_n_shape_color_count_2_s": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "035_non_overlap_one_split_n_shape_color_count_2_m": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "036_non_overlap_one_split_n_shape_color_count_2_l": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "037_non_overlap_one_split_n_shape_size_count_2_s": {
+            "accuracy": 100.0,
+            "f1_score": 1.0
+        },
+        "038_non_overlap_one_split_n_shape_size_count_2_m": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "039_non_overlap_one_split_n_shape_size_count_2_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.4
+        },
+        "040_non_overlap_one_split_n_color_size_count_2_s": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "041_non_overlap_one_split_n_color_size_count_2_m": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666666
+        },
+        "042_non_overlap_one_split_n_color_size_count_2_l": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "043_non_overlap_one_split_n_shape_color_size_count_2_s": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "044_non_overlap_one_split_n_shape_color_size_count_2_m": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "045_non_overlap_one_split_n_shape_color_size_count_2_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "046_non_overlap_two_splines_shape_2_s": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "047_non_overlap_two_splines_shape_2_m": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "048_non_overlap_two_splines_shape_2_l": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "049_non_overlap_two_splines_color_2_s": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "050_non_overlap_two_splines_color_2_m": {
+            "accuracy": 60.0,
+            "f1_score": 0.375
+        },
+        "051_non_overlap_two_splines_color_2_l": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "052_non_overlap_two_splines_size_2_s": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "053_non_overlap_two_splines_size_2_m": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "054_non_overlap_two_splines_size_2_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.4
+        },
+        "055_non_overlap_two_splines_count_2_s": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "056_non_overlap_two_splines_count_2_m": {
+            "accuracy": 60.0,
+            "f1_score": 0.375
+        },
+        "057_non_overlap_two_splines_count_2_l": {
+            "accuracy": 80.0,
+            "f1_score": 0.8
+        },
+        "058_non_overlap_two_splines_shape_color_2_s": {
+            "accuracy": 60.0,
+            "f1_score": 0.5833333333333333
+        },
+        "059_non_overlap_two_splines_shape_color_2_m": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "060_non_overlap_two_splines_shape_color_2_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.4
+        },
+        "061_non_overlap_two_splines_shape_size_2_s": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "062_non_overlap_two_splines_shape_size_2_m": {
+            "accuracy": 100.0,
+            "f1_score": 1.0
+        },
+        "063_non_overlap_two_splines_shape_size_2_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "064_non_overlap_two_splines_shape_count_2_s": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "065_non_overlap_two_splines_shape_count_2_m": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "066_non_overlap_two_splines_shape_count_2_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.4
+        },
+        "067_non_overlap_two_splines_color_size_2_s": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "068_non_overlap_two_splines_color_size_2_m": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "069_non_overlap_two_splines_color_size_2_l": {
+            "accuracy": 0.0,
+            "f1_score": 0.0
+        },
+        "070_non_overlap_two_splines_color_count_2_s": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "071_non_overlap_two_splines_color_count_2_m": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666666
+        },
+        "072_non_overlap_two_splines_color_count_2_l": {
+            "accuracy": 100.0,
+            "f1_score": 1.0
+        },
+        "073_non_overlap_two_splines_size_count_2_s": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "074_non_overlap_two_splines_size_count_2_m": {
+            "accuracy": 40.0,
+            "f1_score": 0.4
+        },
+        "075_non_overlap_two_splines_size_count_2_l": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666666
+        },
+        "076_non_overlap_two_splines_shape_color_size_2_s": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "077_non_overlap_two_splines_shape_color_size_2_m": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "078_non_overlap_two_splines_shape_color_size_2_l": {
+            "accuracy": 100.0,
+            "f1_score": 1.0
+        },
+        "079_non_overlap_two_splines_shape_color_count_2_s": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "080_non_overlap_two_splines_shape_color_count_2_m": {
+            "accuracy": 80.0,
+            "f1_score": 0.8
+        },
+        "081_non_overlap_two_splines_shape_color_count_2_l": {
+            "accuracy": 60.0,
+            "f1_score": 0.5833333333333333
+        },
+        "082_non_overlap_two_splines_shape_size_count_2_s": {
+            "accuracy": 60.0,
+            "f1_score": 0.5833333333333333
+        },
+        "083_non_overlap_two_splines_shape_size_count_2_m": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "084_non_overlap_two_splines_shape_size_count_2_l": {
+            "accuracy": 60.0,
+            "f1_score": 0.5833333333333333
+        },
+        "085_non_overlap_two_splines_color_size_count_2_s": {
+            "accuracy": 60.0,
+            "f1_score": 0.5833333333333333
+        },
+        "086_non_overlap_two_splines_color_size_count_2_m": {
+            "accuracy": 80.0,
+            "f1_score": 0.7619047619047619
+        },
+        "087_non_overlap_two_splines_color_size_count_2_l": {
+            "accuracy": 80.0,
+            "f1_score": 0.7619047619047619
+        },
+        "088_non_overlap_two_splines_shape_color_size_count_2_s": {
+            "accuracy": 40.0,
+            "f1_score": 0.4
+        },
+        "089_non_overlap_two_splines_shape_color_size_count_2_m": {
+            "accuracy": 80.0,
+            "f1_score": 0.8
+        },
+        "090_non_overlap_two_splines_shape_color_size_count_2_l": {
+            "accuracy": 60.0,
+            "f1_score": 0.5833333333333333
+        },
+        "091_non_overlap_a_splines_shape_2_s": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "092_non_overlap_a_splines_shape_2_m": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "093_non_overlap_a_splines_shape_2_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "094_non_overlap_a_splines_color_2_s": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "095_non_overlap_a_splines_color_2_m": {
+            "accuracy": 80.0,
+            "f1_score": 0.8
+        },
+        "096_non_overlap_a_splines_color_2_l": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "097_non_overlap_a_splines_size_2_s": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666666
+        },
+        "098_non_overlap_a_splines_size_2_m": {
+            "accuracy": 40.0,
+            "f1_score": 0.4
+        },
+        "099_non_overlap_a_splines_size_2_l": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "100_non_overlap_a_splines_count_2_s": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "101_non_overlap_a_splines_count_2_m": {
+            "accuracy": 100.0,
+            "f1_score": 1.0
+        },
+        "102_non_overlap_a_splines_count_2_l": {
+            "accuracy": 80.0,
+            "f1_score": 0.7619047619047619
+        },
+        "103_non_overlap_a_splines_shape_color_2_s": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "104_non_overlap_a_splines_shape_color_2_m": {
+            "accuracy": 0.0,
+            "f1_score": 0.0
+        },
+        "105_non_overlap_a_splines_shape_color_2_l": {
+            "accuracy": 60.0,
+            "f1_score": 0.5833333333333333
+        },
+        "106_non_overlap_a_splines_shape_size_2_s": {
+            "accuracy": 0.0,
+            "f1_score": 0.0
+        },
+        "107_non_overlap_a_splines_shape_size_2_m": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "108_non_overlap_a_splines_shape_size_2_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.4
+        },
+        "109_non_overlap_a_splines_shape_count_2_s": {
+            "accuracy": 40.0,
+            "f1_score": 0.4
+        },
+        "110_non_overlap_a_splines_shape_count_2_m": {
+            "accuracy": 60.0,
+            "f1_score": 0.5833333333333333
+        },
+        "111_non_overlap_a_splines_shape_count_2_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.4
+        },
+        "112_non_overlap_a_splines_color_size_2_s": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "113_non_overlap_a_splines_color_size_2_m": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "114_non_overlap_a_splines_color_size_2_l": {
+            "accuracy": 80.0,
+            "f1_score": 0.8
+        },
+        "115_non_overlap_a_splines_color_count_2_s": {
+            "accuracy": 60.0,
+            "f1_score": 0.375
+        },
+        "116_non_overlap_a_splines_color_count_2_m": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "117_non_overlap_a_splines_color_count_2_l": {
+            "accuracy": 100.0,
+            "f1_score": 1.0
+        },
+        "118_non_overlap_a_splines_size_count_2_s": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "119_non_overlap_a_splines_size_count_2_m": {
+            "accuracy": 80.0,
+            "f1_score": 0.7619047619047619
+        },
+        "120_non_overlap_a_splines_size_count_2_l": {
+            "accuracy": 60.0,
+            "f1_score": 0.5833333333333333
+        },
+        "121_non_overlap_a_splines_shape_color_size_2_s": {
+            "accuracy": 60.0,
+            "f1_score": 0.5833333333333333
+        },
+        "122_non_overlap_a_splines_shape_color_size_2_m": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "123_non_overlap_a_splines_shape_color_size_2_l": {
+            "accuracy": 60.0,
+            "f1_score": 0.5833333333333333
+        },
+        "124_non_overlap_a_splines_shape_color_count_2_s": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "125_non_overlap_a_splines_shape_color_count_2_m": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666666
+        },
+        "126_non_overlap_a_splines_shape_color_count_2_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "127_non_overlap_a_splines_shape_size_count_2_s": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "128_non_overlap_a_splines_shape_size_count_2_m": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "129_non_overlap_a_splines_shape_size_count_2_l": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "130_non_overlap_a_splines_color_size_count_2_s": {
+            "accuracy": 80.0,
+            "f1_score": 0.7619047619047619
+        },
+        "131_non_overlap_a_splines_color_size_count_2_m": {
+            "accuracy": 40.0,
+            "f1_score": 0.4
+        },
+        "132_non_overlap_a_splines_color_size_count_2_l": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "133_non_overlap_a_splines_shape_color_size_count_2_s": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "134_non_overlap_a_splines_shape_color_size_count_2_m": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "135_non_overlap_a_splines_shape_color_size_count_2_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "136_non_overlap_u_splines_shape_2_s": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "137_non_overlap_u_splines_shape_2_m": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666666
+        },
+        "138_non_overlap_u_splines_shape_2_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "139_non_overlap_u_splines_color_2_s": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "140_non_overlap_u_splines_color_2_m": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "141_non_overlap_u_splines_color_2_l": {
+            "accuracy": 0.0,
+            "f1_score": 0.0
+        },
+        "142_non_overlap_u_splines_size_2_s": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666666
+        },
+        "143_non_overlap_u_splines_size_2_m": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "144_non_overlap_u_splines_size_2_l": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "145_non_overlap_u_splines_count_2_s": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "146_non_overlap_u_splines_count_2_m": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666666
+        },
+        "147_non_overlap_u_splines_count_2_l": {
+            "accuracy": 80.0,
+            "f1_score": 0.7619047619047619
+        },
+        "148_non_overlap_u_splines_shape_color_2_s": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "149_non_overlap_u_splines_shape_color_2_m": {
+            "accuracy": 60.0,
+            "f1_score": 0.5833333333333333
+        },
+        "150_non_overlap_u_splines_shape_color_2_l": {
+            "accuracy": 60.0,
+            "f1_score": 0.5833333333333333
+        },
+        "151_non_overlap_u_splines_shape_size_2_s": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "152_non_overlap_u_splines_shape_size_2_m": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "153_non_overlap_u_splines_shape_size_2_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "154_non_overlap_u_splines_shape_count_2_s": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "155_non_overlap_u_splines_shape_count_2_m": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666666
+        },
+        "156_non_overlap_u_splines_shape_count_2_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "157_non_overlap_u_splines_color_size_2_s": {
+            "accuracy": 100.0,
+            "f1_score": 1.0
+        },
+        "158_non_overlap_u_splines_color_size_2_m": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "159_non_overlap_u_splines_color_size_2_l": {
+            "accuracy": 80.0,
+            "f1_score": 0.7619047619047619
+        },
+        "160_non_overlap_u_splines_color_count_2_s": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666666
+        },
+        "161_non_overlap_u_splines_color_count_2_m": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "162_non_overlap_u_splines_color_count_2_l": {
+            "accuracy": 60.0,
+            "f1_score": 0.5833333333333333
+        },
+        "163_non_overlap_u_splines_size_count_2_s": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "164_non_overlap_u_splines_size_count_2_m": {
+            "accuracy": 40.0,
+            "f1_score": 0.4
+        },
+        "165_non_overlap_u_splines_size_count_2_l": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666666
+        },
+        "166_non_overlap_u_splines_shape_color_size_2_s": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "167_non_overlap_u_splines_shape_color_size_2_m": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "168_non_overlap_u_splines_shape_color_size_2_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "169_non_overlap_u_splines_shape_color_count_2_s": {
+            "accuracy": 80.0,
+            "f1_score": 0.7619047619047619
+        },
+        "170_non_overlap_u_splines_shape_color_count_2_m": {
+            "accuracy": 80.0,
+            "f1_score": 0.8
+        },
+        "171_non_overlap_u_splines_shape_color_count_2_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "172_non_overlap_u_splines_shape_size_count_2_s": {
+            "accuracy": 0.0,
+            "f1_score": 0.0
+        },
+        "173_non_overlap_u_splines_shape_size_count_2_m": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "174_non_overlap_u_splines_shape_size_count_2_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "175_non_overlap_u_splines_color_size_count_2_s": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "176_non_overlap_u_splines_color_size_count_2_m": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "177_non_overlap_u_splines_color_size_count_2_l": {
+            "accuracy": 100.0,
+            "f1_score": 1.0
+        },
+        "178_non_overlap_u_splines_shape_color_size_count_2_s": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "179_non_overlap_u_splines_shape_color_size_count_2_m": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666666
+        },
+        "180_non_overlap_u_splines_shape_color_size_count_2_l": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "181_feature_continuity_x_splines_shape_2_s": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666666
+        },
+        "182_feature_continuity_x_splines_shape_2_m": {
+            "accuracy": 80.0,
+            "f1_score": 0.7619047619047619
+        },
+        "183_feature_continuity_x_splines_shape_2_l": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "184_feature_continuity_x_splines_color_2_s": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "185_feature_continuity_x_splines_color_2_m": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "186_feature_continuity_x_splines_color_2_l": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "187_feature_continuity_x_splines_size_2_s": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "188_feature_continuity_x_splines_size_2_m": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "189_feature_continuity_x_splines_size_2_l": {
+            "accuracy": 60.0,
+            "f1_score": 0.5833333333333333
+        },
+        "190_feature_continuity_x_splines_count_2_s": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "191_feature_continuity_x_splines_count_2_m": {
+            "accuracy": 100.0,
+            "f1_score": 1.0
+        },
+        "192_feature_continuity_x_splines_count_2_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.4
+        },
+        "193_feature_continuity_x_splines_shape_color_2_s": {
+            "accuracy": 100.0,
+            "f1_score": 1.0
+        },
+        "194_feature_continuity_x_splines_shape_color_2_m": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "195_feature_continuity_x_splines_shape_color_2_l": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "196_feature_continuity_x_splines_shape_size_2_s": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "197_feature_continuity_x_splines_shape_size_2_m": {
+            "accuracy": 40.0,
+            "f1_score": 0.4
+        },
+        "198_feature_continuity_x_splines_shape_size_2_l": {
+            "accuracy": 0.0,
+            "f1_score": 0.0
+        },
+        "199_feature_continuity_x_splines_shape_count_2_s": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666666
+        },
+        "200_feature_continuity_x_splines_shape_count_2_m": {
+            "accuracy": 80.0,
+            "f1_score": 0.8
+        },
+        "201_feature_continuity_x_splines_shape_count_2_l": {
+            "accuracy": 60.0,
+            "f1_score": 0.5833333333333333
+        },
+        "202_feature_continuity_x_splines_color_size_2_s": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "203_feature_continuity_x_splines_color_size_2_m": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "204_feature_continuity_x_splines_color_size_2_l": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "205_feature_continuity_x_splines_color_count_2_s": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "206_feature_continuity_x_splines_color_count_2_m": {
+            "accuracy": 40.0,
+            "f1_score": 0.4
+        },
+        "207_feature_continuity_x_splines_color_count_2_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "208_feature_continuity_x_splines_size_count_2_s": {
+            "accuracy": 60.0,
+            "f1_score": 0.5833333333333333
+        },
+        "209_feature_continuity_x_splines_size_count_2_m": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "210_feature_continuity_x_splines_size_count_2_l": {
+            "accuracy": 60.0,
+            "f1_score": 0.375
+        },
+        "211_feature_continuity_x_splines_shape_color_size_2_s": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "212_feature_continuity_x_splines_shape_color_size_2_m": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666666
+        },
+        "213_feature_continuity_x_splines_shape_color_size_2_l": {
+            "accuracy": 60.0,
+            "f1_score": 0.5833333333333333
+        },
+        "214_feature_continuity_x_splines_shape_color_count_2_s": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "215_feature_continuity_x_splines_shape_color_count_2_m": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666666
+        },
+        "216_feature_continuity_x_splines_shape_color_count_2_l": {
+            "accuracy": 60.0,
+            "f1_score": 0.5833333333333333
+        },
+        "217_feature_continuity_x_splines_shape_size_count_2_s": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666666
+        },
+        "218_feature_continuity_x_splines_shape_size_count_2_m": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "219_feature_continuity_x_splines_shape_size_count_2_l": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "220_feature_continuity_x_splines_color_size_count_2_s": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "221_feature_continuity_x_splines_color_size_count_2_m": {
+            "accuracy": 40.0,
+            "f1_score": 0.4
+        },
+        "222_feature_continuity_x_splines_color_size_count_2_l": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "223_feature_continuity_x_splines_shape_color_size_count_2_s": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "224_feature_continuity_x_splines_shape_color_size_count_2_m": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "225_feature_continuity_x_splines_shape_color_size_count_2_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        }
+    }
+}

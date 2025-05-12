@@ -1,0 +1,736 @@
+{
+    "similarity": {
+        "001_non_overlap_fixed_number_shape_2_s": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "002_non_overlap_fixed_number_shape_2_m": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "003_non_overlap_fixed_number_shape_2_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "004_non_overlap_fixed_number_shape_3_s": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "005_non_overlap_fixed_number_shape_3_m": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "006_non_overlap_fixed_number_shape_3_l": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "007_non_overlap_fixed_number_shape_4_s": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "008_non_overlap_fixed_number_shape_4_m": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "009_non_overlap_fixed_number_shape_4_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "010_non_overlap_pacman_color_2_s": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "011_non_overlap_pacman_color_2_m": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "012_non_overlap_pacman_color_2_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "013_non_overlap_pacman_color_3_s": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "014_non_overlap_pacman_color_3_m": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "015_non_overlap_pacman_color_3_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "016_non_overlap_pacman_color_4_s": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "017_non_overlap_pacman_color_4_m": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "018_non_overlap_pacman_color_4_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "019_non_overlap_pacman_color_5_s": {
+            "accuracy": 100.0,
+            "f1_score": 1.0
+        },
+        "020_non_overlap_pacman_color_5_m": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "021_non_overlap_pacman_color_5_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.4
+        },
+        "022_non_overlap_pacman_size_2_s": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "023_non_overlap_pacman_size_2_m": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "024_non_overlap_pacman_size_2_l": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "025_non_overlap_pacman_size_3_s": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "026_non_overlap_pacman_size_3_m": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "027_non_overlap_pacman_size_3_l": {
+            "accuracy": 0.0,
+            "f1_score": 0.0
+        },
+        "028_non_overlap_pacman_size_4_s": {
+            "accuracy": 40.0,
+            "f1_score": 0.4
+        },
+        "029_non_overlap_pacman_size_4_m": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "030_non_overlap_pacman_size_4_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "031_non_overlap_pacman_size_5_s": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "032_non_overlap_pacman_size_5_m": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "033_non_overlap_pacman_size_5_l": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "034_non_overlap_pacman_count_2_s": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "035_non_overlap_pacman_count_2_m": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "036_non_overlap_pacman_count_2_l": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "037_non_overlap_pacman_count_3_s": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "038_non_overlap_pacman_count_3_m": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "039_non_overlap_pacman_count_3_l": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "040_non_overlap_pacman_count_4_s": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "041_non_overlap_pacman_count_4_m": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "042_non_overlap_pacman_count_4_l": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "043_non_overlap_pacman_count_5_s": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "044_non_overlap_pacman_count_5_m": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "045_non_overlap_pacman_count_5_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "046_non_overlap_pacman_color_size_2_s": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "047_non_overlap_pacman_color_size_2_m": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "048_non_overlap_pacman_color_size_2_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "049_non_overlap_pacman_color_size_3_s": {
+            "accuracy": 40.0,
+            "f1_score": 0.4
+        },
+        "050_non_overlap_pacman_color_size_3_m": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "051_non_overlap_pacman_color_size_3_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "052_non_overlap_pacman_color_size_4_s": {
+            "accuracy": 40.0,
+            "f1_score": 0.4
+        },
+        "053_non_overlap_pacman_color_size_4_m": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "054_non_overlap_pacman_color_size_4_l": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "055_non_overlap_pacman_color_size_5_s": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "056_non_overlap_pacman_color_size_5_m": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "057_non_overlap_pacman_color_size_5_l": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "058_non_overlap_pacman_color_count_2_s": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "059_non_overlap_pacman_color_count_2_m": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "060_non_overlap_pacman_color_count_2_l": {
+            "accuracy": 0.0,
+            "f1_score": 0.0
+        },
+        "061_non_overlap_pacman_color_count_3_s": {
+            "accuracy": 100.0,
+            "f1_score": 1.0
+        },
+        "062_non_overlap_pacman_color_count_3_m": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "063_non_overlap_pacman_color_count_3_l": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "064_non_overlap_pacman_color_count_4_s": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "065_non_overlap_pacman_color_count_4_m": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "066_non_overlap_pacman_color_count_4_l": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "067_non_overlap_pacman_color_count_5_s": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "068_non_overlap_pacman_color_count_5_m": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "069_non_overlap_pacman_color_count_5_l": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "070_non_overlap_pacman_size_count_2_s": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "071_non_overlap_pacman_size_count_2_m": {
+            "accuracy": 100.0,
+            "f1_score": 1.0
+        },
+        "072_non_overlap_pacman_size_count_2_l": {
+            "accuracy": 0.0,
+            "f1_score": 0.0
+        },
+        "073_non_overlap_pacman_size_count_3_s": {
+            "accuracy": 100.0,
+            "f1_score": 1.0
+        },
+        "074_non_overlap_pacman_size_count_3_m": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "075_non_overlap_pacman_size_count_3_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "076_non_overlap_pacman_size_count_4_s": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "077_non_overlap_pacman_size_count_4_m": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "078_non_overlap_pacman_size_count_4_l": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "079_non_overlap_pacman_size_count_5_s": {
+            "accuracy": 60.0,
+            "f1_score": 0.5833333333333333
+        },
+        "080_non_overlap_pacman_size_count_5_m": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "081_non_overlap_pacman_size_count_5_l": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "082_non_overlap_pacman_color_size_count_2_s": {
+            "accuracy": 0.0,
+            "f1_score": 0.0
+        },
+        "083_non_overlap_pacman_color_size_count_2_m": {
+            "accuracy": 60.0,
+            "f1_score": 0.5833333333333333
+        },
+        "084_non_overlap_pacman_color_size_count_2_l": {
+            "accuracy": 60.0,
+            "f1_score": 0.5833333333333333
+        },
+        "085_non_overlap_pacman_color_size_count_3_s": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "086_non_overlap_pacman_color_size_count_3_m": {
+            "accuracy": 40.0,
+            "f1_score": 0.4
+        },
+        "087_non_overlap_pacman_color_size_count_3_l": {
+            "accuracy": 60.0,
+            "f1_score": 0.5833333333333333
+        },
+        "088_non_overlap_pacman_color_size_count_4_s": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "089_non_overlap_pacman_color_size_count_4_m": {
+            "accuracy": 0.0,
+            "f1_score": 0.0
+        },
+        "090_non_overlap_pacman_color_size_count_4_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "091_non_overlap_pacman_color_size_count_5_s": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "092_non_overlap_pacman_color_size_count_5_m": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "093_non_overlap_pacman_color_size_count_5_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "094_non_overlap_palette_size_2_s": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "095_non_overlap_palette_size_2_m": {
+            "accuracy": 60.0,
+            "f1_score": 0.5833333333333333
+        },
+        "096_non_overlap_palette_size_2_l": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "097_non_overlap_palette_size_3_s": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "098_non_overlap_palette_size_3_m": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "099_non_overlap_palette_size_3_l": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "100_non_overlap_palette_shape_2_s": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "101_non_overlap_palette_shape_2_m": {
+            "accuracy": 40.0,
+            "f1_score": 0.4
+        },
+        "102_non_overlap_palette_shape_2_l": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "103_non_overlap_palette_shape_3_s": {
+            "accuracy": 60.0,
+            "f1_score": 0.5833333333333333
+        },
+        "104_non_overlap_palette_shape_3_m": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "105_non_overlap_palette_shape_3_l": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666666
+        },
+        "106_non_overlap_palette_count_2_s": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "107_non_overlap_palette_count_2_m": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "108_non_overlap_palette_count_2_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "109_non_overlap_palette_count_3_s": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "110_non_overlap_palette_count_3_m": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "111_non_overlap_palette_count_3_l": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "112_non_overlap_palette_color_2_s": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "113_non_overlap_palette_color_2_m": {
+            "accuracy": 100.0,
+            "f1_score": 1.0
+        },
+        "114_non_overlap_palette_color_2_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "115_non_overlap_palette_color_3_s": {
+            "accuracy": 80.0,
+            "f1_score": 0.7619047619047619
+        },
+        "116_non_overlap_palette_color_3_m": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "117_non_overlap_palette_color_3_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "118_non_overlap_palette_size_shape_2_s": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "119_non_overlap_palette_size_shape_2_m": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "120_non_overlap_palette_size_shape_2_l": {
+            "accuracy": 80.0,
+            "f1_score": 0.8
+        },
+        "121_non_overlap_palette_size_shape_3_s": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "122_non_overlap_palette_size_shape_3_m": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "123_non_overlap_palette_size_shape_3_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "124_non_overlap_palette_size_count_2_s": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "125_non_overlap_palette_size_count_2_m": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "126_non_overlap_palette_size_count_2_l": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "127_non_overlap_palette_size_count_3_s": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "128_non_overlap_palette_size_count_3_m": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "129_non_overlap_palette_size_count_3_l": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "130_non_overlap_palette_size_color_2_s": {
+            "accuracy": 40.0,
+            "f1_score": 0.4
+        },
+        "131_non_overlap_palette_size_color_2_m": {
+            "accuracy": 80.0,
+            "f1_score": 0.8
+        },
+        "132_non_overlap_palette_size_color_2_l": {
+            "accuracy": 80.0,
+            "f1_score": 0.7619047619047619
+        },
+        "133_non_overlap_palette_size_color_3_s": {
+            "accuracy": 60.0,
+            "f1_score": 0.5833333333333333
+        },
+        "134_non_overlap_palette_size_color_3_m": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "135_non_overlap_palette_size_color_3_l": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "136_non_overlap_palette_shape_count_2_s": {
+            "accuracy": 100.0,
+            "f1_score": 1.0
+        },
+        "137_non_overlap_palette_shape_count_2_m": {
+            "accuracy": 60.0,
+            "f1_score": 0.5833333333333333
+        },
+        "138_non_overlap_palette_shape_count_2_l": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "139_non_overlap_palette_shape_count_3_s": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "140_non_overlap_palette_shape_count_3_m": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "141_non_overlap_palette_shape_count_3_l": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "142_non_overlap_palette_shape_color_2_s": {
+            "accuracy": 100.0,
+            "f1_score": 1.0
+        },
+        "143_non_overlap_palette_shape_color_2_m": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "144_non_overlap_palette_shape_color_2_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "145_non_overlap_palette_shape_color_3_s": {
+            "accuracy": 100.0,
+            "f1_score": 1.0
+        },
+        "146_non_overlap_palette_shape_color_3_m": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "147_non_overlap_palette_shape_color_3_l": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "148_non_overlap_palette_count_color_2_s": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666666
+        },
+        "149_non_overlap_palette_count_color_2_m": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "150_non_overlap_palette_count_color_2_l": {
+            "accuracy": 80.0,
+            "f1_score": 0.8
+        },
+        "151_non_overlap_palette_count_color_3_s": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "152_non_overlap_palette_count_color_3_m": {
+            "accuracy": 60.0,
+            "f1_score": 0.5833333333333333
+        },
+        "153_non_overlap_palette_count_color_3_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "154_non_overlap_palette_size_shape_count_2_s": {
+            "accuracy": 80.0,
+            "f1_score": 0.7619047619047619
+        },
+        "155_non_overlap_palette_size_shape_count_2_m": {
+            "accuracy": 60.0,
+            "f1_score": 0.5833333333333333
+        },
+        "156_non_overlap_palette_size_shape_count_2_l": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "157_non_overlap_palette_size_shape_count_3_s": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "158_non_overlap_palette_size_shape_count_3_m": {
+            "accuracy": 80.0,
+            "f1_score": 0.8
+        },
+        "159_non_overlap_palette_size_shape_count_3_l": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "160_non_overlap_palette_size_shape_color_2_s": {
+            "accuracy": 100.0,
+            "f1_score": 1.0
+        },
+        "161_non_overlap_palette_size_shape_color_2_m": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "162_non_overlap_palette_size_shape_color_2_l": {
+            "accuracy": 60.0,
+            "f1_score": 0.5833333333333333
+        },
+        "163_non_overlap_palette_size_shape_color_3_s": {
+            "accuracy": 60.0,
+            "f1_score": 0.5833333333333333
+        },
+        "164_non_overlap_palette_size_shape_color_3_m": {
+            "accuracy": 100.0,
+            "f1_score": 1.0
+        },
+        "165_non_overlap_palette_size_shape_color_3_l": {
+            "accuracy": 100.0,
+            "f1_score": 1.0
+        },
+        "166_non_overlap_palette_size_count_color_2_s": {
+            "accuracy": 60.0,
+            "f1_score": 0.5833333333333333
+        },
+        "167_non_overlap_palette_size_count_color_2_m": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "168_non_overlap_palette_size_count_color_2_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "169_non_overlap_palette_size_count_color_3_s": {
+            "accuracy": 60.0,
+            "f1_score": 0.5833333333333333
+        },
+        "170_non_overlap_palette_size_count_color_3_m": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "171_non_overlap_palette_size_count_color_3_l": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666666
+        },
+        "172_non_overlap_palette_shape_count_color_2_s": {
+            "accuracy": 100.0,
+            "f1_score": 1.0
+        },
+        "173_non_overlap_palette_shape_count_color_2_m": {
+            "accuracy": 80.0,
+            "f1_score": 0.8
+        },
+        "174_non_overlap_palette_shape_count_color_2_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "175_non_overlap_palette_shape_count_color_3_s": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        },
+        "176_non_overlap_palette_shape_count_color_3_m": {
+            "accuracy": 20.0,
+            "f1_score": 0.16666666666666669
+        },
+        "177_non_overlap_palette_shape_count_color_3_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "178_non_overlap_palette_size_shape_count_color_2_s": {
+            "accuracy": 60.0,
+            "f1_score": 0.37499999999999994
+        },
+        "179_non_overlap_palette_size_shape_count_color_2_m": {
+            "accuracy": 40.0,
+            "f1_score": 0.28571428571428575
+        },
+        "180_non_overlap_palette_size_shape_count_color_2_l": {
+            "accuracy": 40.0,
+            "f1_score": 0.4
+        },
+        "181_non_overlap_palette_size_shape_count_color_3_s": {
+            "accuracy": 80.0,
+            "f1_score": 0.7619047619047619
+        },
+        "182_non_overlap_palette_size_shape_count_color_3_m": {
+            "accuracy": 80.0,
+            "f1_score": 0.8
+        },
+        "183_non_overlap_palette_size_shape_count_color_3_l": {
+            "accuracy": 80.0,
+            "f1_score": 0.4444444444444445
+        }
+    }
+}
