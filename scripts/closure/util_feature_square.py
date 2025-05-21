@@ -34,10 +34,12 @@ def feature_closure_square(is_positive, clu_num, params, pin):
         positions = get_feature_square_positions(group_anchors[i], clu_size)
         shapes = ["pac_man"] * obj_num
         # 50% of the negative images, random object positions but other properties as same as positive
+        is_random = False
         if not is_positive and pin and random.random() > 0.5:
             start_angles = random.sample(range(0, 360), obj_num)
             end_angles = [angle + 270 for angle in start_angles]
             is_positive = True
+            is_random = True
         else:
             start_angles = [90, 270, 0, 180]
             end_angles = [angle + 270 for angle in start_angles]
@@ -63,6 +65,10 @@ def feature_closure_square(is_positive, clu_num, params, pin):
             else:
                 sizes = [random.uniform(obj_size * 0.6, obj_size * 1) for _ in range(obj_num)]
         try:
+            if is_random:
+                group_id = -1
+            else:
+                group_id = i
             for i in range(len(positions)):
                 objs.append(encode_utils.encode_objs(
                     x=positions[i][0],
@@ -73,7 +79,8 @@ def feature_closure_square(is_positive, clu_num, params, pin):
                     line_width=-1,
                     solid=True,
                     start_angle=start_angles[i],
-                    end_angle=end_angles[i]
+                    end_angle=end_angles[i],
+                    group_id=group_id,
                 ))
         except Exception as e:
             raise e

@@ -4,7 +4,7 @@ from scripts import config
 from scripts.utils.data_utils import get_all_combs
 
 
-def encode_objs(x, y, size, color, shape, line_width, solid, start_angle=None, end_angle=None):
+def encode_objs(x, y, size, color, shape, line_width, solid, start_angle=0, end_angle=360, group_id=-1):
     data = {"x": x,
             "y": y,
             "size": size,
@@ -16,7 +16,8 @@ def encode_objs(x, y, size, color, shape, line_width, solid, start_angle=None, e
             "line_width": line_width,
             "solid": solid,
             "start_angle": start_angle,
-            "end_angle": end_angle
+            "end_angle": end_angle,
+            "group_id": group_id,
             }
     return data
 

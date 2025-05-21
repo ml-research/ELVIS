@@ -119,7 +119,8 @@ def similarity_pacman(obj_size, is_positive, clu_num=1, fixed_props="", obj_quan
                 line_width=-1,
                 solid=True,
                 start_angle=angles[clu_i],
-                end_angle=angles[clu_i] + 300
+                end_angle=angles[clu_i] + 300,
+                group_id=clu_i
             )
             objs.append(obj)
 

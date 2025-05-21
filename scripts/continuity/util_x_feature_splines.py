@@ -44,7 +44,8 @@ def feature_continuity_x_splines(params, is_positive, clu_num, obj_quantity, pin
     line1_points = get_spline_points(line1_key_points, line1_num)
     line1_points_shade = get_shaded_points(line1_points, dx, dy)
     line2_points = get_spline_points(line2_key_points, line2_num)
-
+    is_random = False
+    group_ids = [0]*line1_num*2 + [1]*line2_num
     if is_positive:
         if "shape" in params or random.random() < 0.5:
             shapes = [random.choice(config.bk_shapes[1:])] * line1_num * 2
@@ -91,10 +92,15 @@ def feature_continuity_x_splines(params, is_positive, clu_num, obj_quantity, pin
         if pin:
             positions = np.concatenate((line1_points, line1_points_shade, line2_points))
         else:
-            positions = pos_utils.get_random_positions(len(line1_points) + len(line1_points_shade) + line2_points,
+            is_random =True
+            positions = pos_utils.get_random_positions(len(line1_points) + len(line1_points_shade) + len(line2_points),
                                                        obj_size)
     try:
         for i in range(len(positions)):
+            if is_random:
+                group_id = -1
+            else:
+                group_id=group_ids[i]
             objs.append(encode_utils.encode_objs(
                 x=positions[i][0],
                 y=positions[i][1],
@@ -102,7 +108,8 @@ def feature_continuity_x_splines(params, is_positive, clu_num, obj_quantity, pin
                 color=colors[i],
                 shape=shapes[i],
                 line_width=-1,
-                solid=True
+                solid=True,
+                group_id=group_id
             ))
     except Exception as e:
         raise e

@@ -80,7 +80,7 @@ def similarity_palette(obj_size, params, is_positive, clu_num, quantity):
                     x=obj_x,
                     y=obj_y,
                     size=obj_size_variant, color=obj_color, shape=obj_shape,
-                    line_width=-1, solid=True,
+                    line_width=-1, solid=True,group_id=i,
                 ))
         objs.extend(cluster_objects)
 

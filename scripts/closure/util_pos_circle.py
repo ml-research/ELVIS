@@ -19,17 +19,20 @@ def closure_big_circle(obj_size, is_positive, clu_num, params, obj_quantity, pin
     group_anchors = []
     for _ in range(clu_num):
         group_anchors.append(pos_utils.generate_random_anchor(group_anchors))
-
+    group_ids = []
     for i in range(clu_num):
         x = group_anchors[i][0]
         y = group_anchors[i][1]
         positions += pos_utils.get_circle_positions(obj_quantity, x, y)
+        group_ids.append(i)
     obj_num = len(positions)
 
     # 50% of the negative images, random object positions but other properties as same as positive
+    is_random = False
     if not is_positive and pin and  random.random() < 0.3:
         positions = pos_utils.get_random_positions(obj_num, obj_size)
         is_positive = True
+        is_random = True
 
     if is_positive:
         if "shape" in params or random.random() < 0.5:
@@ -70,19 +73,23 @@ def closure_big_circle(obj_size, is_positive, clu_num, params, obj_quantity, pin
             sizes = [obj_size] * obj_num
         else:
             sizes = [random.uniform(obj_size * 0.6, obj_size * 1.5) for _ in range(obj_num)]
-    try:
-        for i in range(len(positions)):
-            objs.append(encode_utils.encode_objs(
-                x=positions[i][0],
-                y=positions[i][1],
-                size=sizes[i],
-                color=colors[i],
-                shape=shapes[i],
-                line_width=-1,
-                solid=True
-            ))
-    except Exception as e:
-        raise e
+
+
+    for i in range(len(positions)):
+        if is_random:
+            group_id = -1
+        else:
+            group_id = group_ids[i]
+        objs.append(encode_utils.encode_objs(
+            x=positions[i][0],
+            y=positions[i][1],
+            size=sizes[i],
+            color=colors[i],
+            shape=shapes[i],
+            line_width=-1,
+            solid=True,
+            group_id=group_id,
+        ))
 
 
     return objs

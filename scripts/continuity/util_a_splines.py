@@ -67,7 +67,8 @@ def position_continuity_a_splines(obj_size, is_positive, clu_num, params, obj_qu
     line1_num = len(line1_points)
     line2_num = len(line2_points)
     total_num = len(line1_points) + len(line2_points)
-
+    group_ids = [0]*line1_num + [1]*line2_num
+    is_random = False
     if is_positive:
         if "shape" in params or random.random() < 0.5:
             shapes = [random.choice(config.bk_shapes[1:])] * line1_num
@@ -115,8 +116,13 @@ def position_continuity_a_splines(obj_size, is_positive, clu_num, params, obj_qu
             positions = np.concatenate((line1_points, line2_points))
         else:
             positions = pos_utils.get_random_positions(len(line1_points) + len(line2_points), obj_size)
+            is_random = True
     try:
         for i in range(len(positions)):
+            if is_random:
+                group_id = -1
+            else:
+                group_id = group_ids[i]
             objs.append(encode_utils.encode_objs(
                 x=positions[i][0],
                 y=positions[i][1],
@@ -124,7 +130,8 @@ def position_continuity_a_splines(obj_size, is_positive, clu_num, params, obj_qu
                 color=colors[i],
                 shape=shapes[i],
                 line_width=-1,
-                solid=True
+                solid=True,
+                group_id=group_id,
             ))
     except Exception as e:
         raise e

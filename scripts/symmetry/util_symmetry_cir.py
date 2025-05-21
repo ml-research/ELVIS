@@ -83,7 +83,8 @@ def feature_symmetry_circle(params, is_positive, clu_num=1):
         color=color,
         shape=shape,
         line_width=-1,
-        solid=True
+        solid=True,
+        group_id=-1
     ))
     if "count" in params and not is_positive:
         clu_num = data_utils.neg_clu_num(clu_num, 1, clu_num + 2)
@@ -93,6 +94,7 @@ def feature_symmetry_circle(params, is_positive, clu_num=1):
     group_centers = get_circumference_points(clu_num, 0.5, 0.5, cir_so)
 
     for a_i in range(clu_num):
+        is_random = False
         if is_positive:
             group_obj_num = random.randint(2, 4)
             positions = get_symmetry_surrounding_positions(angles[a_i], cir_so / 2, is_positive, group_obj_num)
@@ -142,10 +144,15 @@ def feature_symmetry_circle(params, is_positive, clu_num=1):
                 sizes = data_utils.duplicate_maintain_order(sizes, 2)
             if random.random() < 0.3:
                 positions = get_surrounding_positions(group_centers[a_i], cir_so * 1, group_obj_num)
+                is_random = True
             else:
                 positions = get_symmetry_surrounding_positions(angles[a_i], cir_so / 2, is_positive, group_obj_num)
         try:
             for i in range(len(positions)):
+                if is_random:
+                    group_id = -1
+                else:
+                    group_id = a_i
                 objs.append(encode_utils.encode_objs(
                     x=positions[i][0],
                     y=positions[i][1],
@@ -153,7 +160,8 @@ def feature_symmetry_circle(params, is_positive, clu_num=1):
                     color=colors[i],
                     shape=shapes[i],
                     line_width=-1,
-                    solid=True
+                    solid=True,
+                    group_id=group_id
                 ))
         except IndexError:
             raise IndexError

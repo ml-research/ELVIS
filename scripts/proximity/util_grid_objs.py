@@ -37,7 +37,8 @@ def proximity_grid(is_positive, obj_size, cluster_num=1, fixed_props="", obj_qua
                         color = random.choice(config.color_large_exclude_gray)
 
                     obj = encode_utils.encode_objs(x=x, y=y, size=obj_size, color=color, shape=shape, line_width=-1,
-                                                   solid=True)
+                                                   solid=True,
+                                                   group_id=a_i)
                     objs.append(obj)
 
             else:
@@ -50,7 +51,7 @@ def proximity_grid(is_positive, obj_size, cluster_num=1, fixed_props="", obj_qua
 
                     x = (x_i + 1) / (line_size + 2)
                     obj = encode_utils.encode_objs(x=x, y=y, size=obj_size, color=color, shape=shape, line_width=-1,
-                                                   solid=True)
+                                                   solid=True, group_id=a_i)
                     objs.append(obj)
 
     return objs

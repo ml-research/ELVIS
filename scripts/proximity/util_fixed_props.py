@@ -57,7 +57,6 @@ def proximity_fixed_props(fixed_props, is_positive, obj_size, obj_quantities):
         has_fixed = a_i in fix_indices if not is_positive else True
 
         for i in range(group_size):
-
             if has_fixed:
                 shape = shapes[i]
                 color = colors[i]
@@ -74,7 +73,8 @@ def proximity_fixed_props(fixed_props, is_positive, obj_size, obj_quantities):
                 x, y = neighbour_points[i]
             except IndexError:
                 raise IndexError
-            obj = encode_utils.encode_objs(x=x, y=y, size=obj_size, color=color, shape=shape, line_width=-1, solid=True)
+            obj = encode_utils.encode_objs(x=x, y=y, size=obj_size,
+                                           color=color, shape=shape, line_width=-1, solid=True,group_id=a_i)
             objs.append(obj)
 
     return objs

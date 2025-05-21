@@ -31,9 +31,13 @@ def feature_closure_circle(is_positive, clu_num, params, pin):
         obj_size = clu_size * (0.3 + random.random() * 0.1)
 
         positions = get_feature_circle_positions(group_anchors[i], clu_size)
+
+        is_random = False
         if not is_positive and pin and random.random() > 0.5:
             positions[-1] = pos_utils.random_shift_point(positions[-1], 0.05, clu_size / 2)
             is_positive = True
+            is_random = True
+
         if is_positive:
             if "shape" in params or random.random() > 0.5:
                 shapes = [random.choice(["square", "triangle"])] * obj_num
@@ -49,7 +53,7 @@ def feature_closure_circle(is_positive, clu_num, params, pin):
                 colors += ["lightgray"]
 
             if "size" in params or random.random() < 0.5:
-                shapes = [random.choice(["square", "triangle"])] * obj_num+ ["circle"]
+                shapes = [random.choice(["square", "triangle"])] * obj_num + ["circle"]
                 sizes = [obj_size] * obj_num
                 sizes += [clu_size]
             else:
@@ -78,19 +82,21 @@ def feature_closure_circle(is_positive, clu_num, params, pin):
             else:
                 sizes = [random.uniform(obj_size * 0.8, obj_size * 1) for _ in range(obj_num)]
                 sizes += [clu_size]
-        try:
-            for i in range(len(positions)):
-                objs.append(encode_utils.encode_objs(
-                    x=positions[i][0],
-                    y=positions[i][1],
-                    size=sizes[i],
-                    color=colors[i],
-                    shape=shapes[i],
-                    line_width=-1,
-                    solid=True,
-                ))
-        except Exception as e:
-            raise e
+        if is_random:
+            group_id = -1
+        else:
+            group_id = i
+        for i in range(len(positions)):
+            objs.append(encode_utils.encode_objs(
+                x=positions[i][0],
+                y=positions[i][1],
+                size=sizes[i],
+                color=colors[i],
+                shape=shapes[i],
+                line_width=-1,
+                solid=True,
+                group_id=group_id,
+            ))
 
     return objs
 

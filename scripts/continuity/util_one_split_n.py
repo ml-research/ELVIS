@@ -38,7 +38,7 @@ def continuity_one_splits_n(obj_size, is_positive, params, obj_quantity, prin_in
     dy = 0.08
     minx = 0.1
     main_y = 0.5 + random.uniform(0, 0.1)
-
+    is_random = False
     if is_positive:
         if "shape" in params:
             shapes_main = [random.choice(config.bk_shapes[1:])] * (main_road_length + split_road_length)
@@ -114,9 +114,14 @@ def continuity_one_splits_n(obj_size, is_positive, params, obj_quantity, prin_in
             positions_split = get_split_positions(split_road_length, minx + main_road_length * dx, dx, main_y, dy)
             positions = positions_main + positions_split
         else:
+            is_random = True
             positions = pos_utils.get_random_positions(main_road_length + split_road_length, obj_size)
 
     for i in range(len(positions)):
+        if is_random:
+            group_id = -1
+        else:
+            group_id = 0
         objs.append(encode_utils.encode_objs(
             x=positions[i][0],
             y=positions[i][1],
@@ -124,7 +129,8 @@ def continuity_one_splits_n(obj_size, is_positive, params, obj_quantity, prin_in
             color=colors[i],
             shape=shapes[i],
             line_width=-1,
-            solid=True
+            solid=True,
+            group_id=group_id
         ))
     return objs
 

@@ -39,6 +39,7 @@ def proximity_big_small(is_positive, obj_size, clu_num, params, obj_quantities):
 
     big_shape = "triangle"
     for a_i in range(clu_num):
+        is_random = False
         group_size = random.choice(group_sizes)
         try:
             neighbour_points = pos_utils.generate_points(group_anchors[a_i], group_radius, group_size, neighbour_dist)
@@ -69,6 +70,7 @@ def proximity_big_small(is_positive, obj_size, clu_num, params, obj_quantities):
 
         try:
             for i in range(len(neighbour_points)):
+                group_id = a_i
                 objs.append(encode_utils.encode_objs(
                     x=neighbour_points[i][0],
                     y=neighbour_points[i][1],
@@ -76,7 +78,8 @@ def proximity_big_small(is_positive, obj_size, clu_num, params, obj_quantities):
                     color=colors[i],
                     shape=shapes[i],
                     line_width=-1,
-                    solid=True
+                    solid=True,
+                    group_id=group_id,
                 ))
         except Exception as e:
             raise e
@@ -127,7 +130,9 @@ def proximity_big_small_2(is_positive, given_size, cluster_num, fixed_props, obj
                     [c for c in config.color_large_exclude_gray if c != fixed_color])
 
             objs.append(
-                encode_utils.encode_objs(x=x, y=y, size=obj_size, color=color, shape=shape, line_width=-1, solid=True))
+                encode_utils.encode_objs(x=x, y=y, size=obj_size, color=color,
+                                         shape=shape, line_width=-1, solid=True,
+                                         group_id=a_i))
 
     return objs
 

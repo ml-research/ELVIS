@@ -52,7 +52,8 @@ def overlap_circle_features(fixed_props, is_positive, cluster_num, obj_quantitie
     big_color = random.choice(config.color_large_exclude_gray)
     obj_size = cir_so * 0.07
     obj = encode_utils.encode_objs(x=0.5, y=0.5, size=cir_so, color=big_color,
-                                   shape="circle", line_width=-1, solid=True)
+                                   shape="circle", line_width=-1, solid=True,
+                                   group_id=-1)
     objs.append(obj)
 
     for a_i in range(cluster_num):
@@ -92,6 +93,7 @@ def overlap_circle_features(fixed_props, is_positive, cluster_num, obj_quantitie
                                            color=colors[i],
                                            shape=shapes[i],
                                            line_width=-1,
-                                           solid=True)
+                                           solid=True,
+                                           group_id=a_i)
             objs.append(obj)
     return objs

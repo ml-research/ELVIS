@@ -78,7 +78,8 @@ def symmetry_solar_sys(obj_size, is_positive, clu_num, params):
         color=color,
         shape=shape,
         line_width=-1,
-        solid=True
+        solid=True,
+        group_id=-1
     ))
     dist = 1.2
 
@@ -89,10 +90,11 @@ def symmetry_solar_sys(obj_size, is_positive, clu_num, params):
     group_centers = get_circumference_points(clu_num, 0.5, 0.5, cir_so)
 
     group_obj_num = [random.randint(2, 4) for i in range(clu_num)]
-
+    is_random = False
     if not is_positive and random.random() < 0.3:
         all_positions = pos_utils.get_almost_symmetry_positions(group_centers, cir_so * dist, group_obj_num)
         is_positive = True
+        is_random = True
     else:
         all_positions = get_symmetry_on_cir_positions(group_centers, cir_so * dist, group_obj_num)
     for a_i in range(clu_num):
@@ -147,6 +149,10 @@ def symmetry_solar_sys(obj_size, is_positive, clu_num, params):
                 positions = get_symmetry_on_cir_positions(group_centers, cir_so * dist, group_obj_num)
 
         for i in range(len(all_positions[a_i])):
+            if is_random:
+                group_id = -1
+            else:
+                group_id = a_i
             objs.append(encode_utils.encode_objs(
                 x=all_positions[a_i][i][0],
                 y=all_positions[a_i][i][1],
@@ -154,7 +160,8 @@ def symmetry_solar_sys(obj_size, is_positive, clu_num, params):
                 color=colors[i],
                 shape=shapes[i],
                 line_width=-1,
-                solid=True
+                solid=True,
+                group_id=group_id
             ))
     return objs
 

@@ -9,7 +9,7 @@ from scripts.utils import pos_utils, encode_utils
 
 
 def generate_group_objects(color, target_count, cluster_centers, image_size, diameter,
-                           so, min_circles, max_circles, used_centers, fixed_props):
+                           so, min_circles, max_circles, used_centers, fixed_props, group_id):
     """Generate objects for one group (of a given color) until target_count is reached."""
     group_objs = []
     count = 0
@@ -46,7 +46,7 @@ def generate_group_objects(color, target_count, cluster_centers, image_size, dia
                         shape = random.choice(config.bk_shapes[1:])
 
                     obj = encode_utils.encode_objs(x=new_x, y=new_y, size=so, color=color, shape=shape,
-                                                   line_width=-1, solid=True)
+                                                   line_width=-1, solid=True, group_id=group_id)
                     group_objs.append(obj)
                     count += 1
                     break
@@ -107,9 +107,10 @@ def similarity_fixed_number(is_positive, obj_size, cluster_num, fixed_props, qua
 
     used_centers = set()
     objs = [
-        obj for color, count in group_configs
+        obj for g_i, (color, count) in enumerate(group_configs)
         for obj in generate_group_objects(color, count, cluster_centers, image_size,
-                                          diameter, obj_size, min_circles, max_circles, used_centers, fixed_props)
+                                          diameter, obj_size, min_circles, max_circles,
+                                          used_centers, fixed_props, g_i)
     ]
 
     return objs

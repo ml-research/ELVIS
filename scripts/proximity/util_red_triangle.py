@@ -81,7 +81,8 @@ def proximity_red_triangle(is_positive, obj_size, clu_num, params, obj_quantitie
                     color = random.choice(config.color_large_exclude_gray)
 
             x, y = neighbour_points[i]
-            obj = encode_utils.encode_objs(x=x, y=y, size=obj_size, color=color, shape=shape, line_width=-1, solid=True)
+            obj = encode_utils.encode_objs(x=x, y=y, size=obj_size, color=color, shape=shape, line_width=-1, solid=True,
+                                           group_id=a_i)
             objs.append(obj)
 
     return objs
