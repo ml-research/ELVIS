@@ -31,7 +31,7 @@ def closure_big_triangle(obj_size, is_positive, clu_num, params, obj_quantity, p
         x = group_anchors[i][0]
         y = group_anchors[i][1]
         positions += pos_utils.get_triangle_positions(obj_quantity, x, y)
-        group_ids.append(i)
+        group_ids += [i]*len(positions)
     obj_num = len(positions)
 
     # 30% of the negative images, random object positions but other properties as same as positive

@@ -23,7 +23,7 @@ def closure_big_square(obj_size, is_positive, clu_num, params, obj_quantity, pin
         x = group_anchors[i][0]
         y = group_anchors[i][1]
         positions += pos_utils.get_square_positions(obj_quantity, x, y)
-        group_ids.append(i)
+        group_ids += [i]*len(positions)
     obj_num = len(positions)
 
     # 50% of the negative images, random object positions but other properties as same as positive
