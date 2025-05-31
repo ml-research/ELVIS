@@ -39,6 +39,7 @@ def continuity_one_splits_n(obj_size, is_positive, params, obj_quantity, prin_in
     minx = 0.1
     main_y = 0.5 + random.uniform(0, 0.1)
     is_random = False
+    group_ids = []
     if is_positive:
         if "shape" in params:
             shapes_main = [random.choice(config.bk_shapes[1:])] * (main_road_length + split_road_length)
@@ -72,10 +73,10 @@ def continuity_one_splits_n(obj_size, is_positive, params, obj_quantity, prin_in
             sizes = sizes_main + sizes_split
 
         positions_main = get_main_positions(main_road_length, minx, dx, main_y)
-        positions_main += get_main_split_positions(split_road_length, minx + main_road_length * dx, dx, main_y, dy)
-
-        positions_split = get_split_positions(split_road_length, minx + main_road_length * dx, dx, main_y, dy)
-        positions = positions_main + positions_split
+        position_split_1 = get_main_split_positions(split_road_length, minx + main_road_length * dx, dx, main_y, dy)
+        position_split_2 = get_split_positions(split_road_length, minx + main_road_length * dx, dx, main_y, dy)
+        positions = positions_main + position_split_1 + position_split_2
+        group_ids = [0] * len(positions_main) + [1]* len(position_split_1) + [2]* len(position_split_2)
     else:
         if "shape" in params or random.random() < 0.5:
             shapes_main = data_utils.random_select_unique_mix(config.bk_shapes[1:],
@@ -109,10 +110,10 @@ def continuity_one_splits_n(obj_size, is_positive, params, obj_quantity, prin_in
 
         if prin_in_neg:
             positions_main = get_main_positions(main_road_length, minx, dx, main_y)
-            positions_main += get_main_split_positions(split_road_length, minx + main_road_length * dx, dx, main_y, dy)
-
-            positions_split = get_split_positions(split_road_length, minx + main_road_length * dx, dx, main_y, dy)
-            positions = positions_main + positions_split
+            position_split_1 = get_main_split_positions(split_road_length, minx + main_road_length * dx, dx, main_y, dy)
+            position_split_2 = get_split_positions(split_road_length, minx + main_road_length * dx, dx, main_y, dy)
+            positions = positions_main + position_split_1 + position_split_2
+            group_ids = [0] * len(positions_main) + [1] * len(position_split_1) + [2] * len(position_split_2)
         else:
             is_random = True
             positions = pos_utils.get_random_positions(main_road_length + split_road_length, obj_size)
@@ -121,7 +122,7 @@ def continuity_one_splits_n(obj_size, is_positive, params, obj_quantity, prin_in
         if is_random:
             group_id = -1
         else:
-            group_id = 0
+            group_id = group_ids[i]
         objs.append(encode_utils.encode_objs(
             x=positions[i][0],
             y=positions[i][1],

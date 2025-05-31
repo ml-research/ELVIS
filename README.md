@@ -1,5 +1,14 @@
 # Category Example: [Click Here](scripts/README.md)
+#### Citation
 
+```
+@inproceedings{sha2025gestalt,
+  author    = {Jingyuan Sha and Hikaru Shindo and Kristian Kersting and Devendra Singh Dhami},
+  title     = {Gestalt Vision: A Dataset for Evaluating Gestalt Principles in Visual Perception},
+  booktitle = {Proceedings of the 19th International Conference on Neurosymbolic Learning and Reasoning (NeSy)},
+  year      = {2025}
+}
+```
 # Gestalt Pattern Reasoning Benchmark
 ![alt text](intro.png "Title")
 ## Overview
