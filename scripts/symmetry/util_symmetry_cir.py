@@ -124,20 +124,20 @@ def feature_symmetry_circle(params, is_positive, clu_num=1):
             group_obj_num = random.randint(2, 4)
             # shape
             if "shape" in params:
-                shapes = data_utils.random_select_unique_mix(config.bk_shapes[1:], group_obj_num)
-                shapes = data_utils.duplicate_maintain_order(shapes, 2)
+                shapes = data_utils.random_select_unique_mix(config.bk_shapes[1:], group_obj_num * 2)
+
             else:
                 shapes = [random.choice(config.bk_shapes[1:])] * group_obj_num
                 shapes = data_utils.duplicate_maintain_order(shapes, 2)
             if "color" in params:
-                colors = data_utils.random_select_unique_mix(config.color_large_exclude_gray, group_obj_num)
-                colors = data_utils.duplicate_maintain_order(colors, 2)
+                colors = data_utils.random_select_unique_mix(config.color_large_exclude_gray, group_obj_num * 2)
+
             else:
                 colors = [random.choice(config.color_large_exclude_gray)] * group_obj_num
                 colors = data_utils.duplicate_maintain_order(colors, 2)
             if "size" in params:
-                sizes = [random.uniform(obj_size * 0.9, obj_size * 2) for _ in range(group_obj_num)]
-                sizes = data_utils.duplicate_maintain_order(sizes, 2)
+                sizes = [random.uniform(obj_size * 0.9, obj_size * 2) for _ in range(group_obj_num * 2)]
+
 
             else:
                 sizes = [obj_size] * group_obj_num

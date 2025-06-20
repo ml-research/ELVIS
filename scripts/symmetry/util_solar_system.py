@@ -125,21 +125,18 @@ def symmetry_solar_sys(obj_size, is_positive, clu_num, params):
         else:
             # shape
             if "shape" in params:
-                shapes = data_utils.random_select_unique_mix(config.bk_shapes[1:], group_obj_num[a_i])
+                shapes = data_utils.random_select_unique_mix(config.bk_shapes[1:], group_obj_num[a_i] * 2)
                 shapes = data_utils.duplicate_maintain_order(shapes, 2)
             else:
                 shapes = [random.choice(config.bk_shapes[1:])] * group_obj_num[a_i]
                 shapes = data_utils.duplicate_maintain_order(shapes, 2)
             if "color" in params:
-                colors = data_utils.random_select_unique_mix(config.color_large_exclude_gray, group_obj_num[a_i])
-                colors = data_utils.duplicate_maintain_order(colors, 2)
+                colors = data_utils.random_select_unique_mix(config.color_large_exclude_gray, group_obj_num[a_i] * 2)
             else:
                 colors = [random.choice(config.color_large_exclude_gray)] * group_obj_num[a_i]
                 colors = data_utils.duplicate_maintain_order(colors, 2)
             if "size" in params:
-                sizes = [random.uniform(obj_size * 0.9, obj_size * 1) for _ in range(group_obj_num[a_i])]
-                sizes = data_utils.duplicate_maintain_order(sizes, 2)
-
+                sizes = [random.uniform(obj_size * 0.9, obj_size * 1) for _ in range(group_obj_num[a_i] * 2)]
             else:
                 sizes = [obj_size] * group_obj_num[a_i]
                 sizes = data_utils.duplicate_maintain_order(sizes, 2)

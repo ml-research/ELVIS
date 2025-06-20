@@ -85,16 +85,18 @@ def similarity_fixed_number(is_positive, obj_size, cluster_num, fixed_props, qua
         """Adjust the count of objects if the pattern is negative."""
         return base if is_positive else max(1, base + random.randint(-5, 5))
 
-    colors = ["yellow", "blue", "red", "green"][:cluster_num]
+    colors = ["yellow", "blue", "red", "green"]
 
     # Determine cluster sizes based on the pattern type
     if is_positive:
         cluster_sizes = [base_count] * cluster_num
     else:
+        # different group numbers
         if random.random() < 0.5:
             cluster_num = random.choice([n for n in {2, 3, 4} if n != cluster_num])
             cluster_sizes = [base_count] * cluster_num
         else:
+            # same group number, but different group size
             cluster_sizes = [random.randint(1, base_count + 5) for _ in range(cluster_num)]
 
     group_configs = list(zip(colors, cluster_sizes))
