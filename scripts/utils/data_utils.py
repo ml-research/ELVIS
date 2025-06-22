@@ -88,3 +88,11 @@ def calculate_metrics(TN, FP, FN, TP):
     f1_score = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
 
     return precision, recall, f1_score
+
+def get_random_sizes(obj_num, obj_size):
+    sizes = [
+        random.uniform(obj_size * 0.5, obj_size * 0.9) if random.random() < 0.5
+        else random.uniform(obj_size * 1.2, obj_size * 1.6)
+        for _ in range(obj_num)
+    ]
+    return sizes

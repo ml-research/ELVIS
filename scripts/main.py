@@ -12,7 +12,7 @@ from scripts.similarity import similarity_patterns
 from scripts.symmetry import symmetry_patterns
 from scripts.continuity import continuity_patterns
 from scripts.closure import closure_patterns
-
+from scripts.object_detector import  object_patterns
 
 def gen_image(objs):
     """
@@ -123,11 +123,12 @@ def save_principle_patterns(principle_name, pattern_dicts):
 
 def main():
     principles = {
+        # "od": object_patterns.pattern_dicts,
         # "proximity": prox_patterns.pattern_dicts,
-        "similarity": similarity_patterns.pattern_dicts,
+        # "similarity": similarity_patterns.pattern_dicts,
         # "symmetry": symmetry_patterns.pattern_dicts,
         # "continuity": continuity_patterns.pattern_dicts,
-        # "closure": closure_patterns.pattern_dicts,
+        "closure": closure_patterns.pattern_dicts,
     }
     for principle_name, pattern_dicts in principles.items():
         save_principle_patterns(principle_name, pattern_dicts)

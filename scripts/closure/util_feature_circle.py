@@ -57,7 +57,8 @@ def feature_closure_circle(is_positive, clu_num, params, pin):
                 sizes = [obj_size] * obj_num
                 sizes += [clu_size]
             else:
-                sizes = [random.uniform(obj_size * 0.8, obj_size * 1) for _ in range(obj_num)]
+                sizes = data_utils.get_random_sizes(obj_num, obj_size)
+
                 sizes += [clu_size]
         else:
             cf_params = data_utils.get_proper_sublist(params)
@@ -76,11 +77,10 @@ def feature_closure_circle(is_positive, clu_num, params, pin):
 
             if "size" in cf_params:
                 shapes = [random.choice(["square", "triangle"])] * obj_num + ["circle"]
-
                 sizes = [obj_size] * obj_num
                 sizes += [clu_size]
             else:
-                sizes = [random.uniform(obj_size * 0.8, obj_size * 1) for _ in range(obj_num)]
+                sizes = data_utils.get_random_sizes(obj_num, obj_size)
                 sizes += [clu_size]
         if is_random:
             group_id = -1

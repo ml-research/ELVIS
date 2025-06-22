@@ -55,10 +55,11 @@ def closure_big_triangle(obj_size, is_positive, clu_num, params, obj_quantity, p
             colors = data_utils.random_select_unique_mix(config.color_large_exclude_gray, obj_num)
 
         if "size" in params or random.random() < 0.5:
-            shapes = [random.choice(["square", "circle"])] * obj_num
+            # shapes = [random.choice(["square", "circle"])] * obj_num
             sizes = [obj_size] * obj_num
         else:
-            sizes = [random.uniform(obj_size * 0.6, obj_size * 1.5) for _ in range(obj_num)]
+            sizes = data_utils.get_random_sizes(obj_num,obj_size)
+
     else:
 
         cf_params = data_utils.get_proper_sublist(params)
@@ -73,11 +74,13 @@ def closure_big_triangle(obj_size, is_positive, clu_num, params, obj_quantity, p
             colors = random.choices(["green", "yellow"], k=obj_num)
         else:
             colors = data_utils.random_select_unique_mix(config.color_large_exclude_gray, obj_num)
+
         if "size" in cf_params:
-            shapes = [random.choice(["square", "circle"])] * obj_num
             sizes = [obj_size] * obj_num
         else:
-            sizes = [random.uniform(obj_size * 0.6, obj_size * 1.5) for _ in range(obj_num)]
+            sizes = data_utils.get_random_sizes(obj_num,obj_size)
+
+
     try:
         for i in range(len(positions)):
             if is_random:

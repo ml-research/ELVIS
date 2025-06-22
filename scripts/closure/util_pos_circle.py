@@ -10,7 +10,6 @@ from scripts.utils import encode_utils, data_utils, pos_utils
 from scripts.utils.shape_utils import overlaps, overflow
 
 
-
 def closure_big_circle(obj_size, is_positive, clu_num, params, obj_quantity, pin):
     objs = []
     positions = []
@@ -24,12 +23,12 @@ def closure_big_circle(obj_size, is_positive, clu_num, params, obj_quantity, pin
         x = group_anchors[i][0]
         y = group_anchors[i][1]
         positions += pos_utils.get_circle_positions(obj_quantity, x, y)
-        group_ids += [i]* len(positions)
+        group_ids += [i] * len(positions)
     obj_num = len(positions)
 
     # 50% of the negative images, random object positions but other properties as same as positive
     is_random = False
-    if not is_positive and pin and  random.random() < 0.3:
+    if not is_positive and pin and random.random() < 0.3:
         positions = pos_utils.get_random_positions(obj_num, obj_size)
         is_positive = True
         is_random = True
@@ -49,11 +48,11 @@ def closure_big_circle(obj_size, is_positive, clu_num, params, obj_quantity, pin
             colors = data_utils.random_select_unique_mix(config.color_large_exclude_gray, obj_num)
 
         if "size" in params or random.random() < 0.5:
-            shapes = [random.choice(["square", "triangle"])] * obj_num
-
+            # shapes = [random.choice(["square", "triangle"])] * obj_num
             sizes = [obj_size] * obj_num
         else:
-            sizes = [random.uniform(obj_size * 0.6, obj_size * 1.5) for _ in range(obj_num)]
+            sizes = data_utils.get_random_sizes(obj_num, obj_size)
+
     else:
         cf_params = data_utils.get_proper_sublist(params)
         if "shape" in cf_params:
@@ -66,13 +65,14 @@ def closure_big_circle(obj_size, is_positive, clu_num, params, obj_quantity, pin
 
         if "color" in cf_params:
             colors = random.choices(["blue", "yellow"], k=obj_num)
+
         else:
             colors = data_utils.random_select_unique_mix(config.color_large_exclude_gray, obj_num)
         if "size" in cf_params:
-            shapes = [random.choice(["square", "triangle"])] * obj_num
+            # shapes = [random.choice(["square", "triangle"])] * obj_num
             sizes = [obj_size] * obj_num
         else:
-            sizes = [random.uniform(obj_size * 0.6, obj_size * 1.5) for _ in range(obj_num)]
+            sizes = data_utils.get_random_sizes(obj_num,obj_size)
 
 
     for i in range(len(positions)):
@@ -91,8 +91,8 @@ def closure_big_circle(obj_size, is_positive, clu_num, params, obj_quantity, pin
             group_id=group_id,
         ))
 
-
     return objs
+
 
 def non_overlap_big_circle(params, is_positive, clu_num, obj_quantity, pin):
     obj_size = 0.05

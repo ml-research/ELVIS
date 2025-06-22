@@ -57,7 +57,8 @@ def feature_closure_triangle(is_positive, clu_num, params, pin):
             if "size" in params or random.random() < 0.5:
                 sizes = [obj_size] * obj_num
             else:
-                sizes = [random.uniform(obj_size * 0.8, obj_size * 1) for _ in range(obj_num)]
+                sizes = data_utils.get_random_sizes(obj_num, obj_size)
+
         else:
             cf_params = data_utils.get_proper_sublist(params)
             if "color" in cf_params:
@@ -68,7 +69,8 @@ def feature_closure_triangle(is_positive, clu_num, params, pin):
             if "size" in cf_params:
                 sizes = [obj_size] * obj_num
             else:
-                sizes = [random.uniform(obj_size * 0.6, obj_size * 1) for _ in range(obj_num)]
+                sizes = data_utils.get_random_sizes(obj_num, obj_size)
+
         try:
             if is_random:
                 group_id = -1
