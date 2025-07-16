@@ -12,6 +12,8 @@ from transformers import AutoModelForCausalLM
 
 from deepseek_vl2.models import DeepseekVLV2Processor, DeepseekVLV2ForCausalLM
 from deepseek_vl2.utils.io import load_pil_images
+from deepseek_vl2.processors import DeepSeekVL2Processor
+from deepseek_vl2.models import DeepSeekVL2ForCausalLM
 
 from scripts.utils import data_utils
 
@@ -28,12 +30,13 @@ def load_deepseek_model(device):
     model_name = "deepseek-ai/deepseek-vl2-small"  # Adjust based on the specific DeepSeek model you're using
 
     # Load model and processor
-    processor = AutoProcessor.from_pretrained(model_name)
-    model = AutoModelForCausalLM.from_pretrained(
+    processor = DeepSeekVL2Processor.from_pretrained(model_name)
+    model = DeepSeekVL2ForCausalLM.from_pretrained(
         model_name,
         torch_dtype=torch.float16,
-        device_map=device
+        device_map="auto"
     )
+    model = model.to(device)
     return model, processor
 
 
