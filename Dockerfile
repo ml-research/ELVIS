@@ -15,7 +15,8 @@ RUN pip install --upgrade pip setuptools wheel
 WORKDIR /app
 
 RUN pip install opencv-python==4.8.0.74
-
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Set the default command for training (adjust as needed)
 #CMD ["python", "scripts/main.py"]

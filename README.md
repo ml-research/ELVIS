@@ -83,7 +83,7 @@ docker run --rm gestalt_benchmark -it
 For GPU-accelerated training (if available):
 ```
  
-docker run --gpus all -it -v /home/ml-jsha/storage/grb:/app/data --rm gestalt_benchmark 
+docker run -it --gpus all -v /home/ml-jsha/ELVIS:/app --rm elvis:latest 
 
 python -m scripts.main
 python -m scripts.evaluate_models --batch_size 100 --principle proximity --img_num 3 --model vit --device_id 0
@@ -99,7 +99,8 @@ python -m scripts.evaluate_models --batch_size 1 --principle closure  --img_num 
 python -m scripts.evaluate_models --batch_size 1 --principle symmetry --img_num 3 --model llava  --device_id 4
 python -m scripts.evaluate_models --batch_size 100 --principle continuity --img_num 3 --model llava --device_id 7
 
-python -m scripts.evaluate_models --batch_size 1 --principle symmetry --device_id 3 > /app/data/output.log
+# train deepseek
+python -m scripts.evaluate_models --batch_size 1 --principle proximity --model deepseek
 
 ```
 
