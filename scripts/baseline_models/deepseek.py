@@ -22,7 +22,7 @@ def init_wandb(batch_size):
 
 def load_deepseek_model(device):
     # Load DeepSeek model and tokenizer
-    model_name = "deepseek-ai/deepseek-vl-7b"  # Adjust based on the specific DeepSeek model you're using
+    model_name = "deepseek-ai/deepseek-vl2-small"  # Adjust based on the specific DeepSeek model you're using
 
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForCausalLM.from_pretrained(
