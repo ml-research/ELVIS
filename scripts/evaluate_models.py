@@ -1,8 +1,8 @@
 # Created by jing at 26.02.25
 import argparse
 from scripts import config
-from scripts.baseline_models import vit
-from scripts.baseline_models import llava
+# from scripts.baseline_models import vit
+# from scripts.baseline_models import llava
 from scripts.baseline_models import deepseek
 import torch
 import os
