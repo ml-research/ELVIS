@@ -68,24 +68,25 @@ Each pattern has its own folder within the respective principle directory, conta
 
 To ensure compatibility across environments, you can use Docker to build and run the project.
 
-### Building the Docker Image
+### Docker Usage 
+
+##### Build
+
 ``` 
 docker build -t elvis .
 ```
 
-### Running the Container
+##### Run
 
-For CPU-only:
-```
-docker run --rm gestalt_benchmark -it
-```
-
-For GPU-accelerated training (if available):
-```
- 
+``` 
 docker run -it --gpus all -v /home/ml-jsha/ELVIS:/app --rm elvis:latest 
+``` 
+
+
 
 python -m scripts.main
+
+
 python -m scripts.evaluate_models --batch_size 100 --principle proximity --img_num 3 --model vit --device_id 0
 python -m scripts.evaluate_models --batch_size 100 --principle similarity --img_num 100 --device_id 1
 python -m scripts.evaluate_models --batch_size 100 --principle closure --img_num 100 --device_id 0
@@ -100,7 +101,7 @@ python -m scripts.evaluate_models --batch_size 1 --principle symmetry --img_num 
 python -m scripts.evaluate_models --batch_size 100 --principle continuity --img_num 3 --model llava --device_id 7
 
 # train deepseek
-python -m scripts.evaluate_models --batch_size 1 --principle proximity --model deepseek
+python -m scripts.evaluate_models --batch_size 1 --principle proximity --model deepseek --device_id 2
 
 ```
 

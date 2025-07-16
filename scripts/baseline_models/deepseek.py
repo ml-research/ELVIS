@@ -7,8 +7,11 @@ import wandb
 from pathlib import Path
 from PIL import Image
 from transformers import AutoTokenizer, AutoModelForCausalLM
-from deepseek_vl.models import AutoModelForCausalLM
-from deepseek_vl.processors import AutoProcessor
+from transformers import AutoModelForCausalLM
+
+
+from deepseek_vl2.models import DeepseekVLV2Processor, DeepseekVLV2ForCausalLM
+from deepseek_vl2.utils.io import load_pil_images
 
 from scripts.utils import data_utils
 
