@@ -23,8 +23,8 @@ This repository on the Github also includes all the code for generating the data
 ## Installation
 To use this benchmark, first clone the repository and install dependencies:
 ```bash
-git clone https://github.com/akweury/gestalt_benchmark.git
-cd gestalt_benchmark
+git clone https://github.com/ml-research/ELVIS.git
+cd ELVIS
 pip install -r requirements.txt
 ```
 
@@ -70,7 +70,7 @@ To ensure compatibility across environments, you can use Docker to build and run
 
 ### Building the Docker Image
 ``` 
-docker build -t gestalt_benchmark .
+docker build -t elvis .
 ```
 
 ### Running the Container
