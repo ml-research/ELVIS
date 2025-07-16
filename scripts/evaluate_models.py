@@ -3,13 +3,15 @@ import argparse
 from scripts import config
 from scripts.baseline_models import vit
 from scripts.baseline_models import llava
+from scripts.baseline_models import deepseek
 import torch
 import os
 
 # List of baseline models
 baseline_models = [
-    {"name": "ViT-Base-Patch32-384", "module": vit.run_vit},
-    {"name": "Llava", "module": llava.run_llava}
+    # {"name": "ViT-Base-Patch32-384", "module": vit.run_vit},
+    # {"name": "Llava", "module": llava.run_llava},
+    {"name": "deepseek", "module": deepseek.run_deepseek},
 ]
 
 
