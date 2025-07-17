@@ -82,7 +82,7 @@ docker build -t elvis .
 docker run -it --gpus all -v /home/ml-jsha/ELVIS:/app --rm elvis:latest 
 ``` 
 
-
+ln -s /home/ml-jsha/nesy_causal_p/storage/dataset/grb /home/ml-jsha/ELVIS/grb
 
 python -m scripts.main
 

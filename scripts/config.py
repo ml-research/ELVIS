@@ -29,7 +29,7 @@ color_large_exclude_gray = [item for item in color_large if item != "lightgray" 
 data = root / 'data'
 if not os.path.exists(data):
     os.makedirs(data)
-raw_patterns = data / 'raw_patterns'
+raw_patterns = root / 'grb'
 if not os.path.exists(raw_patterns):
     os.makedirs(raw_patterns)
 
