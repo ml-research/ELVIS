@@ -8,7 +8,8 @@ from pathlib import Path
 from PIL import Image
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from transformers import AutoModelForCausalLM
-from deepseek_vl2.models import DeepseekVLV2Processor
+from deepseek_vl2.models import DeepseekVLV2Processor, DeepseekVLV2ForCausalLM
+from deepseek_vl2.utils.io import load_pil_images
 
 
 from scripts.utils import data_utils
@@ -22,20 +23,20 @@ def init_wandb(batch_size):
 
 
 def load_deepseek_model(device):
-    # Load DeepSeek model and tokenizer
-    model_name = "deepseek-ai/deepseek-vl2-small"  # Adjust based on the specific DeepSeek model you're using
-    cache_dir = "/models/deepseek_cache"  # Make sure this path is mounted and persistent in your Docker container
+    model_name = "deepseek-ai/deepseek-vl2-small"
+    cache_dir = "/models/deepseek_cache"  # Ensure this is mounted in Docker
 
-    # Load model and processor
-    processor = DeepseekVLV2Processor.from_pretrained(model_name)
-    model = AutoModelForCausalLM.from_pretrained(
+    processor = DeepseekVLV2Processor.from_pretrained(model_name, cache_dir=cache_dir)
+    model = DeepseekVLV2ForCausalLM.from_pretrained(
         model_name,
-        torch_dtype=torch.float16,
+        trust_remote_code=True,
+        torch_dtype=torch.bfloat16,
         device_map="auto",
         cache_dir=cache_dir
     )
-    model = model.to(device)
-    return model, processor
+    model = model.to(device).eval()
+    tokenizer = processor.tokenizer
+    return model, processor, tokenizer
 
 
 def load_images(image_dir, num_samples=5):
@@ -59,40 +60,73 @@ def generate_reasoning_prompt(principle):
     return prompt
 
 
+
+
 def infer_logic_rules(model, processor, train_positive, train_negative, device, principle):
-    # Prepare conversation history
-    conversations = [
+    # Prepare conversation as per official example
+    conversation = [
         {
-            "role": "system",
-            "content": f"You are an AI analyzing Gestalt patterns. Principle: {principle}."
+            "role": "<|User|>",
+            "content": "Describe the difference between these images.",
+            "images": [img for img in train_positive + train_negative],
         },
+        {"role": "<|Assistant|>", "content": ""},
     ]
+    pil_images = load_pil_images(conversation)
+    prepare_inputs = processor(
+        conversations=conversation,
+        images=pil_images,
+        force_batchify=True,
+        system_prompt=""
+    ).to(device)
+    inputs_embeds = model.prepare_inputs_embeds(**prepare_inputs)
+    outputs = model.language_model.generate(
+        inputs_embeds=inputs_embeds,
+        attention_mask=prepare_inputs.attention_mask,
+        pad_token_id=processor.tokenizer.eos_token_id,
+        bos_token_id=processor.tokenizer.bos_token_id,
+        eos_token_id=processor.tokenizer.eos_token_id,
+        max_new_tokens=512,
+        do_sample=False,
+        use_cache=True
+    )
+    answer = processor.tokenizer.decode(outputs[0].cpu().tolist(), skip_special_tokens=True)
+    return answer
 
-    # Add positive examples
-    for img in train_positive:
-        conversations.append({
-            "role": "user",
-            "content": [{"type": "image", "image": img}, {"type": "text", "text": "Positive example"}]
-        })
-
-    # Add negative examples
-    for img in train_negative:
-        conversations.append({
-            "role": "user",
-            "content": [{"type": "image", "image": img}, {"type": "text", "text": "Negative example"}]
-        })
-
-    # Final reasoning prompt
-    conversations.append({
-        "role": "user",
-        "content": "What rule distinguishes positive from negative examples?"
-    })
-
-    # Process and generate
-    inputs = processor(conversations).to(device)
-    inputs = {k: torch.tensor(v).to(device) for k, v in inputs.items()}
-    outputs = model.generate(**inputs, max_new_tokens=512)
-    return processor.decode(outputs[0], skip_special_tokens=True)
+# def infer_logic_rules(model, processor, train_positive, train_negative, device, principle):
+#     # Prepare conversation history
+#     conversations = [
+#         {
+#             "role": "system",
+#             "content": f"You are an AI analyzing Gestalt patterns. Principle: {principle}."
+#         },
+#     ]
+#
+#     # Add positive examples
+#     for img in train_positive:
+#         conversations.append({
+#             "role": "user",
+#             "content": [{"type": "image", "image": img}, {"type": "text", "text": "Positive example"}]
+#         })
+#
+#     # Add negative examples
+#     for img in train_negative:
+#         conversations.append({
+#             "role": "user",
+#             "content": [{"type": "image", "image": img}, {"type": "text", "text": "Negative example"}]
+#         })
+#
+#     # Final reasoning prompt
+#     conversations.append({
+#         "role": "user",
+#         "content": "What rule distinguishes positive from negative examples?"
+#     })
+#
+#     # Process and generate
+#     inputs = processor(conversations).to(device)
+#     inputs = {k: torch.tensor(v).to(device) for k, v in inputs.items()}
+#     outputs = model.generate(**inputs, max_new_tokens=512)
+#     return processor.decode(outputs[0], skip_special_tokens=True)
 
 
 def evaluate_deepseek(model, tokenizer, test_images, logic_rules, device, principle):
