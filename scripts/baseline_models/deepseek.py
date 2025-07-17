@@ -60,7 +60,7 @@ def generate_reasoning_prompt(principle):
 
 def infer_logic_rules(model, processor, train_positive, train_negative, device, principle):
     # Prepare conversation as per official example
-    print("img path:" + train_negative[0])
+    print("img path:" + str(train_negative[0]))
     conversation = [
         {
             "role": "<|User|>",
