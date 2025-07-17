@@ -87,7 +87,7 @@ def infer_logic_rules(model, processor, train_positive, train_negative, device, 
 
     inputs_embeds = model.prepare_inputs_embeds(**prepare_inputs)
 
-    outputs = model.language_model.generate(
+    outputs = model.language.generate(
         inputs_embeds=inputs_embeds,
         attention_mask=prepare_inputs.attention_mask,
         pad_token_id=processor.tokenizer.eos_token_id,
