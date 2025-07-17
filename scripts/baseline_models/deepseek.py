@@ -37,7 +37,8 @@ def load_deepseek_model(device):
 
 def load_images(image_dir, num_samples=5):
     image_paths = sorted(Path(image_dir).glob("*.png"))[:num_samples]
-    return [Image.open(img_path).convert("RGB").resize((224, 224)) for img_path in image_paths]
+    return image_paths
+    # return [Image.open(img_path).convert("RGB").resize((224, 224)) for img_path in image_paths]
 
 
 def generate_reasoning_prompt(principle):
@@ -58,11 +59,12 @@ def generate_reasoning_prompt(principle):
 
 def infer_logic_rules(model, processor, train_positive, train_negative, device, principle):
     # Prepare conversation as per official example
+    print("img path:" + train_negative[0])
     conversation = [
         {
             "role": "<|User|>",
             "content": "Describe the difference between these images.",
-            "images": [img for img in train_positive + train_negative],
+            "images": [str(img) for img in train_positive + train_negative],
         },
         {"role": "<|Assistant|>", "content": ""},
     ]
