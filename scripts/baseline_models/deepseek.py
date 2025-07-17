@@ -11,11 +11,7 @@ from transformers import AutoModelForCausalLM
 from deepseek_vl2.models import DeepseekVLV2Processor, DeepseekVLV2ForCausalLM
 from deepseek_vl2.utils.io import load_pil_images
 
-
 from scripts.utils import data_utils
-
-
-
 
 
 def init_wandb(batch_size):
@@ -60,8 +56,6 @@ def generate_reasoning_prompt(principle):
     return prompt
 
 
-
-
 def infer_logic_rules(model, processor, train_positive, train_negative, device, principle):
     # Prepare conversation as per official example
     conversation = [
@@ -80,11 +74,11 @@ def infer_logic_rules(model, processor, train_positive, train_negative, device, 
         system_prompt=""
     )
     # Move all tensors in prepare_inputs to the target device
-    for k, v in prepare_inputs.items():
+    for attr in prepare_inputs.__dict__:
+        v = getattr(prepare_inputs, attr)
         if isinstance(v, torch.Tensor):
-            prepare_inputs[k] = v.to(device)
+            setattr(prepare_inputs, attr, v.to(device))
     inputs_embeds = model.prepare_inputs_embeds(**prepare_inputs)
-
 
     outputs = model.language_model.generate(
         inputs_embeds=inputs_embeds,
@@ -98,6 +92,7 @@ def infer_logic_rules(model, processor, train_positive, train_negative, device, 
     )
     answer = processor.tokenizer.decode(outputs[0].cpu().tolist(), skip_special_tokens=True)
     return answer
+
 
 # def infer_logic_rules(model, processor, train_positive, train_negative, device, principle):
 #     # Prepare conversation history
