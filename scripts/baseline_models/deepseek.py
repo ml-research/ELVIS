@@ -36,6 +36,7 @@ def load_deepseek_model(device):
 
 
 def load_images(image_dir, num_samples=5):
+    print("img dir " + str(image_dir))
     image_paths = sorted(Path(image_dir).glob("*.png"))[:num_samples]
     return image_paths
     # return [Image.open(img_path).convert("RGB").resize((224, 224)) for img_path in image_paths]
