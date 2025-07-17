@@ -30,7 +30,7 @@ def load_deepseek_model(device):
         device_map="auto",
         cache_dir=cache_dir
     )
-    model = model.to(device).eval()
+    # model = model.to(device).eval()
     tokenizer = processor.tokenizer
     return model, processor, tokenizer
 
