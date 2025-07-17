@@ -77,7 +77,14 @@ def infer_logic_rules(model, processor, train_positive, train_negative, device, 
     for attr in prepare_inputs.__dict__:
         v = getattr(prepare_inputs, attr)
         if isinstance(v, torch.Tensor):
+            print(f"Before: {attr} device = {v.device}")  # Debug print
             setattr(prepare_inputs, attr, v.to(device))
+            print(f"After: {attr} device = {getattr(prepare_inputs, attr).device}")  # Debug print
+
+    for name, param in model.named_parameters():
+        print(f"Model param: {name} device = {param.device}")  # Debug print
+        break  # Only print one for brevity
+
     inputs_embeds = model.prepare_inputs_embeds(**prepare_inputs)
 
     outputs = model.language_model.generate(
