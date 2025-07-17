@@ -155,6 +155,8 @@ def evaluate_deepseek(model, tokenizer, test_images, logic_rules, device, princi
         prediction = tokenizer.decode(generate_ids[0], skip_special_tokens=True)
         prediction_label = prediction.split("assistant")[-1].strip().lower()
 
+        print(f"({label}) evaluating answer: {prediction_label}")
+
         predicted_label = 1 if "positive" in prediction_label else 0
         all_labels.append(label)
         all_predictions.append(predicted_label)
