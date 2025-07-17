@@ -180,7 +180,7 @@ def evaluate_deepseek(model, processor, test_images, logic_rules, device, princi
 
         prediction_label = answer.split("response:")[-1].strip().lower()
         # prediction_label = prediction_label.split("response:")[-1].strip().lower()
-        print(f"({label}) evaluating answer: {answer}")
+        # print(f"({label}) evaluating answer: {prediction_label}")
         predicted_label = 1 if "positive" in prediction_label else 0
         all_labels.append(label)
         all_predictions.append(predicted_label)
