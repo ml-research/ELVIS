@@ -44,20 +44,6 @@ def load_images(image_dir, num_samples=5):
     # return [Image.open(img_path).convert("RGB").resize((224, 224)) for img_path in image_paths]
 
 
-def generate_reasoning_prompt(principle):
-    prompt = f"""You are an AI reasoning about visual patterns based on Gestalt principles.
-    You are given positive and negative examples and must deduce the common logic that differentiates them.
-
-    Principle: {principle}
-
-    Positive examples:
-    first half images.
-
-    Negative examples:
-    second half images.
-
-    What logical rule differentiates the positive from the negative examples?"""
-    return prompt
 
 
 def infer_logic_rules(model, processor, train_positive, train_negative, device, principle):
@@ -132,29 +118,68 @@ def infer_logic_rules(model, processor, train_positive, train_negative, device, 
 #     return processor.decode(outputs[0], skip_special_tokens=True)
 
 
-def evaluate_deepseek(model, tokenizer, test_images, logic_rules, device, principle):
+def evaluate_deepseek(model, processor, test_images, logic_rules, device, principle):
     model.eval()
     correct, total = 0, 0
     all_labels, all_predictions = [], []
     torch.cuda.empty_cache()
 
     for image, label in test_images:
-        conversation = conversations.deepseek_eval_conversation(image, logic_rules)
-        inputs = tokenizer.apply_chat_template(
-            conversation,
-            add_generation_prompt=True,
-            return_tensors="pt"
-        ).to(device)
 
-        generate_ids = model.generate(
-            inputs,
-            max_new_tokens=10,  # Short output expected
-            do_sample=False
+        conversation = conversations.deepseek_eval_conversation(image, logic_rules)
+        pil_images = load_pil_images(conversation)
+
+
+        inputs = processor(
+            conversations=conversation,
+            images=pil_images,
+            force_batchify=True,
+            system_prompt=""
         )
 
-        prediction_label = tokenizer.decode(generate_ids[0], skip_special_tokens=True)
-        prediction_label = prediction_label.split("response:")[-1].strip().lower()
-        prediction_label = prediction_label.split("response:")[-1].strip().lower()
+        model_device = next(model.parameters()).device
+
+        # Move all tensors in prepare_inputs to model_device
+        for attr in inputs.__dict__:
+            v = getattr(inputs, attr)
+            if isinstance(v, torch.Tensor):
+                setattr(inputs, attr, v.to(model_device))
+
+        inputs_embeds = model.prepare_inputs_embeds(**inputs)
+
+        outputs = model.generate(
+            inputs_embeds=inputs_embeds,
+            attention_mask=inputs.attention_mask,
+            pad_token_id=processor.tokenizer.eos_token_id,
+            bos_token_id=processor.tokenizer.bos_token_id,
+            eos_token_id=processor.tokenizer.eos_token_id,
+            max_new_tokens=512,
+            do_sample=False,
+            use_cache=True
+        )
+        answer = processor.tokenizer.decode(outputs[0].cpu().tolist(), skip_special_tokens=True)
+
+
+        # # inputs = tokenizer.apply_chat_template(
+        # #     conversation,
+        # #     add_generation_prompt=True,
+        # #     return_tensors="pt"
+        # # ).to(device)
+        #
+        # generate_ids = model.generate(
+        #     inputs,
+        #     max_new_tokens=10,  # Short output expected
+        #     do_sample=False
+        # )
+        #
+        #
+        # processor.tokenizer.decode(outputs[0].cpu().tolist(), skip_special_tokens=True)
+        # prediction_label = tokenizer.decode(generate_ids[0], skip_special_tokens=True)
+        #
+        #
+
+        prediction_label = answer.split("response:")[-1].strip().lower()
+        # prediction_label = prediction_label.split("response:")[-1].strip().lower()
         print(f"({label}) evaluating answer: {prediction_label}")
 
         predicted_label = 1 if "positive" in prediction_label else 0
@@ -209,7 +234,7 @@ def run_deepseek(data_path, principle, batch_size, device, img_num, epochs):
 
         test_images = [(img, 1) for img in test_positive] + [(img, 0) for img in test_negative]
         # print("len test images", len(test_images))
-        accuracy, f1, precision, recall = evaluate_deepseek(model, tokenizer, test_images, logic_rules, device, principle)
+        accuracy, f1, precision, recall = evaluate_deepseek(model, processor, test_images, logic_rules, device, principle)
 
         results[pattern_folder.name] = {
             "accuracy": accuracy,

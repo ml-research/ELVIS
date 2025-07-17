@@ -103,6 +103,7 @@ def deepseek_conversation(train_positive, train_negative, principle):
                 train_positive[0],
                 train_positive[1],
                 train_positive[2],
+
                 train_negative[0],
                 train_negative[1],
                 train_negative[2]
@@ -121,6 +122,7 @@ def deepseek_eval_conversation(image, logic_rules):
                        f"Classify this image <image_placeholder> as Positive or Negative."
                        f"Only answer with positive or negative.",
             "images": [image]
-        }
+        },
+        {"role": "Assistant", "content": ""}
     ]
     return conversation
