@@ -89,7 +89,8 @@ def infer_logic_rules(model, processor, train_positive, train_negative, device, 
     })
 
     # Process and generate
-    inputs = processor(conversations, return_tensors="pt").to(device)
+    inputs = processor(conversations).to(device)
+    inputs = {k: torch.tensor(v).to(device) for k, v in inputs.items()}
     outputs = model.generate(**inputs, max_new_tokens=512)
     return processor.decode(outputs[0], skip_special_tokens=True)
 
