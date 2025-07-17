@@ -11,6 +11,8 @@ from transformers import AutoModelForCausalLM
 from deepseek_vl2.models import DeepseekVLV2Processor, DeepseekVLV2ForCausalLM
 from deepseek_vl2.utils.io import load_pil_images
 
+import conversations
+
 from scripts.utils import data_utils
 
 
@@ -36,7 +38,7 @@ def load_deepseek_model(device):
 
 
 def load_images(image_dir, num_samples=5):
-    print("img dir " + str(image_dir))
+    # print("img dir " + str(image_dir))
     image_paths = sorted(Path(image_dir).glob("*.png"))[:num_samples]
     return image_paths
     # return [Image.open(img_path).convert("RGB").resize((224, 224)) for img_path in image_paths]
@@ -60,15 +62,8 @@ def generate_reasoning_prompt(principle):
 
 def infer_logic_rules(model, processor, train_positive, train_negative, device, principle):
     # Prepare conversation as per official example
-    print("img path:" + str(train_negative[0]))
-    conversation = [
-        {
-            "role": "<|User|>",
-            "content": "Describe the difference between these images.",
-            "images": [str(img) for img in train_positive + train_negative],
-        },
-        {"role": "<|Assistant|>", "content": ""},
-    ]
+    # print("img path:" + str(train_negative[0]))
+    conversation = conversations.llava_conversation(train_positive, train_negative, principle)
     pil_images = load_pil_images(conversation)
     prepare_inputs = processor(
         conversations=conversation,
@@ -84,8 +79,6 @@ def infer_logic_rules(model, processor, train_positive, train_negative, device, 
         v = getattr(prepare_inputs, attr)
         if isinstance(v, torch.Tensor):
             setattr(prepare_inputs, attr, v.to(model_device))
-
-
 
     inputs_embeds = model.prepare_inputs_embeds(**prepare_inputs)
 
@@ -146,13 +139,9 @@ def evaluate_deepseek(model, tokenizer, test_images, logic_rules, device, princi
     torch.cuda.empty_cache()
 
     for image, label in test_images:
-        messages = [
-            {"role": "system", "content": f"Using these rules: {logic_rules}"},
-            {"role": "user", "content": "[IMAGE] Classify this image as Positive or Negative. Only answer with 'positive' or 'negative'."}
-        ]
-
+        conversation = conversations.llava_eval_conversation(image, logic_rules)
         inputs = tokenizer.apply_chat_template(
-            messages,
+            [conversation],
             add_generation_prompt=True,
             return_tensors="pt"
         ).to(device)
@@ -217,7 +206,7 @@ def run_deepseek(data_path, principle, batch_size, device, img_num, epochs):
         logic_rules = infer_logic_rules(model, processor, train_positive, train_negative, device, principle)
 
         test_images = [(img, 1) for img in test_positive] + [(img, 0) for img in test_negative]
-        print("len test images", len(test_images))
+        # print("len test images", len(test_images))
         accuracy, f1, precision, recall = evaluate_deepseek(model, tokenizer, test_images, logic_rules, device, principle)
 
         results[pattern_folder.name] = {

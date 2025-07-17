@@ -7,13 +7,7 @@ import cv2
 
 from scripts import config
 from scripts.utils import file_utils
-from scripts.proximity import prox_patterns
-from scripts.similarity import similarity_patterns
-from scripts.symmetry import symmetry_patterns
-from scripts.continuity import continuity_patterns
 from scripts.closure import closure_patterns
-from scripts.object_detector import  object_patterns
-from scripts.video_proximity import video_proximity_patterns
 def gen_image(objs):
     """
     Generate an image from a list of objects.

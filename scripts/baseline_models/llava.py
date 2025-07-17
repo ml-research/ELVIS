@@ -9,6 +9,7 @@ from PIL import Image
 
 from transformers import AutoProcessor, LlavaOnevisionForConditionalGeneration
 
+import conversations
 from scripts.utils import data_utils
 
 
@@ -61,66 +62,7 @@ def infer_logic_rules(model, processor, train_positive, train_negative, device, 
     """
     torch.cuda.empty_cache()
     # Prepare a batch of two prompts, where the first one is a multi-turn conversation and the second is not
-    conversation = [
-        {
-            "role": "user",
-            "content": [
-                {"type": "image", "image": train_positive[0]},
-                {"type": "text", "text": f"You are an AI reasoning about visual patterns based on Gestalt principles.\n"
-                                         f"Principle: {principle}\n\n"
-                                         f"We have a set of images labeled Positive and a set labeled Negative.\n"
-                                         f"You will see each image one by one.\n"
-                                         f"Describe each image, note any pattern features, and keep track of insights.\n"
-                                         f"After seeing all images, we will derive the logic that differentiates Positive from Negative. "
-                                         f"The first positive image."},
-            ],
-        },
-        {
-            "role": "user",
-            "content": [
-                {"type": "image", "image": train_positive[1]},
-                {"type": "text", "text": f"The second positive image."},
-            ],
-        },
-        {
-            "role": "user",
-            "content": [
-                {"type": "image", "image": train_positive[2]},
-                {"type": "text", "text": f"The third positive image."},
-            ],
-        },
-        {
-            "role": "user",
-            "content": [
-                {"type": "image", "image": train_negative[0]},
-                {"type": "text", "text": f"The first negative image."},
-            ],
-        },
-        {
-            "role": "user",
-            "content": [
-                {"type": "image", "image": train_negative[1]},
-                {"type": "text", "text": f"The second negative image."},
-            ],
-        },
-        {
-            "role": "user",
-            "content": [
-                {"type": "image", "image": train_negative[2]},
-                {"type": "text", "text": f"The third negative image."},
-            ],
-        },
-        {
-            "role": "user",
-            "content": [
-                {"type": "text", "text": "Now we have seen all the Positive and Negative examples. "
-                                         "Please state the logic/rule that distinguishes them. "
-                                         "Focus on the Gestalt principle of "
-                                         f"{principle}."},
-            ],
-        },
-
-    ]
+    conversation = conversations.llava_conversation(train_positive, train_negative, principle)
     inputs = processor.apply_chat_template(
         [conversation],
         add_generation_prompt=True,
@@ -145,18 +87,7 @@ def evaluate_llm(model, processor, test_images, logic_rules, device, principle):
     all_labels, all_predictions = [], []
     torch.cuda.empty_cache()
     for image, label in test_images:
-        conversation = [
-            {
-                "role": "user",
-                "content": [
-                    {"type": "image", "image": image},
-                    {"type": "text",
-                     "text": f"Using the following reasoning rules: {logic_rules}. "
-                             f"Classify this image as Positive or Negative."
-                             f"Only answer with positive or negative."},
-                ]
-            }
-        ]
+        conversation = conversations.llava_eval_conversation(image, logic_rules)
         inputs = processor.apply_chat_template(
             [conversation],
             add_generation_prompt=True,
