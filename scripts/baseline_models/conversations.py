@@ -96,14 +96,13 @@ def deepseek_conversation(train_positive, train_negative, principle):
                        f"The first negative image <image_placeholder>."
                        f"The second negative image <image_placeholder>."
                        f"The third negative image <image_placeholder>."
-                       f"Now we have seen all the Positive and Negative examples. "
+                       f"Now we have seen all the positive and negative examples. "
                        "Please state the logic/rule that distinguishes them. "
                        f"Focus on the Gestalt principle of {principle}.",
             "images": [
                 train_positive[0],
                 train_positive[1],
                 train_positive[2],
-
                 train_negative[0],
                 train_negative[1],
                 train_negative[2]
@@ -119,7 +118,7 @@ def deepseek_eval_conversation(image, logic_rules):
         {
             "role": "user",
             "content": f"Using the following reasoning rules: {logic_rules}. "
-                       f"Classify this image <image_placeholder> as Positive or Negative."
+                       f"Classify this image <image_placeholder> as positive or negative."
                        f"Only answer with positive or negative.",
             "images": [image]
         },
