@@ -199,6 +199,10 @@ def run_deepseek(data_path, principle, batch_size, device, img_num, epochs):
         print("No pattern folders found in", principle_path)
         return
 
+    pattern_folders = sorted(
+        [f for f in (principle_path / "train").iterdir() if f.is_dir() and not f.name.startswith('.')]
+    )
+
     total_accuracy, total_f1 = [], []
     results = {}
     total_precision_scores = []
