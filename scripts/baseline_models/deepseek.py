@@ -141,7 +141,7 @@ def evaluate_deepseek(model, tokenizer, test_images, logic_rules, device, princi
     for image, label in test_images:
         conversation = conversations.deepseek_eval_conversation(image, logic_rules)
         inputs = tokenizer.apply_chat_template(
-            [conversation],
+            conversation,
             add_generation_prompt=True,
             return_tensors="pt"
         ).to(device)
