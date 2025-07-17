@@ -63,7 +63,7 @@ def generate_reasoning_prompt(principle):
 def infer_logic_rules(model, processor, train_positive, train_negative, device, principle):
     # Prepare conversation as per official example
     # print("img path:" + str(train_negative[0]))
-    conversation = conversations.llava_conversation(train_positive, train_negative, principle)
+    conversation = conversations.deepseek_conversation(train_positive, train_negative, principle)
     pil_images = load_pil_images(conversation)
     prepare_inputs = processor(
         conversations=conversation,
@@ -139,7 +139,7 @@ def evaluate_deepseek(model, tokenizer, test_images, logic_rules, device, princi
     torch.cuda.empty_cache()
 
     for image, label in test_images:
-        conversation = conversations.llava_eval_conversation(image, logic_rules)
+        conversation = conversations.deepseek_eval_conversation(image, logic_rules)
         inputs = tokenizer.apply_chat_template(
             [conversation],
             add_generation_prompt=True,
