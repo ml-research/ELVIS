@@ -24,13 +24,15 @@ def init_wandb(batch_size):
 def load_deepseek_model(device):
     # Load DeepSeek model and tokenizer
     model_name = "deepseek-ai/deepseek-vl2-small"  # Adjust based on the specific DeepSeek model you're using
+    cache_dir = "/models/deepseek_cache"  # Make sure this path is mounted and persistent in your Docker container
 
     # Load model and processor
     processor = DeepseekVLV2Processor.from_pretrained(model_name)
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
         torch_dtype=torch.float16,
-        device_map="auto"
+        device_map="auto",
+        cache_dir=cache_dir
     )
     model = model.to(device)
     return model, processor
