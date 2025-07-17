@@ -123,6 +123,6 @@ def deepseek_eval_conversation(image, logic_rules):
                        f"Only answer with positive or negative.",
             "images": [image]
         },
-        {"role": "Assistant", "content": ""}
+        {"role": "<|Assistant|>", "content": ""},
     ]
     return conversation
