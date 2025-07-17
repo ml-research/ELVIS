@@ -9,7 +9,8 @@ from PIL import Image
 
 from transformers import AutoProcessor, LlavaOnevisionForConditionalGeneration
 
-import conversations
+from scripts.baseline_models import conversations
+
 from scripts.utils import data_utils
 
 
