@@ -181,7 +181,7 @@ def evaluate_deepseek(model, tokenizer, test_images, logic_rules, device, princi
 
 def run_deepseek(data_path, principle, batch_size, device, img_num, epochs):
     init_wandb(batch_size)
-    model, tokenizer = load_deepseek_model(device)
+    model, processor, tokenizer = load_deepseek_model(device)
     principle_path = Path(data_path)
 
     pattern_folders = sorted((principle_path / "train").iterdir())
@@ -200,7 +200,7 @@ def run_deepseek(data_path, principle, batch_size, device, img_num, epochs):
         test_positive = load_images((principle_path / "test" / pattern_folder.name) / "positive", img_num)
         test_negative = load_images((principle_path / "test" / pattern_folder.name) / "negative", img_num)
 
-        logic_rules = infer_logic_rules(model, tokenizer, train_positive, train_negative, device, principle)
+        logic_rules = infer_logic_rules(model, processor, train_positive, train_negative, device, principle)
 
         test_images = [(img, 1) for img in test_positive] + [(img, 0) for img in test_negative]
         print("len test images", len(test_images))
