@@ -78,8 +78,14 @@ def infer_logic_rules(model, processor, train_positive, train_negative, device, 
         images=pil_images,
         force_batchify=True,
         system_prompt=""
-    ).to(device)
+    )
+    # Move all tensors in prepare_inputs to the target device
+    for k, v in prepare_inputs.items():
+        if isinstance(v, torch.Tensor):
+            prepare_inputs[k] = v.to(device)
     inputs_embeds = model.prepare_inputs_embeds(**prepare_inputs)
+
+
     outputs = model.language_model.generate(
         inputs_embeds=inputs_embeds,
         attention_mask=prepare_inputs.attention_mask,
