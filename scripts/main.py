@@ -7,7 +7,14 @@ import cv2
 
 from scripts import config
 from scripts.utils import file_utils
+
 from scripts.closure import closure_patterns
+from scripts.continuity import continuity_patterns
+from scripts.proximity import prox_patterns
+from scripts.similarity import similarity_patterns
+from scripts.symmetry import symmetry_patterns
+from scripts.object_detector import object_patterns
+from scripts.mixed_patterns import mixed_patterns
 def gen_image(objs):
     """
     Generate an image from a list of objects.
@@ -123,8 +130,7 @@ def main():
         # "symmetry": symmetry_patterns.pattern_dicts,
         # "continuity": continuity_patterns.pattern_dicts,
         # "closure": closure_patterns.pattern_dicts,
-        "video_proximity": closure_patterns.pattern_dicts,
-
+        "mixed":mixed_patterns.pattern_dicts
     }
     for principle_name, pattern_dicts in principles.items():
         save_principle_patterns(principle_name, pattern_dicts)

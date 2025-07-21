@@ -3,6 +3,8 @@
 from scripts import config
 from scripts.utils.data_utils import get_all_combs
 
+import itertools
+
 
 def encode_objs(x, y, size, color, shape, line_width, solid, start_angle=0, end_angle=360, group_id=-1):
     data = {"x": x,
@@ -45,3 +47,23 @@ def create_tasks_v4(func, params, task_sizes, obj_quantities, qualifiers, prin_i
         f"{func.__name__}_{'_'.join(map(str, comb))}_{s}_{oq}_{qua}": (
             lambda p, s=s, comb=comb, oq=oq, qua=qua: func(comb, p, s, oq, qua, prin_in_neg))
         for comb in get_all_combs(params) for s in task_sizes for oq in obj_quantities for qua in qualifiers}
+
+
+def create_mixed_tasks_v4(mix_func, features, num_lst, size_list, qua_list, pin):
+    tasks = {}
+    obj_quantities_list = ["s", "m", "l"]
+    for num, size, qua, obj_quantity, is_positive in itertools.product(
+        num_lst, size_list, qua_list, obj_quantities_list, [True, False]
+    ):
+        all_combinations = mix_func(
+            fixed_props=tuple(features),
+            is_positive=is_positive,
+            cluster_num=num,
+            obj_quantities=obj_quantity,
+            qualifiers=qua,
+            pin=pin
+        )
+        for idx, objs in enumerate(all_combinations):
+            task_name = f"task_{num}_{size}_{qua}_{obj_quantity}_{is_positive}_{idx}"
+            tasks[task_name] = objs
+    return tasks

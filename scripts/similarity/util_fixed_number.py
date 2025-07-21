@@ -41,7 +41,6 @@ def generate_group_objects(color, target_count, cluster_centers, image_size, dia
                     cluster_points.append((new_x, new_y))
                     used_centers.add((new_x, new_y))
 
-
                     if "shape" in fixed_props:
                         shape = random.choice(config.bk_shapes[1:])
 
@@ -51,7 +50,6 @@ def generate_group_objects(color, target_count, cluster_centers, image_size, dia
                     count += 1
                     break
     return group_objs
-
 
 
 def similarity_fixed_number(is_positive, obj_size, cluster_num, fixed_props, quantity, grid_size=3, min_circles=3,
@@ -78,7 +76,7 @@ def similarity_fixed_number(is_positive, obj_size, cluster_num, fixed_props, qua
 
     # Define object count ranges based on quantity parameter
     quantity_map = {"s": (2, 4), "m": (4, 10), "l": (10, 12)}
-    base_count_range = quantity_map.get(quantity, (4,10))  # Default to 'm' if invalid input
+    base_count_range = quantity_map.get(quantity, (4, 10))  # Default to 'm' if invalid input
     base_count = random.randint(*base_count_range)
 
     def adjust_count(base):
@@ -120,7 +118,7 @@ def similarity_fixed_number(is_positive, obj_size, cluster_num, fixed_props, qua
 
 def non_overlap_fixed_number(params, is_positive, cluster_num, quantity):
     obj_size = 0.05
-    objs = similarity_fixed_number(is_positive, obj_size, cluster_num, params,quantity)
+    objs = similarity_fixed_number(is_positive, obj_size, cluster_num, params, quantity)
     t = 0
     tt = 0
     max_try = 1000

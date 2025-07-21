@@ -12,7 +12,7 @@ def proximity_red_triangle(is_positive, obj_size, clu_num, params, obj_quantitie
     cluster_dist = 0.3  # Increased to ensure clear separation
     neighbour_dist = 0.05
 
-    group_sizes = {"s": range(2,4), "m": range(3,5), "l": range(2,7)}.get(obj_quantities, range(2,4))
+    group_sizes = {"s": range(2, 4), "m": range(3, 5), "l": range(2, 7)}.get(obj_quantities, range(2, 4))
     group_radius = {"s": 0.05, "m": 0.08, "l": 0.1}.get(obj_quantities, 0.05)
 
     x_min = 0.1
