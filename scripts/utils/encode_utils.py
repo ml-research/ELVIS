@@ -53,17 +53,16 @@ def create_mixed_tasks_v4(mix_func, features, num_lst, size_list, qua_list, pin)
     tasks = {}
     obj_quantities_list = ["s", "m", "l"]
     for num, size, qua, obj_quantity, is_positive in itertools.product(
-        num_lst, size_list, qua_list, obj_quantities_list, [True, False]
+            num_lst, size_list, qua_list, obj_quantities_list, [True, False]
     ):
         all_combinations = mix_func(
             fixed_props=tuple(features),
-            is_positive=is_positive,
             cluster_num=num,
             obj_quantities=obj_quantity,
             qualifiers=qua,
             pin=pin
         )
         for idx, objs in enumerate(all_combinations):
-            task_name = f"task_{num}_{size}_{qua}_{obj_quantity}_{is_positive}_{idx}"
+            task_name = f"task_{num}_{size}_{qua}_{obj_quantity}"
             tasks[task_name] = objs
     return tasks

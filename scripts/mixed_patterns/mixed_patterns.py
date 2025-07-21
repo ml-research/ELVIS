@@ -13,7 +13,7 @@ size_list = ["s", "m", "l"]
 qua_list = ["all", "exist"]
 # Define task functions dynamically
 tasks = {}
-num_lst = range(2, 5)
+num_lst = range(2, 3)
 # symbolic features
 pin = config.prin_in_neg
 # color, all

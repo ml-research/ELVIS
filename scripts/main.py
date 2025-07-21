@@ -57,7 +57,7 @@ def save_patterns(pattern_data, pattern, save_path, num_samples, is_positive):
     for example_i in range(num_samples):
         img_path = save_path / f"{example_i:05d}.png"
         data_path = save_path / f"{example_i:05d}.json"
-        objs = pattern["module"](is_positive)
+        objs = pattern["module"]
         # encode symbolic object tensors
         image = gen_image(objs)
         file_utils.save_img(img_path, data_path, pattern_data, objs, image)
@@ -74,7 +74,7 @@ def save_principle_patterns(principle_name, pattern_dicts):
     pattern_counter = 0
     num_samp = config.num_samples
     for pattern in pattern_dicts:
-        pattern_counter += 1
+
         pattern_name = f"{pattern_counter:03d}_" + pattern["name"]
         # Run the save_patterns function if it exists in the script
 
@@ -119,6 +119,7 @@ def save_principle_patterns(principle_name, pattern_dicts):
         save_patterns(pattern_data, pattern, test_path / "positive", num_samples=num_samp, is_positive=True)
         save_patterns(pattern_data, pattern, test_path / "negative", num_samples=num_samp, is_positive=False)
 
+        pattern_counter += 1
     print(f"{principle_name} pattern generation complete.")
 
 
