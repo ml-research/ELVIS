@@ -90,7 +90,7 @@ ln -s /home/ml-jsha/nesy_causal_p/storage/dataset/grb /home/ml-jsha/ELVIS/grb
 python -m scripts.main
 
 ##### train llama
-python -m scripts.evaluate_models --model llama --batch_size 2 --principle proximity --img_num 3 --device_id 4
+python -m scripts.evaluate_models --model llama --batch_size 2 --principle proximity --img_num 3 --device_id 1
 
 #### train vit
 
