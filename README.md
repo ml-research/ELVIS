@@ -70,6 +70,9 @@ To ensure compatibility across environments, you can use Docker to build and run
 
 ### Docker Usage 
 
+
+git clone https://github.com/ml-research/ELVIS.git
+
 ##### Build
 
 ``` 
