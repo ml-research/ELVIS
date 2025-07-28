@@ -57,7 +57,7 @@ def save_patterns(pattern_data, pattern, save_path, num_samples, is_positive):
     for example_i in range(num_samples):
         img_path = save_path / f"{example_i:05d}.png"
         data_path = save_path / f"{example_i:05d}.json"
-        objs = pattern["module"]
+        objs = pattern["module"](is_positive)
         # encode symbolic object tensors
         image = gen_image(objs)
         file_utils.save_img(img_path, data_path, pattern_data, objs, image)
