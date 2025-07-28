@@ -17,6 +17,9 @@ from collections import defaultdict
 from scripts import config
 
 from scripts.utils import data_utils
+from datetime import datetime
+
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
 # Configuration
 # BATCH_SIZE = 8  # Increase batch size for better GPU utilization  # Reduce batch size dynamically
@@ -174,7 +177,8 @@ def evaluate_vit(model, test_loader, device, principle, pattern_name):
 def run_vit(data_path, principle, batch_size, device, img_num, epochs):
     init_wandb(batch_size, epochs)
     model_name = "vit_base_patch16_224"
-    checkpoint_path = config.results / principle / f"{model_name}_{img_num}checkpoint.pth"
+    output_dir = Path(f"/elvis_result/{principle}")
+    checkpoint_path = output_dir / f"{model_name}_{img_num}checkpoint.pth"
     device = torch.device(device)
     model = ViTClassifier(model_name).to(device, memory_format=torch.channels_last)
     model.load_checkpoint(checkpoint_path)
@@ -232,8 +236,9 @@ def run_vit(data_path, principle, batch_size, device, img_num, epochs):
         f"Average Metrics for {principle}:\n  - Accuracy: {avg_accuracy:.2f}%\n  - F1 Score: {avg_f1_scores:.4f}\n  - Precision: {avg_precision:.4f}\n  - Recall: {avg_recall:.4f}")
 
     # Save results to JSON file
-    os.makedirs(config.results / principle, exist_ok=True)
-    results_path = config.results / principle / f"{model_name}_{img_num}_evaluation_results.json"
+    output_dir = f"/elvis_result/{principle}"
+    os.makedirs(output_dir, exist_ok=True)
+    results_path = Path(output_dir) / f"{model_name}_{img_num}_evaluation_results_{timestamp}.json"
     with open(results_path, "w") as json_file:
         json.dump(results, json_file, indent=4)
 

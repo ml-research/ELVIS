@@ -14,7 +14,7 @@ from scripts.proximity import prox_patterns
 from scripts.similarity import similarity_patterns
 from scripts.symmetry import symmetry_patterns
 from scripts.object_detector import object_patterns
-from scripts.mixed_patterns import mixed_patterns
+# from scripts.mixed_patterns import mixed_patterns
 def gen_image(objs):
     """
     Generate an image from a list of objects.
@@ -57,9 +57,10 @@ def save_patterns(pattern_data, pattern, save_path, num_samples, is_positive):
     for example_i in range(num_samples):
         img_path = save_path / f"{example_i:05d}.png"
         data_path = save_path / f"{example_i:05d}.json"
-        objs = pattern["module"](is_positive)
+        objs, logic_rules = pattern["module"](is_positive)
         # encode symbolic object tensors
         image = gen_image(objs)
+        pattern_data["logic_rules"] = logic_rules
         file_utils.save_img(img_path, data_path, pattern_data, objs, image)
 
 
@@ -127,10 +128,10 @@ def main():
     principles = {
         # "od": object_patterns.pattern_dicts,
         "proximity": prox_patterns.pattern_dicts,
-        "similarity": similarity_patterns.pattern_dicts,
-        "symmetry": symmetry_patterns.pattern_dicts,
-        "continuity": continuity_patterns.pattern_dicts,
-        "closure": closure_patterns.pattern_dicts,
+        # "similarity": similarity_patterns.pattern_dicts,
+        # "symmetry": symmetry_patterns.pattern_dicts,
+        # "continuity": continuity_patterns.pattern_dicts,
+        # "closure": closure_patterns.pattern_dicts,
         # "mixed":mixed_patterns.pattern_dicts
     }
     for principle_name, pattern_dicts in principles.items():

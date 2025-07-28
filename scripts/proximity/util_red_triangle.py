@@ -88,6 +88,22 @@ def proximity_red_triangle(is_positive, obj_size, clu_num, params, obj_quantitie
     return objs
 
 
+def get_logic_rules(qualifiers, fixed_props):
+    if qualifiers == "all":
+        head = "group_target(X)"
+    else:
+        head = "image_target(X)"
+
+    body = ""
+    if "shape" in fixed_props:
+        body += "has_shape(X,triangle),"
+    if "color" in fixed_props:
+        body += "has_color(X,red),"
+
+    rule = f"{head}:-{body}principle(proximity)."
+    return rule
+
+
 def non_overlap_red_triangle(fixed_props, is_positive, cluster_num, obj_quantities, qualifiers, pin):
     obj_size = 0.05
     objs = proximity_red_triangle(is_positive, obj_size, cluster_num, fixed_props, obj_quantities, qualifiers, pin)
@@ -101,4 +117,6 @@ def non_overlap_red_triangle(fixed_props, is_positive, cluster_num, obj_quantiti
             obj_size = obj_size * 0.90
         tt = tt + 1
         t = t + 1
-    return objs
+
+    logic_rules = get_logic_rules(qualifiers, fixed_props)
+    return objs, logic_rules

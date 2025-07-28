@@ -82,7 +82,7 @@ docker build -t elvis .
 ##### Run
 
 ``` 
-docker run -it --gpus all -v /home/ml-jsha/ELVIS:/app -v /home/ml-jsha/storage/deepseek_cache:/models/deepseek_cache --rm elvis:latest 
+docker run -it --gpus all -v /home/ml-jsha/ELVIS:/app -v /home/ml-jsha/storage/ELVIS_RESULT/:/elvis_result --rm elvis:latest 
 ``` 
 
 ln -s /home/ml-jsha/nesy_causal_p/storage/dataset/grb /home/ml-jsha/ELVIS/grb
