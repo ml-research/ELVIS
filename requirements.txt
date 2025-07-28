@@ -25,4 +25,3 @@ transformers==4.51.0
 accelerate>=0.26.0
 bitsandbytes
 ace_tools
-git+https://github.com/deepseek-ai/DeepSeek-VL2.git
