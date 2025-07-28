@@ -3,8 +3,15 @@
 
 from transformers import AutoProcessor, Llama4ForConditionalGeneration
 import torch
+import wandb
+from pathlib import Path
+from PIL import Image
 
 from scripts.baseline_models import conversations
+
+
+def init_wandb(batch_size):
+    wandb.init(project="LLAMA-Gestalt-Patterns", config={"batch_size": batch_size})
 
 
 def load_images(image_dir, num_samples=5):
