@@ -26,8 +26,6 @@ def evaluate_model(model_entry, principle, batch_size, data_path, device, img_nu
 
 
 if __name__ == "__main__":
-
-
     parser = argparse.ArgumentParser(description="Evaluate baseline models with CUDA support.")
     parser.add_argument("--principle", type=str, required=True, help="Specify the principle to filter data.")
     parser.add_argument("--model", type=str, required=True)
@@ -36,9 +34,6 @@ if __name__ == "__main__":
     parser.add_argument("--img_num", type=int, default=5)
     parser.add_argument("--batch_size", type=int)
     args = parser.parse_args()
-
-    os.environ["HF_HOME"] = "/app/hf_cache"
-    os.environ["TRANSFORMERS_CACHE"] = "/app/hf_cache"
     # Determine device based on device_id flag
     if args.device_id is not None and torch.cuda.is_available():
         device = f"cuda:{args.device_id}"
