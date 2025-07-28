@@ -3,7 +3,8 @@ import argparse
 from scripts import config
 # from scripts.baseline_models import vit
 # from scripts.baseline_models import llava
-from scripts.baseline_models import deepseek
+# from scripts.baseline_models import deepseek
+from scripts.baseline_models import llama
 import torch
 import os
 
@@ -11,7 +12,8 @@ import os
 baseline_models = [
     # {"name": "ViT-Base-Patch32-384", "module": vit.run_vit},
     # {"name": "Llava", "module": llava.run_llava},
-    {"name": "deepseek", "module": deepseek.run_deepseek},
+    # {"name": "deepseek", "module": deepseek.run_deepseek},
+    {"name":"llama", "module":llama.run_llama}
 ]
 
 
