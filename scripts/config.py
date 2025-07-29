@@ -42,6 +42,11 @@ scripts = root / 'scripts'
 if not os.path.exists(scripts):
     os.mkdir(scripts)
 
+
+result_path = root / 'results'
+figure_path = result_path / 'figures'
+os.makedirs(figure_path, exist_ok=True)
+
 # -------------- categories -----------------------
 categories = {
     "proximity": ["red_triangle", "grid", "fixed_props", "big_small", "circle_features"],

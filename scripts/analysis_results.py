@@ -164,6 +164,7 @@ def draw_f1_heat_map(csv_files, model_names, gestalt_principles):
         tmp_df = pd.read_csv(principle_csv_files[0], index_col=0)  # Load CSV and set first column as index (model names)
         for file in principle_csv_files:
             df = pd.read_csv(file, index_col=0)  # Load CSV and set first column as index (model names)
+
             def categorize_task(task_name):
                 for category in categories:
                     if category in task_name:
@@ -216,7 +217,7 @@ def draw_f1_heat_map(csv_files, model_names, gestalt_principles):
         counts += len(categories)
     # Increase the font size of x ticks below the chart
     # Increase the font size of x-ticks below the chart
-    ax.set_xticklabels(ax.get_xticklabels(), fontsize=16,rotation=30, ha="right")
+    ax.set_xticklabels(ax.get_xticklabels(), fontsize=16, rotation=30, ha="right")
 
     ax2.set_xticks(principle_pos)
     ax2.set_xticklabels(principle_names, rotation=0, fontsize=12, fontweight="bold")
@@ -421,18 +422,120 @@ def analysis_models(principles, model_names):
 
     model_names.append("NEUMANN")
     draw_f1_heat_map(csv_files, model_names, config.categories)
+def get_category_accuracy(task_results, categories=None):
+    if categories is None:
+        categories = ['shape', 'color', 'count', '_s_', '_m_', '_l_',
+                      "non_overlap_red_triangle", "non_overlap_grid",
+                      "non_overlap_fixed_props", "overlap_big_small",
+                      "overlap_circle_features"]
+    acc_results = {}
+    for cat in categories:
+        acc_results[cat] = np.mean([v['accuracy'] for k, v in task_results.items() if cat in k])
+    return acc_results
+def print_category_accuracy(task_results, categories=None):
+    """
+    Calculate and print mean and std accuracy for each category keyword in task names.
+    Args:
+        task_results: dict, key is task_name, value is a dict with at least 'accuracy'
+        categories: list of category keywords to check (default: ['shape', 'color', 'count', 's', 'm', 'l'])
+    """
+    import numpy as np
+    if categories is None:
+        categories = ['shape', 'color', 'count', '_s_', '_m_', '_l_',
+                      "non_overlap_red_triangle", "non_overlap_grid",
+                      "non_overlap_fixed_props", "overlap_big_small",
+                      "overlap_circle_features"]
+    for cat in categories:
+        accs = [v['accuracy'] for k, v in task_results.items() if cat in k]
+        if accs:
+            print(f"{cat}: mean accuracy = {np.mean(accs):.3f}, std = {np.std(accs):.3f}, n = {len(accs)}")
+        else:
+            print(f"{cat}: no tasks found")
+
+
+def analysis_result(principles, data):
+    accuracies = [v['accuracy'] for v in data.values()]
+    f1_scores = [v['f1_score'] for v in data.values()]
+
+    mean_acc = np.mean(accuracies)
+    std_acc = np.std(accuracies)
+    mean_f1 = np.mean(f1_scores)
+    std_f1 = np.std(f1_scores)
+
+    print(f"Accuracy: mean={mean_acc:.3f}, std={std_acc:.3f}")
+    print(f"F1 Score: mean={mean_f1:.3f}, std={std_f1:.3f}")
+
+
+def draw_category_subfigures(results, principle, save_path=None):
+    models = list(results.keys())
+    categories = list(next(iter(results.values())).keys())
+    n_cats = len(categories)
+    n_cols = min(6, n_cats)
+    n_rows = int(np.ceil(n_cats / n_cols))
+
+    fig_width = 15
+    fig_height = 2.5 * n_rows
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(fig_width, fig_height), squeeze=False)
+
+    palette = sns.color_palette("Set2", n_colors=len(models))
+
+    for idx, cat in enumerate(categories):
+        row, col = divmod(idx, n_cols)
+        ax = axes[row][col]
+        values = [results[model].get(cat, np.nan) for model in models]
+        bars = ax.bar(range(len(models)), values, color=palette)
+        ax.set_title(cat, fontsize=10, fontweight='bold', pad=6)
+        ax.set_ylim(0, 100)
+        ax.set_ylabel('Acc.', fontsize=8)
+        ax.yaxis.set_label_coords(-0.08, 0.5)
+        ax.set_xticks(range(len(models)))
+        ax.set_xticklabels(models, fontsize=8, rotation=20)
+        ax.tick_params(axis='y', labelsize=8)
+        yticks = ax.get_yticks()
+        ax.set_yticks(yticks[::2])
+        for i, v in enumerate(values):
+            ax.text(i, v + 2, f"{v:.1f}", ha='center', va='bottom', fontsize=7)
+        ax.margins(y=0.15)
+        # Remove top and right spines
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        # Add 50% dashed line
+        ax.axhline(50, color='gray', linestyle='--', linewidth=1)
+    # Hide unused subplots
+    for idx in range(n_cats, n_rows * n_cols):
+        row, col = divmod(idx, n_cols)
+        fig.delaxes(axes[row][col])
+    fig.suptitle(f'Mean Accuracy by Category - {principle}', fontsize=12, fontweight='bold', y=0.99)
+    plt.tight_layout(rect=[0, 0, 1, 0.97], pad=1.0, h_pad=1.2, w_pad=1.2)
+    if save_path:
+        plt.savefig(save_path, format="pdf", bbox_inches="tight")
+    plt.show()
 
 
 if __name__ == "__main__":
-    principles = [
-        "proximity",
-        "similarity",
-        "closure",
-        "symmetry",
-        "continuity"
-    ]
+    # Generate fake data
+    models = ["ViT", "LLaVA", "NEUMANN"]
+    categories = ['shape', 'color', 'count', '_s_', '_m_', '_l_',
+                  "non_overlap_red_triangle", "non_overlap_grid",
+                  "non_overlap_fixed_props", "overlap_big_small",
+                  "overlap_circle_features"]
 
-    # model_name = "Llava"
-    model_names = ["vit_3", "vit_100", "llava"]
+    principle = "proximity"
+    model = "vit"
+    file_name = config.result_path / principle / "vit_base_patch16_224_3_evaluation_results_20250728_162145.json"
+    with open(file_name, 'r') as f:
+        vit_prox_data = json.load(f)
+    vit_prox_data = vit_prox_data[principle]
+    vit_prox_acc = get_category_accuracy(vit_prox_data, categories)
+    np.random.seed(42)
+    results = {
+        "vit": vit_prox_acc,
+        "Llama": {cat: np.random.uniform(40, 70) for cat in categories},
+        "NEUMANN": {cat: np.random.uniform(40, 70) for cat in categories}
+    }
 
-    analysis_models(principles, model_names)
+    # Call the function
+    draw_category_subfigures(results, principle, save_path=config.figure_path / f"{principle}_category_accuracy.pdf")
+
+    # print_category_accuracy(data)
+    # analysis_result(principles, data)
