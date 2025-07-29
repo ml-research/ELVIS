@@ -177,7 +177,7 @@ def evaluate_vit(model, test_loader, device, principle, pattern_name):
 def run_vit(data_path, principle, batch_size, device, img_num, epochs):
     init_wandb(batch_size, epochs)
     model_name = "vit_base_patch16_224"
-    output_dir = Path(f"/elvis_result/{principle}")
+    output_dir = Path(f"/elvis_result/vit/{principle}")
     checkpoint_path = output_dir / f"{model_name}_{img_num}checkpoint.pth"
     device = torch.device(device)
     model = ViTClassifier(model_name).to(device, memory_format=torch.channels_last)

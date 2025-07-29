@@ -422,6 +422,8 @@ def analysis_models(principles, model_names):
 
     model_names.append("NEUMANN")
     draw_f1_heat_map(csv_files, model_names, config.categories)
+
+
 def get_category_accuracy(task_results, categories=None):
     if categories is None:
         categories = ['shape', 'color', 'count', '_s_', '_m_', '_l_',
@@ -432,6 +434,8 @@ def get_category_accuracy(task_results, categories=None):
     for cat in categories:
         acc_results[cat] = np.mean([v['accuracy'] for k, v in task_results.items() if cat in k])
     return acc_results
+
+
 def print_category_accuracy(task_results, categories=None):
     """
     Calculate and print mean and std accuracy for each category keyword in task names.
@@ -512,30 +516,50 @@ def draw_category_subfigures(results, principle, save_path=None):
     plt.show()
 
 
+def load_json_data(principle, file_name):
+    with open(file_name, 'r') as f:
+        data = json.load(f)
+    if principle not in data:
+        data.pop("average", None)  # Remove 'average' if it exists
+        return data
+    return data[principle]
+
+
 if __name__ == "__main__":
     # Generate fake data
-    models = ["ViT", "LLaVA", "NEUMANN"]
-    categories = ['shape', 'color', 'count', '_s_', '_m_', '_l_',
-                  "non_overlap_red_triangle", "non_overlap_grid",
-                  "non_overlap_fixed_props", "overlap_big_small",
-                  "overlap_circle_features"]
-
-    principle = "proximity"
-    model = "vit"
-    file_name = config.result_path / principle / "vit_base_patch16_224_3_evaluation_results_20250728_162145.json"
-    with open(file_name, 'r') as f:
-        vit_prox_data = json.load(f)
-    vit_prox_data = vit_prox_data[principle]
-    vit_prox_acc = get_category_accuracy(vit_prox_data, categories)
     np.random.seed(42)
-    results = {
-        "vit": vit_prox_acc,
-        "Llama": {cat: np.random.uniform(40, 70) for cat in categories},
-        "NEUMANN": {cat: np.random.uniform(40, 70) for cat in categories}
+    models = ["ViT", "LLaVA", "NEUMANN"]
+    base_categories = ['shape', 'color', 'count', "size", '_s', '_m', '_l']
+    prox_categories = ["non_overlap_red_triangle", "non_overlap_grid",
+                       "non_overlap_fixed_props", "overlap_big_small",
+                       "overlap_circle_features"]
+
+    closure_categories = ["non_overlap_big_triangle", "non_overlap_big_square",
+                          "non_overlap_big_circle", "non_overlap_feature_triangle", "non_overlap_feature_square",
+                          "non_overlap_feature_circle"]
+
+    vit_prox = load_json_data("proximity", config.result_path / "proximity" / "vit_base_patch16_224_3_evaluation_results_20250728_162145.json")
+    vit_prox_acc = get_category_accuracy(vit_prox, base_categories)
+
+    vit_3_closure = load_json_data("closure", config.result_path / "closure" / "vit_3.json")
+    vit_100_closure = load_json_data("closure", config.result_path / "closure" / "vit_100.json")
+    llava_closure = load_json_data("closure", config.result_path / "closure" / "llava.json")
+
+    vit_3_closure_acc = get_category_accuracy(vit_3_closure, base_categories)
+    vit_100_closure_acc = get_category_accuracy(vit_100_closure, base_categories)
+    llava_closure_acc = get_category_accuracy(llava_closure, base_categories)
+    closure_results = {
+        "vit_3": vit_3_closure_acc,
+        "vit_100": vit_100_closure_acc,
+        "llava": llava_closure_acc,
     }
 
     # Call the function
-    draw_category_subfigures(results, principle, save_path=config.figure_path / f"{principle}_category_accuracy.pdf")
+    draw_category_subfigures(closure_results, "closure", save_path=config.figure_path / f"closure_category_accuracy.pdf")
+    # draw_category_subfigures(results, "proximity", save_path=config.figure_path / f"proximity_category_accuracy.pdf")
+    # draw_category_subfigures(results, "proximity", save_path=config.figure_path / f"proximity_category_accuracy.pdf")
+    # draw_category_subfigures(results, "proximity", save_path=config.figure_path / f"proximity_category_accuracy.pdf")
+    # draw_category_subfigures(results, "proximity", save_path=config.figure_path / f"proximity_category_accuracy.pdf")
 
     # print_category_accuracy(data)
     # analysis_result(principles, data)

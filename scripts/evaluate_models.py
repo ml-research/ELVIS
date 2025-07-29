@@ -13,7 +13,7 @@ baseline_models = [
     {"name": "ViT-Base-Patch32-384", "module": vit.run_vit},
     # {"name": "Llava", "module": llava.run_llava},
     # {"name": "deepseek", "module": deepseek.run_deepseek},
-    # {"name":"llama", "module":llama.run_llama}
+    {"name":"llama", "module":llama.run_llama}
 ]
 
 
@@ -44,11 +44,7 @@ if __name__ == "__main__":
     data_path = os.path.join(config.raw_patterns, args.principle)
 
     print(f"Starting model evaluations with data from {data_path}...")
-
-    if args.model == "llava":
-        model = baseline_models[1]
-    else:
-        model = baseline_models[0]
+    model = baseline_models[args.model]
     evaluate_model(model, args.principle, args.batch_size, data_path, device, args.img_num, args.epochs)
 
     print("All model evaluations completed.")
