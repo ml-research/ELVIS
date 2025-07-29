@@ -6,8 +6,14 @@ import torch
 import wandb
 from pathlib import Path
 from PIL import Image
-
+from rtpt import RTPT
+import json
 from scripts.baseline_models import conversations
+from scripts.utils import data_utils
+import os
+from datetime import datetime
+
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
 
 def init_wandb(batch_size):
@@ -77,7 +83,7 @@ def evaluate_llama(model, processor, test_images, logic_rules, device, principle
     for image, label in test_images:
         conversation = conversations.llama_eval_conversation(image, logic_rules)
         inputs = processor.apply_chat_template(
-            messages,
+            conversation,
             add_generation_prompt=True,
             tokenize=True,
             return_dict=True,
@@ -135,8 +141,11 @@ def run_llama(data_path, principle, batch_size, device, img_num, epochs):
     results = {}
     total_precision_scores = []
     total_recall_scores = []
-
+    rtpt = RTPT(name_initials='JS', experiment_name=f'Elvis-llama-{principle}', max_iterations=len(pattern_folders))
+    rtpt.start()
     for pattern_folder in pattern_folders:
+        rtpt.step()
+
         train_positive = load_images(pattern_folder / "positive", img_num)
         train_negative = load_images(pattern_folder / "negative", img_num)
         test_positive = load_images((principle_path / "test" / pattern_folder.name) / "positive", img_num)
@@ -161,7 +170,12 @@ def run_llama(data_path, principle, batch_size, device, img_num, epochs):
     avg_f1 = sum(total_f1) / len(total_f1) if total_f1 else 0
 
     results["average"] = {"accuracy": avg_accuracy, "f1_score": avg_f1}
-    results_path = Path(data_path) / f"llava_{principle}.json"
+
+    # Save results to JSON file
+    output_dir = f"/elvis_result/{principle}"
+    os.makedirs(output_dir, exist_ok=True)
+    results_path = Path(output_dir) / f"llama_{principle}_eval_res_img_num_{img_num}_{timestamp}.json"
+    # results_path = Path(data_path) / f"llama_{principle}.json"
     with open(results_path, "w") as json_file:
         json.dump(results, json_file, indent=4)
 

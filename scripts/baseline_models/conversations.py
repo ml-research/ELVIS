@@ -140,4 +140,20 @@ def llama_reasoning_conversation(positive_imgs, negative_imgs, principle):
             ]
         },
     ]
-    return conversation
+    return messages
+
+
+def llama_eval_conversation(positive_imgs, principle):
+    url1 = "https://huggingface.co/datasets/huggingface/documentation-images/resolve/0052a70beed5bf71b92610a43a52df6d286cd5f3/diffusers/rabbit.jpg"
+    url2 = "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/datasets/cat_style_layout.png"
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {"type": "image", "url": url1},
+                {"type": "image", "url": url2},
+                {"type": "text", "text": "Can you describe how these two images are similar, and how they differ?"},
+            ]
+        },
+    ]
+    return messages
