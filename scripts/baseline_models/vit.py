@@ -13,7 +13,7 @@ import wandb
 from pathlib import Path
 from torch.utils.data import DataLoader, Subset
 from collections import defaultdict
-
+from rtpt import RTPT
 from scripts import config
 
 from scripts.utils import data_utils
@@ -195,7 +195,11 @@ def run_vit(data_path, principle, batch_size, device, img_num, epochs):
 
     pattern_folders = sorted([p for p in (principle_path / "train").iterdir() if p.is_dir()], key=lambda x: x.stem)
 
+    rtpt = RTPT(name_initials='JS', experiment_name='Elvis-vit', max_iterations=len(pattern_folders))
+    rtpt.start()
+
     for pattern_folder in pattern_folders:
+        rtpt.step()
         train_loader, num_train_images = get_dataloader(pattern_folder, batch_size, img_num)
         wandb.log({f"{principle}/num_train_images": num_train_images})
         train_vit(model, train_loader, device, checkpoint_path, epochs)
@@ -238,7 +242,7 @@ def run_vit(data_path, principle, batch_size, device, img_num, epochs):
     # Save results to JSON file
     output_dir = f"/elvis_result/{principle}"
     os.makedirs(output_dir, exist_ok=True)
-    results_path = Path(output_dir) / f"{model_name}_{img_num}_evaluation_results_{timestamp}.json"
+    results_path = Path(output_dir) / f"{model_name}_{img_num}_eval_res_{timestamp}_img_num_{img_num}.json"
     with open(results_path, "w") as json_file:
         json.dump(results, json_file, indent=4)
 
