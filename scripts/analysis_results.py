@@ -470,66 +470,124 @@ def analysis_result(principles, data):
     print(f"F1 Score: mean={mean_f1:.3f}, std={std_f1:.3f}")
 
 
-def draw_category_subfigures(results, principle, save_path=None):
+# def draw_category_subfigures(results, save_path=None):
+#     models = list(results.keys())
+#     categories = list(next(iter(results.values())).keys())
+#     n_cats = len(categories)
+#     n_cols = min(6, n_cats)
+#     n_rows = int(np.ceil(n_cats / n_cols))
+#
+#     fig_width = 15
+#     fig_height = 2.5 * n_rows
+#     fig, axes = plt.subplots(n_rows, n_cols, figsize=(fig_width, fig_height), squeeze=False)
+#
+#     palette = sns.color_palette("Set2", n_colors=len(models))
+#
+#     for idx, cat in enumerate(categories):
+#         row, col = divmod(idx, n_cols)
+#         ax = axes[row][col]
+#         values = [results[model].get(cat, np.nan) for model in models]
+#         bars = ax.bar(range(len(models)), values, color=palette)
+#         ax.set_title(cat, fontsize=10, fontweight='bold', pad=6)
+#         ax.set_ylim(0, 100)
+#         ax.set_ylabel('Acc.', fontsize=8)
+#         ax.yaxis.set_label_coords(-0.08, 0.5)
+#         ax.set_xticks(range(len(models)))
+#         ax.set_xticklabels(models, fontsize=8, rotation=20)
+#         ax.tick_params(axis='y', labelsize=8)
+#         yticks = ax.get_yticks()
+#         ax.set_yticks(yticks[::2])
+#         for i, v in enumerate(values):
+#             ax.text(i, v + 2, f"{v:.1f}", ha='center', va='bottom', fontsize=7)
+#         ax.margins(y=0.15)
+#         # Remove top and right spines
+#         ax.spines['top'].set_visible(False)
+#         ax.spines['right'].set_visible(False)
+#         # Add 50% dashed line
+#         ax.axhline(50, color='gray', linestyle='--', linewidth=1)
+#     # Hide unused subplots
+#     for idx in range(n_cats, n_rows * n_cols):
+#         row, col = divmod(idx, n_cols)
+#         fig.delaxes(axes[row][col])
+#     fig.suptitle(f'Mean Accuracy by Category', fontsize=12, fontweight='bold', y=0.99)
+#     plt.tight_layout(rect=[0, 0, 1, 0.97], pad=1.0, h_pad=1.2, w_pad=1.2)
+#     if save_path:
+#         plt.savefig(save_path, format="pdf", bbox_inches="tight")
+#     plt.show()
+
+def draw_category_subfigures(results, name, save_path=None):
     models = list(results.keys())
     categories = list(next(iter(results.values())).keys())
-    n_cats = len(categories)
-    n_cols = min(6, n_cats)
-    n_rows = int(np.ceil(n_cats / n_cols))
+    n_models = len(models)
+    n_cols = min(4, n_models)
+    n_rows = int(np.ceil(n_models / n_cols))
 
-    fig_width = 15
-    fig_height = 2.5 * n_rows
+    fig_width = 4 * n_cols
+    fig_height = 3 * n_rows
     fig, axes = plt.subplots(n_rows, n_cols, figsize=(fig_width, fig_height), squeeze=False)
 
-    palette = sns.color_palette("Set2", n_colors=len(models))
+    palette = sns.color_palette("Set2", n_colors=len(categories))
 
-    for idx, cat in enumerate(categories):
+    for idx, model in enumerate(models):
         row, col = divmod(idx, n_cols)
         ax = axes[row][col]
-        values = [results[model].get(cat, np.nan) for model in models]
-        bars = ax.bar(range(len(models)), values, color=palette)
-        ax.set_title(cat, fontsize=10, fontweight='bold', pad=6)
+        values = [results[model].get(cat, np.nan) for cat in categories]
+        bars = ax.bar(range(len(categories)), values, color=palette)
+        ax.set_title(model, fontsize=11, fontweight='bold', pad=6)
         ax.set_ylim(0, 100)
-        ax.set_ylabel('Acc.', fontsize=8)
+        ax.set_ylabel('Acc.', fontsize=9)
         ax.yaxis.set_label_coords(-0.08, 0.5)
-        ax.set_xticks(range(len(models)))
-        ax.set_xticklabels(models, fontsize=8, rotation=20)
+        ax.set_xticks(range(len(categories)))
+        ax.set_xticklabels(categories, fontsize=8, rotation=30, ha='right')
         ax.tick_params(axis='y', labelsize=8)
         yticks = ax.get_yticks()
         ax.set_yticks(yticks[::2])
         for i, v in enumerate(values):
             ax.text(i, v + 2, f"{v:.1f}", ha='center', va='bottom', fontsize=7)
         ax.margins(y=0.15)
-        # Remove top and right spines
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
-        # Add 50% dashed line
         ax.axhline(50, color='gray', linestyle='--', linewidth=1)
     # Hide unused subplots
-    for idx in range(n_cats, n_rows * n_cols):
+    for idx in range(n_models, n_rows * n_cols):
         row, col = divmod(idx, n_cols)
         fig.delaxes(axes[row][col])
-    fig.suptitle(f'Mean Accuracy by Category - {principle}', fontsize=12, fontweight='bold', y=0.99)
+    fig.suptitle(f'Mean {name} Accuracy by Model', fontsize=13, fontweight='bold', y=0.99)
     plt.tight_layout(rect=[0, 0, 1, 0.97], pad=1.0, h_pad=1.2, w_pad=1.2)
     if save_path:
         plt.savefig(save_path, format="pdf", bbox_inches="tight")
     plt.show()
 
 
-def load_json_data(principle, file_name):
+def load_json_data(principle, file_name, base_categories=None):
     with open(file_name, 'r') as f:
         data = json.load(f)
     if principle not in data:
         data.pop("average", None)  # Remove 'average' if it exists
-        return data
-    return data[principle]
+    else:
+        data = data[principle]  # Extract the specific principle data
+    cate_acc = get_category_accuracy(data, base_categories)
+    return cate_acc
 
 
-if __name__ == "__main__":
-    # Generate fake data
-    np.random.seed(42)
-    models = ["ViT", "LLaVA", "NEUMANN"]
-    base_categories = ['shape', 'color', 'count', "size", '_s', '_m', '_l']
+def load_json_model_data(model_name, base_categories):
+    all_data = {}
+    for principle in config.categories.keys():
+        json_path = config.result_path / principle / f"{model_name}.json"
+        if os.path.exists(json_path):
+            with open(json_path, 'r') as f:
+                data = json.load(f)
+                if principle not in data:
+                    data.pop("average", None)  # Remove 'average' if it exists
+                else:
+                    data = data[principle]  # Extract the specific principle data
+                all_data.update(data)
+    category_acc = get_category_accuracy(all_data, base_categories)
+
+    return category_acc
+
+
+def analysis_per_principle_model_category_performance():
     prox_categories = ["non_overlap_red_triangle", "non_overlap_grid",
                        "non_overlap_fixed_props", "overlap_big_small",
                        "overlap_circle_features"]
@@ -539,27 +597,45 @@ if __name__ == "__main__":
                           "non_overlap_feature_circle"]
 
     vit_prox = load_json_data("proximity", config.result_path / "proximity" / "vit_base_patch16_224_3_evaluation_results_20250728_162145.json")
-    vit_prox_acc = get_category_accuracy(vit_prox, base_categories)
 
     vit_3_closure = load_json_data("closure", config.result_path / "closure" / "vit_3.json")
     vit_100_closure = load_json_data("closure", config.result_path / "closure" / "vit_100.json")
     llava_closure = load_json_data("closure", config.result_path / "closure" / "llava.json")
 
-    vit_3_closure_acc = get_category_accuracy(vit_3_closure, base_categories)
-    vit_100_closure_acc = get_category_accuracy(vit_100_closure, base_categories)
-    llava_closure_acc = get_category_accuracy(llava_closure, base_categories)
-    closure_results = {
-        "vit_3": vit_3_closure_acc,
-        "vit_100": vit_100_closure_acc,
-        "llava": llava_closure_acc,
-    }
+    vit_3_symmetry = load_json_data("symmetry", config.result_path / "symmetry" / "vit_3.json")
+    vit_100_symmetry = load_json_data("symmetry", config.result_path / "symmetry" / "vit_100.json")
+    llava_symmetry = load_json_data("symmetry", config.result_path / "symmetry" / "llava.json")
+    # vit_3_closure_acc = get_category_accuracy(vit_3_closure, base_categories)
+    # vit_100_closure_acc = get_category_accuracy(vit_100_closure, base_categories)
+    # llava_closure_acc = get_category_accuracy(llava_closure, base_categories)
+    closure_results = {"vit_3": vit_3_closure, "vit_100": vit_100_closure, "llava": llava_closure}
+    symmetry_results = {"vit_3": vit_3_symmetry, "vit_100": vit_100_symmetry, "llava": llava_symmetry}
 
     # Call the function
-    draw_category_subfigures(closure_results, "closure", save_path=config.figure_path / f"closure_category_accuracy.pdf")
+    # draw_category_subfigures(closure_results, "closure", save_path=config.figure_path / f"closure_category_accuracy.pdf")
     # draw_category_subfigures(results, "proximity", save_path=config.figure_path / f"proximity_category_accuracy.pdf")
     # draw_category_subfigures(results, "proximity", save_path=config.figure_path / f"proximity_category_accuracy.pdf")
     # draw_category_subfigures(results, "proximity", save_path=config.figure_path / f"proximity_category_accuracy.pdf")
     # draw_category_subfigures(results, "proximity", save_path=config.figure_path / f"proximity_category_accuracy.pdf")
 
+
+def analysis_model_category_performance(categories, name):
+    vit_3_data = load_json_model_data("vit_3", categories)
+    vit_100_data = load_json_model_data("vit_100", categories)
+    llava_data = load_json_model_data("llava", categories)
+    model_results = {"vit_3": vit_3_data,
+                     "vit_100": vit_100_data,
+                     "llava": llava_data}
+    draw_category_subfigures(model_results, name, save_path=config.figure_path / f"model_category_accuracy_{name}.pdf")
+
+
+if __name__ == "__main__":
+    base_categories = ['shape', 'color', 'count', "size"]
+
+    analysis_model_category_performance(['shape', 'color', 'count', "size"], "prop")
+    analysis_model_category_performance(["_s", "_m", "_l"], "size")
+    analysis_model_category_performance(["exist", "all"], "exist")
+    analysis_model_category_performance(["_1", "_2", "_3", "_4", "_5"], "group_num")
+    # analysis_model_category_performance(["exist", "all"], "exist")
     # print_category_accuracy(data)
     # analysis_result(principles, data)

@@ -56,7 +56,7 @@ def wrap_non_overlap_feature_triangle(fixed_props, is_positive, cluster_num, obj
 
 
 def wrap_non_overlap_big_triangle(fixed_props, is_positive, cluster_num, obj_quantities, qualifiers, pin):
-    return util_pos_triangle.non_overlap_big_triangle(fixed_props, is_positive, cluster_num, obj_quantities, pin)
+    return util_pos_triangle.separate_big_triangle(fixed_props, is_positive, cluster_num, obj_quantities, pin)
 
 
 def wrap_non_overlap_big_circle(fixed_props, is_positive, cluster_num, obj_quantities, qualifiers, pin):
@@ -64,7 +64,7 @@ def wrap_non_overlap_big_circle(fixed_props, is_positive, cluster_num, obj_quant
 
 
 def wrap_non_overlap_big_square(fixed_props, is_positive, cluster_num, obj_quantities, qualifiers, pin):
-    return util_pos_square.non_overlap_big_square(fixed_props, is_positive, cluster_num, obj_quantities, pin)
+    return util_pos_square.separate_big_square(fixed_props, is_positive, cluster_num, obj_quantities, pin)
 
 
 # Symmetry wrappers

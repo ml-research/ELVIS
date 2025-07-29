@@ -29,7 +29,6 @@ def not_all_true(n):
     return bool_list
 
 
-
 def at_least_one_true(n):
     if n < 2:
         return [True] if n == 1 else []
@@ -55,11 +54,13 @@ def neg_clu_num(clu_num, min_num, max_num):
     clu_num = new_clu_num
     return clu_num
 
+
 def random_select_unique_mix(lst, n):
     while True:
         selection = random.choices(lst, k=n)
         if len(set(selection)) > 1:  # Ensure at least 2 unique elements
             return selection
+
 
 def duplicate_maintain_order(lst, n=2):
     return [item for item in lst for _ in range(n)]
@@ -72,6 +73,7 @@ def get_proper_sublist(lst):
         return []
     sublist_size = random.randint(1, len(lst) - 1)  # Ensure it's a proper sublist
     return random.sample(lst, sublist_size)  # Randomly select elements
+
 
 def confusion_matrix_elements(predictions, ground_truth):
     TN = sum(1 for p, gt in zip(predictions, ground_truth) if p == 0 and gt == 0)
@@ -89,6 +91,7 @@ def calculate_metrics(TN, FP, FN, TP):
 
     return precision, recall, f1_score
 
+
 def get_random_sizes(obj_num, obj_size):
     sizes = [
         random.uniform(obj_size * 0.5, obj_size * 0.9) if random.random() < 0.5
@@ -96,3 +99,20 @@ def get_random_sizes(obj_num, obj_size):
         for _ in range(obj_num)
     ]
     return sizes
+
+
+def get_shapes(obj_num, allowed_shapes):
+    return random.choices(allowed_shapes, k=obj_num)
+
+
+def get_colors(obj_num, allowed_colors):
+    return random.choices(allowed_colors, k=obj_num)
+
+
+def get_sizes(obj_num, fixed_size=None):
+    if fixed_size is not None:
+        return [fixed_size] * obj_num
+    else:
+        return get_random_sizes(obj_num, fixed_size)
+
+

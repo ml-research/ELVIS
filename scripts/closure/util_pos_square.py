@@ -10,7 +10,73 @@ from scripts import config
 from scripts.utils import encode_utils, data_utils, pos_utils
 from scripts.utils.shape_utils import overlaps, overflow
 
+
 def closure_big_square(obj_size, is_positive, clu_num, params, obj_quantity, pin):
+    logic = {
+        "shape": ["triangle", "circle"],
+        "color": ["blue", "red"],
+        "size": obj_size,
+        "count": obj_quantity
+
+    }
+    all_shapes = config.all_shapes
+    all_colors = config.color_large_exclude_gray
+
+    # --- Count logic ---
+    if is_positive:
+        count = logic["count"] if "count" in params else random.choice(list(config.standard_quantity_dict.keys()))
+        counts = [count] * clu_num
+    else:
+        rules = params + ["position"]
+        to_break = set([random.choice(rules)])
+        for rule in rules:
+            if rule not in to_break and random.random() < 0.2:
+                to_break.add(rule)
+        # Count: break by using a different count per cluster
+        if "count" in to_break:
+            available_counts = [k for k in config.standard_quantity_dict.keys() if k != obj_quantity]
+            counts = [random.choice(available_counts) for _ in range(clu_num)]
+        else:
+            counts = [logic["count"]] * clu_num
+
+    # --- Position logic ---
+    cluster = True
+    if not is_positive and "position" in to_break:
+        cluster = False
+
+    # --- Position and group id generation ---
+    positions = []
+    group_ids = []
+    group_anchors = []
+    for i in range(clu_num):
+        count = config.standard_quantity_dict[counts[i]]
+        group_anchors.append(pos_utils.generate_random_anchor(group_anchors))
+        if cluster:
+            pos = pos_utils.get_square_positions(counts[i], group_anchors[i][0], group_anchors[i][1])
+        else:
+            pos = pos_utils.get_random_positions(count, obj_size)
+        positions += pos
+        group_ids += [i] * len(pos)
+    obj_num = len(positions)
+
+    # --- Property assignment ---
+    if is_positive:
+        shapes = random.choices(logic["shape"], k=obj_num) if "shape" in params else random.choices(all_shapes, k=obj_num)
+        colors = random.choices(logic["color"], k=obj_num) if "color" in params else data_utils.random_select_unique_mix(all_colors, obj_num)
+        sizes = [logic["size"]] * obj_num if "size" in params else data_utils.get_random_sizes(obj_num, obj_size)
+    else:
+        cf_params = data_utils.get_proper_sublist(params + ["position"])
+        if "color" in cf_params and "color" not in to_break:
+            print("")
+        shapes = random.choices(logic["shape"], k=obj_num) if "shape" in cf_params and "shape" not in to_break else data_utils.random_select_unique_mix(all_shapes, obj_num)
+        colors = random.choices(logic["color"], k=obj_num) if "color" in cf_params and "color" not in to_break else data_utils.random_select_unique_mix(all_colors, obj_num)
+        sizes = [logic["size"]] * obj_num if "size" in cf_params and "size" not in to_break else data_utils.get_random_sizes(obj_num, obj_size)
+
+    objs = encode_utils.encode_scene(positions, sizes, colors, shapes, group_ids, is_positive)
+    return objs
+
+
+def closure_big_square_legacy(obj_size, is_positive, clu_num, params, obj_quantity, pin):
     objs = []
     positions = []
 
@@ -23,7 +89,7 @@ def closure_big_square(obj_size, is_positive, clu_num, params, obj_quantity, pin
         x = group_anchors[i][0]
         y = group_anchors[i][1]
         positions += pos_utils.get_square_positions(obj_quantity, x, y)
-        group_ids += [i]*len(positions)
+        group_ids += [i] * len(positions)
     obj_num = len(positions)
 
     # 50% of the negative images, random object positions but other properties as same as positive
@@ -51,7 +117,7 @@ def closure_big_square(obj_size, is_positive, clu_num, params, obj_quantity, pin
             # shapes = [random.choice(["triangle", "circle"])] * obj_num
             sizes = [obj_size] * obj_num
         else:
-            sizes = data_utils.get_random_sizes(obj_num,obj_size)
+            sizes = data_utils.get_random_sizes(obj_num, obj_size)
 
     else:
         cf_params = data_utils.get_proper_sublist(params)
@@ -70,7 +136,7 @@ def closure_big_square(obj_size, is_positive, clu_num, params, obj_quantity, pin
             # shapes = [random.choice(["triangle", "circle"])] * obj_num
             sizes = [obj_size] * obj_num
         else:
-            sizes = data_utils.get_random_sizes(obj_num,obj_size)
+            sizes = data_utils.get_random_sizes(obj_num, obj_size)
     try:
         for i in range(len(positions)):
             if is_random:
@@ -93,7 +159,19 @@ def closure_big_square(obj_size, is_positive, clu_num, params, obj_quantity, pin
     return objs
 
 
-def non_overlap_big_square(params, is_positive, clu_num, obj_quantity, pin):
+def get_logic_rules(fixed_props):
+    head = "image_target(X)"
+
+    body = ""
+    if "shape" in fixed_props:
+        body += "has_shape(X,square),has_shape(X,circle),no_shape(X,triangle),"
+    if "color" in fixed_props:
+        body += "has_color(X,green),has_color(X,yellow)"
+    rule = f"{head}:-{body}principle(closure)."
+    return rule
+
+
+def separate_big_square(params, is_positive, clu_num, obj_quantity, pin):
     obj_size = 0.05
     objs = closure_big_square(obj_size, is_positive, clu_num, params, obj_quantity, pin)
     t = 0
@@ -106,4 +184,5 @@ def non_overlap_big_square(params, is_positive, clu_num, obj_quantity, pin):
             obj_size = obj_size * 0.90
         tt = tt + 1
         t = t + 1
-    return objs
+    logic_rules = get_logic_rules(params)
+    return objs, logic_rules

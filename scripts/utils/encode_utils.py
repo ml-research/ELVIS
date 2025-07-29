@@ -23,7 +23,22 @@ def encode_objs(x, y, size, color, shape, line_width, solid, start_angle=0, end_
             }
     return data
 
+def encode_scene(positions, sizes, colors, shapes, group_ids, is_positive):
 
+    objs = []
+    for i in range(len(positions)):
+        group_id = group_ids[i] if is_positive or group_ids[i] >= 0 else -1
+        objs.append(encode_objs(
+            x=positions[i][0],
+            y=positions[i][1],
+            size=sizes[i],
+            color=colors[i],
+            shape=shapes[i],
+            line_width=-1,
+            solid=True,
+            group_id=group_id,
+        ))
+    return objs
 """ 
 p: positive
 s: size

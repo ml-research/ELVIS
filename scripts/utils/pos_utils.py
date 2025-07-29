@@ -3,7 +3,7 @@ import random
 import math
 import numpy as np
 from scipy.interpolate import make_interp_spline, interp1d
-
+from scripts import config
 
 def generate_points(center, radius, n, min_distance):
     points = []
@@ -71,10 +71,9 @@ def get_spline_points(points, n):
 
 def get_triangle_positions(obj_quantity, x, y):
     positions = []
-
     r = 0.3 - min(abs(0.5 - x), abs(0.5 - y))
-    n = {"s": 6, "m": 15, "l": 20}.get(obj_quantity, 2)
-    r = {"s": r * 0.8, "m": r, "l": r * 1.2}.get(obj_quantity, 2)
+    n = config.standard_quantity_dict[obj_quantity]
+    r = config.get_grp_r(r, obj_quantity)
     innerdegree = math.radians(30)
     dx = r * math.cos(innerdegree)
     dy = r * math.sin(innerdegree)
@@ -113,9 +112,9 @@ def get_triangle_positions(obj_quantity, x, y):
 def get_square_positions(obj_quantity, x, y):
     positions = []
 
-    n = {"s": 6, "m": 15, "l": 20}.get(obj_quantity, 2)
     r = 0.3 - min(abs(0.5 - x), abs(0.5 - y))
-    r = {"s": r * 0.8, "m": r, "l": r * 1.2}.get(obj_quantity, 2)
+    n = config.standard_quantity_dict[obj_quantity]
+    r = config.get_grp_r(r, obj_quantity)
 
     minx = x - r / 2
     maxx = x + r / 2

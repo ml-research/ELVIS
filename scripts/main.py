@@ -5,17 +5,238 @@ import os
 import numpy as np
 import cv2
 
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+import numpy as np
+from io import BytesIO
+import matplotlib.transforms as transforms
+from matplotlib.path import Path
+
+
 from scripts import config
 from scripts.utils import file_utils
-
 from scripts.closure import closure_patterns
 from scripts.continuity import continuity_patterns
 from scripts.proximity import prox_patterns
 from scripts.similarity import similarity_patterns
 from scripts.symmetry import symmetry_patterns
 from scripts.object_detector import object_patterns
+
+
 # from scripts.mixed_patterns import mixed_patterns
-def gen_image(objs):
+
+def gen_image_matplotlib(objs):
+    import math
+    img_size = config.img_width
+    dpi = 100
+    fig, ax = plt.subplots(figsize=(img_size / dpi, img_size / dpi), dpi=dpi)
+    ax.set_xlim(0, img_size)
+    ax.set_ylim(0, img_size)
+    ax.axis('off')
+    ax.set_aspect('equal')
+
+    # Background
+    bg_color = config.bg_color
+    ax.add_patch(
+        patches.Rectangle((0, 0), img_size, img_size, color=bg_color, zorder=0)
+    )
+
+    for obj in objs:
+        x = obj["x"] * img_size
+        y = obj["y"] * img_size
+        size = obj["size"] * img_size
+        color = (obj["color_r"] / 255, obj["color_g"] / 255, obj["color_b"] / 255)
+        shape = obj["shape"]
+
+        patch = None
+
+        if shape == "circle":
+            patch = patches.Circle((x, y), size / 2, color=color)
+        elif shape == "square":
+            patch = patches.Rectangle((x - size / 2, y - size / 2), size, size, color=color)
+        elif shape == "triangle":
+            half = size / 2
+            points = [
+                (x, y + half),
+                (x - half, y - half),
+                (x + half, y - half)
+            ]
+            patch = patches.Polygon(points, color=color)
+        elif shape == "pac_man":
+            patch = patches.Wedge((x, y), size / 2, obj.get("start_angle", 30), obj.get("end_angle", 330), color=color)
+        elif shape == "pentagon":
+            points = [
+                (x + size / 2 * math.cos(2 * math.pi * i / 5 - math.pi / 2), y + size / 2 * math.sin(2 * math.pi * i / 5 - math.pi / 2))
+                for i in range(5)
+            ]
+            patch = patches.Polygon(points, color=color)
+        elif shape == "hexagon":
+            points = [
+                (x + size / 2 * math.cos(2 * math.pi * i / 6), y + size / 2 * math.sin(2 * math.pi * i / 6))
+                for i in range(6)
+            ]
+            patch = patches.Polygon(points, color=color)
+        elif shape == "star":
+            # 5-pointed star
+            points = []
+            for i in range(10):
+                angle = i * math.pi / 5 - math.pi / 2
+                r = size / 2 if i % 2 == 0 else size / 4
+                points.append((x + r * math.cos(angle), y + r * math.sin(angle)))
+            patch = patches.Polygon(points, color=color)
+        elif shape == "diamond":
+            points = [
+                (x, y - size / 2),
+                (x - size / 2, y),
+                (x, y + size / 2),
+                (x + size / 2, y)
+            ]
+            patch = patches.Polygon(points, color=color)
+        elif shape == "ellipse":
+            patch = patches.Ellipse((x, y), size, size / 2, color=color)
+        elif shape == "cross":
+            # Cross shape (X)
+            lw = size / 5
+            for angle in [45, -45]:
+                trans = transforms.Affine2D().rotate_deg_around(x, y, angle) + ax.transData
+                rect = patches.Rectangle((x - size / 2, y - lw / 2), size, lw, color=color, transform=trans)
+                ax.add_patch(rect)
+            continue
+        elif shape == "plus":
+            # Plus shape (+)
+            lw = size / 5
+            ax.add_patch(patches.Rectangle((x - lw / 2, y - size / 2), lw, size, color=color))
+            ax.add_patch(patches.Rectangle((x - size / 2, y - lw / 2), size, lw, color=color))
+            continue
+        elif shape == "heart":
+            t = np.linspace(0, 2 * np.pi, 100)
+            x_ = (size / 30) * 16 * np.sin(t) ** 3
+            y_ = (size / 30) * (13 * np.cos(t) - 5 * np.cos(2 * t) - 2 * np.cos(3 * t) - np.cos(4 * t))
+            points = np.column_stack((x + x_, y + y_))
+            patch = patches.Polygon(points, color=color)
+
+        elif shape == "spade":
+            # Spade: upright heart top + curved, flared stem + horizontal base
+            t = np.linspace(0, 2 * np.pi, 100)
+            x_ = (size / 30) * 16 * np.sin(t) ** 3
+            y_ = -(size / 30) * (13 * np.cos(t) - 5 * np.cos(2 * t) - 2 * np.cos(3 * t) - np.cos(4 * t))
+            top = np.column_stack((x + x_, y + y_ + size * 0.12))  # shift up a bit
+            patch = patches.Polygon(top, color=color)
+            ax.add_patch(patch)
+
+            # Adjusted stem to connect with heart
+            stem_h = size / 2.8
+            stem_top_w = size / 1000
+            stem_bot_w = size / 5
+            stem_top_y = y - size * 0.1  # Move up to connect with heart
+            stem_bot_y = stem_top_y - stem_h
+
+            # Polygon for curved, flared stem
+            stem_points = [
+                (x - stem_top_w / 2, stem_top_y),
+                (x - stem_bot_w / 2, stem_bot_y),
+                (x + stem_bot_w / 2, stem_bot_y),
+                (x + stem_top_w / 2, stem_top_y),
+            ]
+            for i in range(1, 4):
+                interp = i / 4
+                left_x = x - (stem_top_w / 2) * (1 - interp) - (stem_bot_w / 2) * interp
+                right_x = x + (stem_top_w / 2) * (1 - interp) + (stem_bot_w / 2) * interp
+                y_interp = stem_top_y * (1 - interp) + stem_bot_y * interp
+                stem_points.insert(i, (left_x, y_interp))
+                stem_points.insert(-i, (right_x, y_interp))
+            stem_patch = patches.Polygon(stem_points, color=color)
+            ax.add_patch(stem_patch)
+
+            continue
+
+        elif shape == "club":
+            # Club: three circles + flared, curved stem + thick Bezier stems between circles
+            r = size / 4.9
+            centers = [
+                (x, y + r*1.2),  # top
+                (x - r * np.sin(np.pi / 2), y - r * np.cos(np.pi / 6)*0.8),  # left
+                (x + r * np.sin(np.pi / 2), y - r * np.cos(np.pi / 6)*0.8),  # right
+            ]
+            for cx, cy in centers:
+                ax.add_patch(patches.Circle((cx, cy), r, color=color))
+
+            # Flared, curved stem
+            stem_h = size / 2.8
+            stem_top_w = size / 1000
+            stem_bot_w = size / 4
+            stem_top_y = y - size * 0.05
+            stem_bot_y = stem_top_y - stem_h*1.2
+
+            n_interp = 16
+            stem_points_left = []
+            stem_points_right = []
+            for i in range(n_interp + 1):
+                t = i / n_interp
+                t_pow = t ** 2.2  # Power curve for width
+                width = (1 - t_pow) * stem_top_w + t_pow * stem_bot_w
+                y_interp = stem_top_y * (1 - t) + stem_bot_y * t
+                left_x = x - width / 2
+                right_x = x + width / 2
+                stem_points_left.append((left_x, y_interp))
+                stem_points_right.append((right_x, y_interp))
+            stem_points = stem_points_left + stem_points_right[::-1]
+            stem_patch = patches.Polygon(stem_points, color=color)
+            ax.add_patch(stem_patch)
+
+            #
+            # stem_points = [
+            #     (x - stem_top_w / 2, stem_top_y),
+            #     (x - stem_bot_w / 2, stem_bot_y),
+            #     (x + stem_bot_w / 2, stem_bot_y),
+            #     (x + stem_top_w / 2, stem_top_y),
+            # ]
+            # for i in range(1, 4):
+            #     interp = i / 4
+            #     left_x = x - (stem_top_w / 2) * (1 - interp) - (stem_bot_w / 2) * interp
+            #     right_x = x + (stem_top_w / 2) * (1 - interp) + (stem_bot_w / 2) * interp
+            #     y_interp = stem_top_y * (1 - interp) + stem_bot_y * interp
+            #     stem_points.insert(i, (left_x, y_interp))
+            #     stem_points.insert(-i, (right_x, y_interp))
+            # stem_patch = patches.Polygon(stem_points, color=color)
+            # ax.add_patch(stem_patch)
+
+            # Thick Bezier stems between each pair of circles (center to center)
+            pairs = [(0, 1), (1, 2), (2, 0)]
+            for i, j in pairs:
+                cx1, cy1 = centers[i]
+                cx2, cy2 = centers[j]
+                start = (cx1, cy1)
+                end = (cx2, cy2)
+                mx, my = (cx1 + cx2) / 2, (cy1 + cy2) / 2
+                nx, ny = -(cy2 - cy1), (cx2 - cx1)
+                norm = np.hypot(nx, ny)
+                nx, ny = nx / norm, ny / norm
+                ctrl = (mx + nx * r * 0.8, my + ny * r * 0.8)
+                verts = [start, ctrl, end]
+                codes = [Path.MOVETO, Path.CURVE3, Path.CURVE3]
+                ax.add_patch(patches.PathPatch(Path(verts, codes), color=color, lw=5, capstyle='round'))
+            continue
+
+
+        else:
+            continue
+
+        if patch is not None:
+            ax.add_patch(patch)
+
+    buf = BytesIO()
+    plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0)
+    plt.close(fig)
+    buf.seek(0)
+    img = plt.imread(buf)
+    buf.close()
+    img = (img[:, :, :3] * 255).astype(np.uint8)
+    img = img[:img_size, :img_size, :]
+    return img
+
+
+def gen_image_cv2(objs):
     """
     Generate an image from a list of objects.
     :param objects: List of objects, each defined by a dict with keys x, y, size, rgb_color, shape.
@@ -59,7 +280,7 @@ def save_patterns(pattern_data, pattern, save_path, num_samples, is_positive):
         data_path = save_path / f"{example_i:05d}.json"
         objs, logic_rules = pattern["module"](is_positive)
         # encode symbolic object tensors
-        image = gen_image(objs)
+        image = gen_image_matplotlib(objs)
         pattern_data["logic_rules"] = logic_rules
         file_utils.save_img(img_path, data_path, pattern_data, objs, image)
 
@@ -75,7 +296,6 @@ def save_principle_patterns(principle_name, pattern_dicts):
     pattern_counter = 0
     num_samp = config.num_samples
     for pattern in pattern_dicts:
-
         pattern_name = f"{pattern_counter:03d}_" + pattern["name"]
         # Run the save_patterns function if it exists in the script
 
@@ -138,5 +358,70 @@ def main():
         save_principle_patterns(principle_name, pattern_dicts)
 
 
+def draw_club_playground(x=0.5, y=0.5, size=0.4, color=(0, 0, 0), img_size=400):
+    fig, ax = plt.subplots(figsize=(4, 4))
+    ax.set_xlim(0, img_size)
+    ax.set_ylim(0, img_size)
+    ax.axis('off')
+    ax.set_aspect('equal')
+
+    # Convert normalized coordinates to image coordinates
+    x = x * img_size
+    y = y * img_size
+    size = size * img_size
+
+    # Club: three circles + flared, curved stem + horizontal base
+    r = size / 6
+    centers = [
+        (x, y + r),  # top
+        (x - r * np.sin(np.pi / 2), y - r * np.cos(np.pi / 6)),  # left
+        (x + r * np.sin(np.pi / 2), y - r * np.cos(np.pi / 6)),  # right
+    ]
+    for cx, cy in centers:
+        ax.add_patch(patches.Circle((cx, cy), r, color=color))
+
+    # Flared, curved stem
+    stem_h = size / 2.8
+    stem_top_w = size / 1000
+    stem_bot_w = size / 10
+    stem_top_y = y - size * 0.05
+    stem_bot_y = stem_top_y - stem_h
+    stem_points = [
+        (x - stem_top_w / 2, stem_top_y),
+        (x - stem_bot_w / 2, stem_bot_y),
+        (x + stem_bot_w / 2, stem_bot_y),
+        (x + stem_top_w / 2, stem_top_y),
+    ]
+    for i in range(1, 4):
+        interp = i / 4
+        left_x = x - (stem_top_w / 2) * (1 - interp) - (stem_bot_w / 2) * interp
+        right_x = x + (stem_top_w / 2) * (1 - interp) + (stem_bot_w / 2) * interp
+        y_interp = stem_top_y * (1 - interp) + stem_bot_y * interp
+        stem_points.insert(i, (left_x, y_interp))
+        stem_points.insert(-i, (right_x, y_interp))
+    stem_patch = patches.Polygon(stem_points, color=color)
+    ax.add_patch(stem_patch)
+
+    pairs = [(0, 1), (1, 2), (2, 0)]
+    for i, j in pairs:
+        cx1, cy1 = centers[i]
+        cx2, cy2 = centers[j]
+        # Use centers directly
+        start = (cx1, cy1)
+        end = (cx2, cy2)
+        # Control point outward from center for a natural curve
+        mx, my = (cx1 + cx2) / 2, (cy1 + cy2) / 2
+        nx, ny = -(cy2 - cy1), (cx2 - cx1)
+        norm = np.hypot(nx, ny)
+        nx, ny = nx / norm, ny / norm
+        ctrl = (mx + nx * r * 0.8, my + ny * r * 0.8)
+        verts = [start, ctrl, end]
+        codes = [Path.MOVETO, Path.CURVE3, Path.CURVE3]
+        ax.add_patch(patches.PathPatch(Path(verts, codes), color=color, lw=20, capstyle='round'))
+
+    plt.show()
+
+
 if __name__ == "__main__":
     main()
+    # draw_club_playground()
