@@ -17,12 +17,9 @@ baseline_models = {
 }
 
 
-def evaluate_model(model_entry, principle, batch_size, data_path, device, img_num, epochs):
-    model_name = model_entry["name"]
-    model_module = model_entry["module"]
-
-    print(f"{principle} Evaluating {model_name} on {device}...")
-    model_module(data_path, principle, batch_size, device=device, img_num=img_num, epochs=epochs)
+def evaluate_model(model, principle, batch_size, data_path, device, img_num, epochs):
+    print(f"{principle} Evaluating on {device}...")
+    model(data_path, principle, batch_size, device=device, img_num=img_num, epochs=epochs)
 
 
 if __name__ == "__main__":
