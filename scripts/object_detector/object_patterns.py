@@ -10,8 +10,11 @@ size_list = ["s"]
 prop_list = ["shape"]
 # Define task functions dynamically
 
-tasks = {}
-prin_in_neg = config.prin_in_neg
-tasks.update(create_tasks_v3(one_random, prop_list, range(2), size_list, prin_in_neg))
-# Convert tasks to pattern dictionary
-pattern_dicts = [{"name": key, "module": task} for key, task in tasks.items()]
+
+def get_patterns():
+    tasks = {}
+    prin_in_neg = config.prin_in_neg
+    tasks.update(create_tasks_v3(one_random, prop_list, range(2), size_list, prin_in_neg))
+    # Convert tasks to pattern dictionary
+    pattern_dicts = [{"name": key, "module": task} for key, task in tasks.items()]
+    return pattern_dicts

@@ -11,7 +11,7 @@ import numpy as np
 from io import BytesIO
 import matplotlib.transforms as transforms
 from matplotlib.path import Path
-
+from PIL import Image
 
 from scripts import config
 from scripts.utils import file_utils
@@ -154,9 +154,9 @@ def gen_image_matplotlib(objs):
             # Club: three circles + flared, curved stem + thick Bezier stems between circles
             r = size / 4.9
             centers = [
-                (x, y + r*1.2),  # top
-                (x - r * np.sin(np.pi / 2), y - r * np.cos(np.pi / 6)*0.8),  # left
-                (x + r * np.sin(np.pi / 2), y - r * np.cos(np.pi / 6)*0.8),  # right
+                (x, y + r * 1.2),  # top
+                (x - r * np.sin(np.pi / 2), y - r * np.cos(np.pi / 6) * 0.8),  # left
+                (x + r * np.sin(np.pi / 2), y - r * np.cos(np.pi / 6) * 0.8),  # right
             ]
             for cx, cy in centers:
                 ax.add_patch(patches.Circle((cx, cy), r, color=color))
@@ -166,7 +166,7 @@ def gen_image_matplotlib(objs):
             stem_top_w = size / 1000
             stem_bot_w = size / 4
             stem_top_y = y - size * 0.05
-            stem_bot_y = stem_top_y - stem_h*1.2
+            stem_bot_y = stem_top_y - stem_h * 1.2
 
             n_interp = 16
             stem_points_left = []
@@ -275,6 +275,7 @@ def gen_image_cv2(objs):
 
 
 def save_patterns(pattern_data, pattern, save_path, num_samples, is_positive):
+    imgs = []
     for example_i in range(num_samples):
         img_path = save_path / f"{example_i:05d}.png"
         data_path = save_path / f"{example_i:05d}.json"
@@ -283,6 +284,28 @@ def save_patterns(pattern_data, pattern, save_path, num_samples, is_positive):
         image = gen_image_matplotlib(objs)
         pattern_data["logic_rules"] = logic_rules
         file_utils.save_img(img_path, data_path, pattern_data, objs, image)
+        imgs.append(image)
+    return imgs
+
+
+def save_task_overview_image(pos_imgs, neg_imgs, save_path, img_size, margin=8):
+    from PIL import Image
+
+    imgs = pos_imgs[:2] + neg_imgs[:2]
+    imgs = [Image.fromarray(img).resize((img_size, img_size)) for img in imgs]
+
+    grid_size = 2
+    total_size = img_size * grid_size + margin * (grid_size + 1)
+    overview_img = Image.new("RGB", (total_size, total_size), (255, 255, 255))
+
+    for idx, img in enumerate(imgs):
+        row = idx // grid_size
+        col = idx % grid_size
+        x = margin + col * (img_size + margin)
+        y = margin + row * (img_size + margin)
+        overview_img.paste(img, (x, y))
+
+    overview_img.save(save_path)
 
 
 def save_principle_patterns(principle_name, pattern_dicts):
@@ -335,10 +358,14 @@ def save_principle_patterns(principle_name, pattern_dicts):
         os.makedirs(test_path / "positive", exist_ok=True)
         os.makedirs(test_path / "negative", exist_ok=True)
 
-        save_patterns(pattern_data, pattern, train_path / "positive", num_samples=num_samp, is_positive=True)
-        save_patterns(pattern_data, pattern, train_path / "negative", num_samples=num_samp, is_positive=False)
-        save_patterns(pattern_data, pattern, test_path / "positive", num_samples=num_samp, is_positive=True)
-        save_patterns(pattern_data, pattern, test_path / "negative", num_samples=num_samp, is_positive=False)
+        train_pos_imgs = save_patterns(pattern_data, pattern, train_path / "positive", num_samples=num_samp, is_positive=True)
+        train_neg_imgs = save_patterns(pattern_data, pattern, train_path / "negative", num_samples=num_samp, is_positive=False)
+        test_pos_imgs = save_patterns(pattern_data, pattern, test_path / "positive", num_samples=num_samp, is_positive=True)
+        test_neg_imgs = save_patterns(pattern_data, pattern, test_path / "negative", num_samples=num_samp, is_positive=False)
+
+        # Save overview images
+        save_task_overview_image(train_pos_imgs, train_neg_imgs, principle_path / "train" / f"{pattern_name}.png", config.img_width)
+        save_task_overview_image(test_pos_imgs, test_neg_imgs, principle_path / "test" / f"{pattern_name}.png", config.img_width)
 
         pattern_counter += 1
     print(f"{principle_name} pattern generation complete.")
@@ -351,7 +378,7 @@ def main():
         # "similarity": similarity_patterns.pattern_dicts,
         # "symmetry": symmetry_patterns.pattern_dicts,
         # "continuity": continuity_patterns.pattern_dicts,
-        "closure": closure_patterns.pattern_dicts,
+        "closure": closure_patterns.get_patterns(),
         # "mixed":mixed_patterns.pattern_dicts
     }
     for principle_name, pattern_dicts in principles.items():

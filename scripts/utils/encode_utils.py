@@ -23,8 +23,8 @@ def encode_objs(x, y, size, color, shape, line_width, solid, start_angle=0, end_
             }
     return data
 
-def encode_scene(positions, sizes, colors, shapes, group_ids, is_positive):
 
+def encode_scene(positions, sizes, colors, shapes, group_ids, is_positive):
     objs = []
     for i in range(len(positions)):
         group_id = group_ids[i] if is_positive or group_ids[i] >= 0 else -1
@@ -39,6 +39,8 @@ def encode_scene(positions, sizes, colors, shapes, group_ids, is_positive):
             group_id=group_id,
         ))
     return objs
+
+
 """ 
 p: positive
 s: size
@@ -51,10 +53,35 @@ def create_tasks_v2(func, params, task_sizes, prin_in_neg):
 
 
 def create_tasks_v3(func, params, task_sizes, obj_quantities, prin_in_neg):
-    return {
-        f"{func.__name__}_{'_'.join(map(str, comb))}_{s}_{oq}": (
-            lambda p, s=s, comb=comb, oq=oq: func(comb, p, s, oq, prin_in_neg))
-        for comb in get_all_combs(params) for s in task_sizes for oq in obj_quantities}
+    tasks = []
+    names = []
+    counter = 0
+    for rel_comb in get_all_combs(params):
+        irrelevant_params = [k for k in params if k not in rel_comb and k != "position"]
+        for irrel_comb in get_all_combs(irrelevant_params):
+            for si in task_sizes:
+                for oq in obj_quantities:
+                    task_name = (
+                            f"{counter}_{func.__name__}_rel_"
+                            + "_".join(f"{k}" for k in rel_comb)
+                            + f"_{si}_{oq}_irrel_"
+                            + "_".join(f"{k}" for k in irrel_comb)
+                    )
+                    counter += 1
+                    # print(task_name)
+                    # print(f"relative params: {rel_comb} \t irrelative params: {irrel_comb}\t task size: {si} \t object quantity: {oq}")
+                    if task_name in tasks:
+                        raise ValueError(f"Duplicate task key detected: {task_name}")
+                    tasks.append(
+                        lambda p, tn=task_name, s=si, relative_comb=rel_comb, irrelative_comb=irrel_comb, obj_quantity=oq: func(tn, relative_comb, irrelative_comb, p, s,
+                                                                                                                                obj_quantity, prin_in_neg)
+                    )
+                    names.append(task_name)
+    return tasks, names
+    # return {
+    #     f"{func.__name__}_{'_'.join(map(str, comb))}_{s}_{oq}": (
+    #         lambda p, s=s, comb=comb, oq=oq: func(comb, p, s, oq, prin_in_neg))
+    #     for comb in get_all_combs(params) for s in task_sizes for oq in obj_quantities}
 
 
 def create_tasks_v4_legacy(func, params, task_sizes, obj_quantities, qualifiers, prin_in_neg):
@@ -63,6 +90,7 @@ def create_tasks_v4_legacy(func, params, task_sizes, obj_quantities, qualifiers,
             lambda p, s=s, comb=comb, oq=oq, qua=qua: func(comb, p, s, oq, qua, prin_in_neg))
         for comb in get_all_combs(params) for s in task_sizes for oq in obj_quantities for qua in qualifiers}
 
+
 def create_tasks_v4(func, params, task_sizes, obj_quantities, qualifiers, prin_in_neg):
     return {
         f"{func.__name__}_{'_'.join(map(str, comb))}_{s}_{oq}_{qua}": (
@@ -70,6 +98,7 @@ def create_tasks_v4(func, params, task_sizes, obj_quantities, qualifiers, prin_i
         )
         for comb in get_all_combs(params) for s in task_sizes for oq in obj_quantities for qua in qualifiers
     }
+
 
 def create_mixed_tasks_v4(mix_func, features, num_lst, size_list, qua_list, pin):
     tasks = {}

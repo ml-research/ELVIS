@@ -35,11 +35,12 @@ def create_tasks_v3(func, params, task_sizes, obj_quantities):
         f"{func.__name__}_{'_'.join(map(str, comb))}_{s}_{oq}": (lambda p, s=s, comb=comb, oq=oq: func(comb, p, s, oq))
         for comb in get_all_combs(params) for s in task_sizes for oq in obj_quantities}
 
+def get_patterns():
+    # Define task functions dynamically
+    tasks = {}
+    tasks.update(create_tasks_v2(non_overlap_soloar_sys, ["shape", "color", "size", "count"], range(1, 5)))
+    tasks.update(create_tasks_v2(feature_symmetry_circle, ["shape", "color", "size", "count"], range(1, 5)))
 
-# Define task functions dynamically
-tasks = {}
-tasks.update(create_tasks_v2(non_overlap_soloar_sys, ["shape", "color", "size", "count"], range(1, 5)))
-tasks.update(create_tasks_v2(feature_symmetry_circle, ["shape", "color", "size", "count"], range(1, 5)))
-
-# Convert tasks to pattern dictionary
-pattern_dicts = [{"name": key, "module": task} for key, task in tasks.items()]
+    # Convert tasks to pattern dictionary
+    pattern_dicts = [{"name": key, "module": task} for key, task in tasks.items()]
+    return pattern_dicts

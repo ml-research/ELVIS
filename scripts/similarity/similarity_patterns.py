@@ -38,14 +38,17 @@ def create_tasks_v3(func, params, task_sizes, obj_quantities):
         for comb in get_all_combs(params) for s in task_sizes for oq in obj_quantities}
 
 
-# Define task functions dynamically
-tasks = {}
-tasks.update(create_tasks_v3(non_overlap_fixed_number, ["shape"], range(2, 5), ["s", "m", "l"]))
-tasks.update(create_tasks_v3(non_overlap_pacman, ["color", "size", "count"], range(2, 6), ["s", "m", "l"]))
-tasks.update(create_tasks_v3(non_overlap_palette, ["size", "shape", "count", "color"], range(2, 4), ["s", "m", "l"]))
+def get_patterns():
+    # Define task functions dynamically
+    tasks = {}
+    tasks.update(create_tasks_v3(non_overlap_fixed_number, ["shape"], range(2, 5), ["s", "m", "l"]))
+    tasks.update(create_tasks_v3(non_overlap_pacman, ["color", "size", "count"], range(2, 6), ["s", "m", "l"]))
+    tasks.update(create_tasks_v3(non_overlap_palette, ["size", "shape", "count", "color"], range(2, 4), ["s", "m", "l"]))
 
-# Convert tasks to pattern dictionary
-pattern_dicts = [{"name": key, "module": task} for key, task in tasks.items()]
+    # Convert tasks to pattern dictionary
+    pattern_dicts = [{"name": key, "module": task} for key, task in tasks.items()]
+    return pattern_dicts
+
 
 """
 # kp(x):-pred_a(X), pred_b(X)
@@ -55,4 +58,3 @@ pattern_dicts = [{"name": key, "module": task} for key, task in tasks.items()]
 
 
 """
-

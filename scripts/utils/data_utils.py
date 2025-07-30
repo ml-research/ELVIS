@@ -94,8 +94,8 @@ def calculate_metrics(TN, FP, FN, TP):
 
 def get_random_sizes(obj_num, obj_size):
     sizes = [
-        random.uniform(obj_size * 0.5, obj_size * 0.9) if random.random() < 0.5
-        else random.uniform(obj_size * 1.2, obj_size * 1.6)
+        random.uniform(obj_size * 0.4, obj_size * 0.7) if random.random() < 0.3
+        else random.uniform(obj_size * 1.5, obj_size * 1.9)
         for _ in range(obj_num)
     ]
     return sizes
