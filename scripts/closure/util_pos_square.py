@@ -84,104 +84,6 @@ def closure_big_square(obj_size, is_positive, clu_num, params, irrel_params, obj
     objs = encode_utils.encode_scene(positions, sizes, colors, shapes, group_ids, is_positive)
     return objs
 
-    # # --- Property assignment ---
-    # if is_positive:
-    #     shapes = random.choices(logic["shape"], k=obj_num) if "shape" in params else random.choices(all_shapes, k=obj_num)
-    #     colors = random.choices(logic["color"], k=obj_num) if "color" in params else data_utils.random_select_unique_mix(all_colors, obj_num)
-    #     sizes = [logic["size"]] * obj_num if "size" in params else data_utils.get_random_sizes(obj_num, obj_size)
-    # else:
-    #     cf_params = data_utils.get_proper_sublist(params + ["position"])
-    #     shapes = random.choices(logic["shape"], k=obj_num) if "shape" in cf_params and "shape" not in to_break else data_utils.random_select_unique_mix(all_shapes, obj_num)
-    #     colors = random.choices(logic["color"], k=obj_num) if "color" in cf_params and "color" not in to_break else data_utils.random_select_unique_mix(all_colors, obj_num)
-    #     sizes = [logic["size"]] * obj_num if "size" in cf_params and "size" not in to_break else data_utils.get_random_sizes(obj_num, obj_size)
-    #
-    # objs = encode_utils.encode_scene(positions, sizes, colors, shapes, group_ids, is_positive)
-    # return objs
-
-
-# def closure_big_square_legacy(obj_size, is_positive, clu_num, params, obj_quantity, pin):
-#     objs = []
-#     positions = []
-#
-#     # Generate random anchors for clusters ensuring proper distance
-#     group_anchors = []
-#     for _ in range(clu_num):
-#         group_anchors.append(pos_utils.generate_random_anchor(group_anchors))
-#     group_ids = []
-#     for i in range(clu_num):
-#         x = group_anchors[i][0]
-#         y = group_anchors[i][1]
-#         positions += pos_utils.get_square_positions(obj_quantity, x, y)
-#         group_ids += [i] * len(positions)
-#     obj_num = len(positions)
-#
-#     # 50% of the negative images, random object positions but other properties as same as positive
-#     is_random = False
-#     if not is_positive and pin and random.random() < 0.3:
-#         positions = pos_utils.get_random_positions(obj_num, obj_size)
-#         is_positive = True
-#         is_random = True
-#
-#     if is_positive:
-#         if "shape" in params or random.random() < 0.5:
-#             shapes = random.choices(["triangle", "circle"], k=obj_num)
-#         else:
-#             if random.random() < 0.5:
-#                 shapes = random.choices(["triangle", "square"], k=obj_num)
-#             else:
-#                 shapes = random.choices(["circle", "square"], k=obj_num)
-#
-#         if "color" in params or random.random() < 0.5:
-#             colors = random.choices(["blue", "red"], k=obj_num)
-#         else:
-#             colors = data_utils.random_select_unique_mix(config.color_large_exclude_gray, obj_num)
-#
-#         if "size" in params or random.random() < 0.5:
-#             # shapes = [random.choice(["triangle", "circle"])] * obj_num
-#             sizes = [obj_size] * obj_num
-#         else:
-#             sizes = data_utils.get_random_sizes(obj_num, obj_size)
-#
-#     else:
-#         cf_params = data_utils.get_proper_sublist(params)
-#         if "shape" in cf_params:
-#             shapes = random.choices(["triangle", "circle"], k=obj_num)
-#         else:
-#             if random.random() < 0.5:
-#                 shapes = data_utils.random_select_unique_mix(["triangle", "square"], obj_num)
-#             else:
-#                 shapes = data_utils.random_select_unique_mix(["circle", "square"], obj_num)
-#         if "color" in cf_params:
-#             colors = random.choices(["blue", "red"], k=obj_num)
-#         else:
-#             colors = data_utils.random_select_unique_mix(config.color_large_exclude_gray, obj_num)
-#         if "size" in cf_params:
-#             # shapes = [random.choice(["triangle", "circle"])] * obj_num
-#             sizes = [obj_size] * obj_num
-#         else:
-#             sizes = data_utils.get_random_sizes(obj_num, obj_size)
-#     try:
-#         for i in range(len(positions)):
-#             if is_random:
-#                 group_id = -1
-#             else:
-#                 group_id = group_ids[i]
-#             objs.append(encode_utils.encode_objs(
-#                 x=positions[i][0],
-#                 y=positions[i][1],
-#                 size=sizes[i],
-#                 color=colors[i],
-#                 shape=shapes[i],
-#                 line_width=-1,
-#                 solid=True,
-#                 group_id=group_id,
-#             ))
-#     except Exception as e:
-#         raise e
-#
-#     return objs
-#
-
 def get_logic_rules(fixed_props):
     head = "image_target(X)"
 
@@ -194,7 +96,7 @@ def get_logic_rules(fixed_props):
     return rule
 
 
-def separate_big_square(name, rel_params, irrel_params, is_positive, clu_num, obj_quantity, pin):
+def separate_big_square(rel_params, irrel_params, is_positive, clu_num, obj_quantity, pin):
     obj_size = 0.05
     objs = closure_big_square(obj_size, is_positive, clu_num, rel_params, irrel_params, obj_quantity, pin)
     t = 0

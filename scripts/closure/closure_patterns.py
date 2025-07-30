@@ -25,18 +25,18 @@ def get_patterns():
         "size",
         "count"
     ]
-    # tasks.update(create_tasks_v3(separate_big_triangle, [
-    #     "shape",
-    #     "color",
-    #     "size",
-    #     "count"
-    # ], range(1, 4), size_list, pin))
+    # tasks, names = create_tasks_v3(separate_big_triangle, props, range(1, 4), size_list, pin)
+    # all_tasks.extend(tasks)
+    # all_names.extend(names)
 
-    tasks, names = create_tasks_v3(separate_big_square, props, range(1, 3), size_list, pin)
+    # tasks, names = create_tasks_v3(separate_big_square, props, range(1, 3), size_list, pin)
+    # all_tasks.extend(tasks)
+    # all_names.extend(names)
+
+    tasks, names = create_tasks_v3(non_overlap_big_circle, props, range(1, 3), size_list,pin)
     all_tasks.extend(tasks)
     all_names.extend(names)
 
-    # tasks.update(create_tasks_v3(non_overlap_big_circle, ["shape", "color", "size"], range(1, 3), size_list,pin))
     # tasks.update(create_tasks_v2(non_overlap_feature_triangle, ["color", "size"], range(1, 5), pin))
     # tasks.update(create_tasks_v2(non_overlap_feature_square, ["color", "size"], range(1, 5), pin))
     # tasks.update(create_tasks_v2(non_overlap_feature_circle, ["color","shape", "size"], range(1, 4), pin))

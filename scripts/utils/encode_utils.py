@@ -73,7 +73,7 @@ def create_tasks_v3(func, params, task_sizes, obj_quantities, prin_in_neg):
                     if task_name in tasks:
                         raise ValueError(f"Duplicate task key detected: {task_name}")
                     tasks.append(
-                        lambda p, tn=task_name, s=si, relative_comb=rel_comb, irrelative_comb=irrel_comb, obj_quantity=oq: func(tn, relative_comb, irrelative_comb, p, s,
+                        lambda p, tn=task_name, s=si, relative_comb=rel_comb, irrelative_comb=irrel_comb, obj_quantity=oq: func(relative_comb, irrelative_comb, p, s,
                                                                                                                                 obj_quantity, prin_in_neg)
                     )
                     names.append(task_name)
