@@ -14,6 +14,7 @@ from pathlib import Path
 from torch.utils.data import DataLoader, Subset
 from collections import defaultdict
 from rtpt import RTPT
+from tqdm import tqdm
 from scripts import config
 
 from scripts.utils import data_utils
@@ -198,14 +199,12 @@ def run_vit(data_path, principle, batch_size, device, img_num, epochs):
     rtpt = RTPT(name_initials='JS', experiment_name='Elvis-vit', max_iterations=len(pattern_folders))
     rtpt.start()
 
-    for pattern_folder in pattern_folders:
+    for pattern_folder in tqdm(pattern_folders):
         rtpt.step()
         train_loader, num_train_images = get_dataloader(pattern_folder, batch_size, img_num)
         wandb.log({f"{principle}/num_train_images": num_train_images})
         train_vit(model, train_loader, device, checkpoint_path, epochs)
-
         torch.cuda.empty_cache()
-
         test_folder = Path(data_path) / "test" / pattern_folder.stem
         if test_folder.exists():
             test_loader, _ = get_dataloader(test_folder, batch_size, img_num)

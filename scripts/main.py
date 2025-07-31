@@ -15,6 +15,7 @@ from io import BytesIO
 import matplotlib.transforms as transforms
 from matplotlib.path import Path
 from PIL import Image
+from tqdm import tqdm
 
 from scripts import config
 from scripts.utils import file_utils
@@ -433,7 +434,7 @@ def save_patterns(pattern_data, pattern, save_path, num_samples, is_positive):
 
 
 def save_task_overview_image(pos_imgs, neg_imgs, save_path, img_size, margin=8):
-    from PIL import Image
+
 
     imgs = pos_imgs[:2] + neg_imgs[:2]
     imgs = [Image.fromarray(img).resize((img_size, img_size)) for img in imgs]
@@ -466,7 +467,7 @@ def save_principle_patterns(args, principle_name, pattern_dicts):
     rtpt = RTPT(name_initials='JS', experiment_name=f'Elvis-Gen-{principle_name}', max_iterations=len(pattern_dicts))
     rtpt.start()
 
-    for pattern in pattern_dicts:
+    for pattern in tqdm(pattern_dicts):
         rtpt.step()
 
         pattern_name = f"{pattern_counter:03d}_" + pattern["name"]
@@ -496,7 +497,7 @@ def save_principle_patterns(args, principle_name, pattern_dicts):
             "resolution": config.img_width
         }
 
-        print(f"{pattern_counter}/{len(pattern_dicts)} Generating {principle_name} pattern {pattern_name}...")
+        # print(f"{pattern_counter}/{len(pattern_dicts)} Generating {principle_name} pattern {pattern_name}...")
         train_path = principle_path / "train" / pattern_name
         test_path = principle_path / "test" / pattern_name
 
