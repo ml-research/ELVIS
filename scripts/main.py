@@ -7,7 +7,7 @@ import cv2
 import argparse
 
 import math
-
+from rtpt import RTPT
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import numpy as np
@@ -379,6 +379,7 @@ def gen_image_cv2_full(objs):
 
     return image
 
+
 def gen_image_cv2(objs):
     """
     Generate an image from a list of objects.
@@ -461,7 +462,13 @@ def save_principle_patterns(args, principle_name, pattern_dicts):
 
     pattern_counter = 0
     num_samp = config.get_num_samples(args.lite)
+
+    rtpt = RTPT(name_initials='JS', experiment_name=f'Elvis-Gen-{principle_name}', max_iterations=len(pattern_dicts))
+    rtpt.start()
+
     for pattern in pattern_dicts:
+        rtpt.step()
+
         pattern_name = f"{pattern_counter:03d}_" + pattern["name"]
         # Run the save_patterns function if it exists in the script
 
