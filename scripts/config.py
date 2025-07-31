@@ -6,7 +6,13 @@ import matplotlib
 root = Path(__file__).parents[1]
 
 # settings
-num_samples = 100
+
+def get_num_samples(lite=False):
+    if lite:
+        return 3
+    else:
+        return 100
+
 img_width = 224
 prin_in_neg = False
 
@@ -57,9 +63,18 @@ color_large_exclude_gray = [item for item in color_large if item != "lightgray" 
 data = root / 'data'
 if not os.path.exists(data):
     os.makedirs(data)
-raw_patterns = root / 'grb'
-if not os.path.exists(raw_patterns):
-    os.makedirs(raw_patterns)
+
+
+def get_raw_patterns_path(remote=False):
+    if remote:
+        raw_patterns_path = Path('/gen_data')
+    else:
+        raw_patterns_path = root / 'gen_data'
+
+    if not os.path.exists(raw_patterns_path):
+        os.makedirs(raw_patterns_path)
+    return raw_patterns_path
+
 
 # -------------- llm path -----------------------
 cache_model_path = data / "llm_pretrained"

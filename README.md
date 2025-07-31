@@ -82,12 +82,12 @@ docker build -t elvis .
 ##### Run
 
 ``` 
-docker run -it --gpus all -v /home/ml-jsha/ELVIS:/app -v /home/ml-jsha/storage/ELVIS_RESULT/:/elvis_result --rm elvis:latest 
+docker run -it --gpus all -v /home/ml-jsha/ELVIS:/app -v /home/ml-jsha/storage/ELVIS_RESULT/:/elvis_result -v /home/ml-jsha/storage/ELVIS_Data/:/gen_data --rm elvis:latest 
 ``` 
 
 ln -s /home/ml-jsha/nesy_causal_p/storage/dataset/grb /home/ml-jsha/ELVIS/grb
 
-python -m scripts.main
+python -m scripts.main --remote
 
 ##### train llama
 python -m scripts.evaluate_models --model llama --batch_size 2 --principle proximity --img_num 3 --device_id 0

@@ -4,6 +4,9 @@ import sys
 import os
 import numpy as np
 import cv2
+import argparse
+
+import math
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
@@ -236,6 +239,146 @@ def gen_image_matplotlib(objs):
     return img
 
 
+def gen_image_cv2_full(objs):
+    img_size = config.img_width
+    image = np.zeros((img_size, img_size, 3), dtype=np.uint8)
+    bg_color = tuple(int(255 * c) if isinstance(c, float) else int(c) for c in config.bg_color[:3])
+    image[:] = bg_color
+
+    for obj in objs:
+        x = int(obj["x"] * img_size)
+        y = int(obj["y"] * img_size)
+        size = int(obj["size"] * img_size)
+        color = (int(obj["color_b"]), int(obj["color_g"]), int(obj["color_r"]))  # cv2 uses BGR
+
+        shape = obj["shape"]
+
+        if shape == "circle":
+            cv2.circle(image, (x, y), size // 2, color, -1)
+        elif shape == "square":
+            top_left = (x - size // 2, y - size // 2)
+            bottom_right = (x + size // 2, y + size // 2)
+            cv2.rectangle(image, top_left, bottom_right, color, -1)
+        elif shape == "triangle":
+            half = size // 2
+            points = np.array([
+                [x, y - half],
+                [x - half, y + half],
+                [x + half, y + half]
+            ], np.int32)
+            cv2.fillPoly(image, [points], color)
+        elif shape == "pac_man":
+            start_angle = int(obj.get("start_angle", 30))
+            end_angle = int(obj.get("end_angle", 330))
+            cv2.ellipse(image, (x, y), (size // 2, size // 2), 0, start_angle, end_angle, color, -1)
+        elif shape == "pentagon":
+            points = []
+            for i in range(5):
+                angle = 2 * math.pi * i / 5 - math.pi / 2
+                px = int(x + size / 2 * math.cos(angle))
+                py = int(y + size / 2 * math.sin(angle))
+                points.append([px, py])
+            cv2.fillPoly(image, [np.array(points, np.int32)], color)
+        elif shape == "hexagon":
+            points = []
+            for i in range(6):
+                angle = 2 * math.pi * i / 6
+                px = int(x + size / 2 * math.cos(angle))
+                py = int(y + size / 2 * math.sin(angle))
+                points.append([px, py])
+            cv2.fillPoly(image, [np.array(points, np.int32)], color)
+        elif shape == "star":
+            points = []
+            for i in range(10):
+                angle = i * math.pi / 5 - math.pi / 2
+                r = size / 2 if i % 2 == 0 else size / 4
+                px = int(x + r * math.cos(angle))
+                py = int(y + r * math.sin(angle))
+                points.append([px, py])
+            cv2.fillPoly(image, [np.array(points, np.int32)], color)
+        elif shape == "diamond":
+            points = np.array([
+                [x, y - size // 2],
+                [x - size // 2, y],
+                [x, y + size // 2],
+                [x + size // 2, y]
+            ], np.int32)
+            cv2.fillPoly(image, [points], color)
+        elif shape == "ellipse":
+            cv2.ellipse(image, (x, y), (size // 2, size // 4), 0, 0, 360, color, -1)
+        elif shape == "cross":
+            lw = size // 5
+            # Draw two rectangles rotated by 45 and -45 degrees
+            M1 = cv2.getRotationMatrix2D((x, y), 45, 1.0)
+            M2 = cv2.getRotationMatrix2D((x, y), -45, 1.0)
+            rect = np.array([
+                [x - size // 2, y - lw // 2],
+                [x + size // 2, y - lw // 2],
+                [x + size // 2, y + lw // 2],
+                [x - size // 2, y + lw // 2]
+            ], np.int32)
+            rect1 = cv2.transform(np.array([rect]), M1)[0]
+            rect2 = cv2.transform(np.array([rect]), M2)[0]
+            cv2.fillPoly(image, [rect1], color)
+            cv2.fillPoly(image, [rect2], color)
+        elif shape == "plus":
+            lw = size // 5
+            cv2.rectangle(image, (x - lw // 2, y - size // 2), (x + lw // 2, y + size // 2), color, -1)
+            cv2.rectangle(image, (x - size // 2, y - lw // 2), (x + size // 2, y + lw // 2), color, -1)
+        elif shape == "heart":
+            # Approximate heart with polygon
+            t = np.linspace(0, 2 * np.pi, 100)
+            x_ = (size / 30) * 16 * np.sin(t) ** 3
+            y_ = (size / 30) * (13 * np.cos(t) - 5 * np.cos(2 * t) - 2 * np.cos(3 * t) - np.cos(4 * t))
+            points = np.column_stack((x + x_, y + y_)).astype(np.int32)
+            cv2.fillPoly(image, [points], color)
+        elif shape == "spade":
+            # Upright spade: heart top + downward stem
+            t = np.linspace(0, 2 * np.pi, 100)
+            x_ = (size / 30) * 16 * np.sin(t) ** 3
+            y_ = (size / 30) * (13 * np.cos(t) - 5 * np.cos(2 * t) - 2 * np.cos(3 * t) - np.cos(4 * t))
+            points = np.column_stack((x + x_, y + y_ - size * 0.12)).astype(np.int32)
+            cv2.fillPoly(image, [points], color)
+
+            # Stem (downward, flared)
+            stem_h = size / 2.8
+            stem_top_w = size / 1000
+            stem_bot_w = size / 5
+            stem_top_y = y + size * 0.1
+            stem_bot_y = stem_top_y + stem_h
+            stem_points = np.array([
+                [x - stem_top_w / 2, stem_top_y],
+                [x - stem_bot_w / 2, stem_bot_y],
+                [x + stem_bot_w / 2, stem_bot_y],
+                [x + stem_top_w / 2, stem_top_y]
+            ], np.int32)
+            cv2.fillPoly(image, [stem_points], color)
+        elif shape == "club":
+            r = size / 4.9
+            centers = [
+                (x, y - r * 1.0),  # top
+                (x - r * np.sin(np.pi / 2), y + r * np.cos(np.pi / 6) * 0.6),  # left
+                (x + r * np.sin(np.pi / 2), y + r * np.cos(np.pi / 6) * 0.6),  # right
+            ]
+            for cx, cy in centers:
+                cv2.circle(image, (int(cx), int(cy)), int(r), color, -1)
+            # Stem (downward)
+            stem_h = size / 2.8
+            stem_top_w = size / 1000
+            stem_bot_w = size / 4
+            stem_top_y = y + size * 0.05
+            stem_bot_y = stem_top_y + stem_h * 1.2
+            stem_points = np.array([
+                [x - stem_top_w / 2, stem_top_y],
+                [x - stem_bot_w / 2, stem_bot_y],
+                [x + stem_bot_w / 2, stem_bot_y],
+                [x + stem_top_w / 2, stem_top_y]
+            ], np.int32)
+            cv2.fillPoly(image, [stem_points], color)
+        # else: skip unknown shapes
+
+    return image
+
 def gen_image_cv2(objs):
     """
     Generate an image from a list of objects.
@@ -281,7 +424,7 @@ def save_patterns(pattern_data, pattern, save_path, num_samples, is_positive):
         data_path = save_path / f"{example_i:05d}.json"
         objs, logic_rules = pattern["module"](is_positive)
         # encode symbolic object tensors
-        image = gen_image_matplotlib(objs)
+        image = gen_image_cv2_full(objs)
         pattern_data["logic_rules"] = logic_rules
         file_utils.save_img(img_path, data_path, pattern_data, objs, image)
         imgs.append(image)
@@ -308,8 +451,8 @@ def save_task_overview_image(pos_imgs, neg_imgs, save_path, img_size, margin=8):
     overview_img.save(save_path)
 
 
-def save_principle_patterns(principle_name, pattern_dicts):
-    resolution_folder = config.raw_patterns / f"res_{config.img_width}_pin_{config.prin_in_neg}"
+def save_principle_patterns(args, principle_name, pattern_dicts):
+    resolution_folder = config.get_raw_patterns_path(args.remote) / f"res_{config.img_width}_pin_{config.prin_in_neg}"
     os.makedirs(resolution_folder, exist_ok=True)
     principle_path = resolution_folder / principle_name
     os.makedirs(principle_path, exist_ok=True)
@@ -317,7 +460,7 @@ def save_principle_patterns(principle_name, pattern_dicts):
     file_utils.remove_folder(principle_path)
 
     pattern_counter = 0
-    num_samp = config.num_samples
+    num_samp = config.get_num_samples(args.lite)
     for pattern in pattern_dicts:
         pattern_name = f"{pattern_counter:03d}_" + pattern["name"]
         # Run the save_patterns function if it exists in the script
@@ -334,7 +477,7 @@ def save_principle_patterns(principle_name, pattern_dicts):
         pattern_data = {
             "principle": principle_name,
             "id": pattern_counter,
-            "num": config.num_samples,
+            "num": config.get_num_samples(args.lite),
             "group_num": group_num,
             "qualifier_all": qualifier_all,
             "qualifier_exist": qualifier_exist,
@@ -371,18 +514,18 @@ def save_principle_patterns(principle_name, pattern_dicts):
     print(f"{principle_name} pattern generation complete.")
 
 
-def main():
+def main(args):
     principles = {
         # "od": object_patterns.pattern_dicts,
         # "proximity": prox_patterns.pattern_dicts,
         # "similarity": similarity_patterns.pattern_dicts,
         # "symmetry": symmetry_patterns.pattern_dicts,
         # "continuity": continuity_patterns.pattern_dicts,
-        "closure": closure_patterns.get_patterns(),
+        "closure": closure_patterns.get_patterns(args.lite),
         # "mixed":mixed_patterns.pattern_dicts
     }
     for principle_name, pattern_dicts in principles.items():
-        save_principle_patterns(principle_name, pattern_dicts)
+        save_principle_patterns(args, principle_name, pattern_dicts)
 
 
 def draw_club_playground(x=0.5, y=0.5, size=0.4, color=(0, 0, 0), img_size=400):
@@ -450,5 +593,10 @@ def draw_club_playground(x=0.5, y=0.5, size=0.4, color=(0, 0, 0), img_size=400):
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Evaluate baseline models with CUDA support.")
+    parser.add_argument("--remote", action="store_true")
+    parser.add_argument("--lite", action="store_true")
+    args = parser.parse_args()
+
+    main(args)
     # draw_club_playground()

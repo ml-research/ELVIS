@@ -39,7 +39,7 @@ def feature_closure_triangle(is_positive, clu_num, params, irrel_params, pin):
             is_positive = True
             is_random = True
         else:
-            start_angles = [-60, 60, -180]
+            start_angles = [120, 0, 240]
             end_angles = [angle + 300 for angle in start_angles]
 
         if is_positive:

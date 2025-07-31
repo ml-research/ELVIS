@@ -70,81 +70,81 @@ def get_spline_points(points, n):
     return positions
 
 
-# def get_triangle_positions(obj_quantity, x, y):
-#     positions = []
-#     r = 0.3 - min(abs(0.5 - x), abs(0.5 - y))
-#     n = config.standard_quantity_dict[obj_quantity]
-#     r = config.get_grp_r(r, obj_quantity)
-#     innerdegree = math.radians(30)
-#     dx = r * math.cos(innerdegree)
-#     dy = r * math.sin(innerdegree)
-#     n = round(n / 3)
-#     xs = x
-#     ys = y - r
-#     xe = x + dx
-#     ye = y + dy
-#     dxi = (xe - xs) / n
-#     dyi = (ye - ys) / n
-#
-#     for i in range(n + 1):
-#         positions.append([xs + i * dxi, ys + i * dyi])
-#
-#     xs = x + dx
-#     ys = y + dy
-#     xe = x - dx
-#     ye = y + dy
-#     dxi = (xe - xs) / n
-#     dyi = (ye - ys) / n
-#     for i in range(n):
-#         positions.append([xs + (i + 1) * dxi, ys + (i + 1) * dyi])
-#
-#     xs = x - dx
-#     ys = y + dy
-#     xe = x
-#     ye = y - r
-#     dxi = (xe - xs) / n
-#     dyi = (ye - ys) / n
-#     for i in range(n - 1):
-#         positions.append([xs + (i + 1) * dxi, ys + (i + 1) * dyi])
-#
-#     return positions
-
 def get_triangle_positions(obj_quantity, x, y):
     positions = []
+    r = 0.3 - min(abs(0.5 - x), abs(0.5 - y))
     n = config.standard_quantity_dict[obj_quantity]
-    r = config.get_grp_r(0.3 - min(abs(0.5 - x), abs(0.5 - y)), obj_quantity)
+    r = config.get_grp_r(r, obj_quantity)
     innerdegree = math.radians(30)
     dx = r * math.cos(innerdegree)
     dy = r * math.sin(innerdegree)
     n = round(n / 3)
+    xs = x
+    ys = y - r
+    xe = x + dx
+    ye = y + dy
+    dxi = (xe - xs) / n
+    dyi = (ye - ys) / n
 
-    # Apex at the top
-    apex = [x, y + r]
-    left = [x - dx, y - dy]
-    right = [x + dx, y - dy]
-
-    # Side 1: left to right (base)
     for i in range(n + 1):
-        t = i / n
-        positions.append([
-            left[0] * (1 - t) + right[0] * t,
-            left[1] * (1 - t) + right[1] * t
-        ])
-    # Side 2: right to apex
-    for i in range(1, n + 1):
-        t = i / n
-        positions.append([
-            right[0] * (1 - t) + apex[0] * t,
-            right[1] * (1 - t) + apex[1] * t
-        ])
-    # Side 3: apex to left
-    for i in range(1, n):
-        t = i / n
-        positions.append([
-            apex[0] * (1 - t) + left[0] * t,
-            apex[1] * (1 - t) + left[1] * t
-        ])
+        positions.append([xs + i * dxi, ys + i * dyi])
+
+    xs = x + dx
+    ys = y + dy
+    xe = x - dx
+    ye = y + dy
+    dxi = (xe - xs) / n
+    dyi = (ye - ys) / n
+    for i in range(n):
+        positions.append([xs + (i + 1) * dxi, ys + (i + 1) * dyi])
+
+    xs = x - dx
+    ys = y + dy
+    xe = x
+    ye = y - r
+    dxi = (xe - xs) / n
+    dyi = (ye - ys) / n
+    for i in range(n - 1):
+        positions.append([xs + (i + 1) * dxi, ys + (i + 1) * dyi])
+
     return positions
+
+# def get_triangle_positions(obj_quantity, x, y):
+#     positions = []
+#     n = config.standard_quantity_dict[obj_quantity]
+#     r = config.get_grp_r(0.3 - min(abs(0.5 - x), abs(0.5 - y)), obj_quantity)
+#     innerdegree = math.radians(30)
+#     dx = r * math.cos(innerdegree)
+#     dy = r * math.sin(innerdegree)
+#     n = round(n / 3)
+#
+#     # Apex at the top
+#     apex = [x, y + r]
+#     left = [x - dx, y - dy]
+#     right = [x + dx, y - dy]
+#
+#     # Side 1: left to right (base)
+#     for i in range(n + 1):
+#         t = i / n
+#         positions.append([
+#             left[0] * (1 - t) + right[0] * t,
+#             left[1] * (1 - t) + right[1] * t
+#         ])
+#     # Side 2: right to apex
+#     for i in range(1, n + 1):
+#         t = i / n
+#         positions.append([
+#             right[0] * (1 - t) + apex[0] * t,
+#             right[1] * (1 - t) + apex[1] * t
+#         ])
+#     # Side 3: apex to left
+#     for i in range(1, n):
+#         t = i / n
+#         positions.append([
+#             apex[0] * (1 - t) + left[0] * t,
+#             apex[1] * (1 - t) + left[1] * t
+#         ])
+#     return positions
 
 
 def get_square_positions(obj_quantity, x, y):
@@ -228,12 +228,12 @@ def get_feature_triangle_positions(anchor, clu_size):
     dx = s * math.cos(math.radians(30))
     dy = s * math.cos(math.radians(30))
 
-    # Apex at the top
-    positions.append([x, y + s])
+    # Apex at the bottom
+    positions.append([x, y - s])
     # Base left
-    positions.append([x - dx, y - dy])
+    positions.append([x - dx, y + dy])
     # Base right
-    positions.append([x + dx, y - dy])
+    positions.append([x + dx, y + dy])
     return positions
 
 
