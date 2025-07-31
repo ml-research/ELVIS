@@ -109,58 +109,18 @@ def closure_big_triangle(obj_size, is_positive, clu_num, params, irrel_params, o
     objs = encode_utils.encode_scene(positions, sizes, colors, shapes, group_ids, is_positive)
     return objs
 
-    #
-    # if is_positive:
-    #     # Use fixed count if "count" in params, else use default
-    #     count = logic["count"] if "count" in params else random.choice(list(config.standard_quantity_dict.keys()))
-    #     positions, group_ids = generate_positions(clu_num, count, obj_size, cluster=True)
-    #     obj_num = len(positions)
-    #     shapes = get_shapes(obj_num, logic["shape"]) if "shape" in params else get_shapes(obj_num, all_shapes)
-    #     colors = get_colors(obj_num, logic["color"]) if "color" in params else get_colors(obj_num, all_colors)
-    #     sizes = [logic["size"]] * obj_num if "size" in params else data_utils.get_random_sizes(obj_num, obj_size)
-    # else:
-    #     # Always break at least one rule
-    #     rules = params
-    #     to_break = set([random.choice(rules)])
-    #     for rule in rules:
-    #         if rule not in to_break and random.random() < 0.5:
-    #             to_break.add(rule)
-    #
-    #     # Break "count" by varying object number per cluster
-    #     if "count" in to_break:
-    #         # Randomize count per cluster
-    #         available_counts = [k for k in config.standard_quantity_dict.keys() if k != obj_quantity]
-    #         counts = [random.choice(available_counts) for _ in range(clu_num)]
-    #         # counts = [random.choice(list(config.standard_quantity_dict.keys())) for _ in range(clu_num)]
-    #         positions = []
-    #         group_ids = []
-    #         for i, c in enumerate(counts):
-    #             pos, _ = generate_positions(1, c, obj_size, cluster="position" not in to_break)
-    #             positions += pos
-    #             group_ids += [i] * len(pos)
-    #         obj_num = len(positions)
-    #     else:
-    #         count = logic["count"]
-    #         positions, group_ids = generate_positions(clu_num, count, obj_size, cluster="position" not in to_break)
-    #         obj_num = len(positions)
-    #
-    #     shapes = get_shapes(obj_num, logic["shape"]) if "shape" in params and "shape" not in to_break else get_shapes(obj_num, all_shapes)
-    #     colors = get_colors(obj_num, logic["color"]) if "color" in params and "color" not in to_break else get_colors(obj_num, all_colors)
-    #     sizes = [logic["size"]] * obj_num if "size" in params and "size" not in to_break else data_utils.get_random_sizes(obj_num, obj_size)
-    #
-    # objs = encode_utils.encode_scene(positions, sizes, colors, shapes, group_ids, is_positive)
-    # return objs
 
-
-def get_logic_rules(fixed_props):
-    head = "image_target(X)"
-
-    body = ""
-    if "shape" in fixed_props:
-        body += "has_shape(X,square),has_shape(X,circle),no_shape(X,triangle),"
-    if "color" in fixed_props:
-        body += "has_color(X,green),has_color(X,yellow)"
-    rule = f"{head}:-{body}principle(closure)."
+def get_logic_rules(params):
+    head = "group_target(X)"
+    body = "in(O,X),in(G,X),"
+    if "color" in params:
+        body += "has_color(green,O),has_color(yellow,O),"
+    if "size" in params:
+        body += "same_obj_size(G),"
+    if "shape" in params:
+        body += ("has_shape(O1,square),has_shape(O2,circle),no_shape(O3,triangle),"
+                 "in(O1,G),in(O2,G),in(O3,G),")
+    rule = f"{head}:-{body}group_shape(triangle,G),principle(closure,G)."
     return rule
 
 

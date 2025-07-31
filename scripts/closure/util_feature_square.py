@@ -9,28 +9,25 @@ from scripts.utils.shape_utils import overlaps, overflow
 from scripts.utils.pos_utils import get_feature_square_positions
 
 
-def feature_closure_square(is_positive, clu_num, params, pin):
-    cluster_dist = 0.2
-    x_min = 0.25
-    x_max = 0.75
-    y_min = 0.5
-    y_max = 0.95
+def feature_closure_square(is_positive, clu_num, params, irrel_params, pin):
     obj_num = 4
 
-    objs = []
     # Generate random anchors for clusters ensuring proper distance
     group_anchors = []
+    clu_size = ({1: 0.3 + random.random() * 0.2,
+                 2: 0.3 + random.random() * 0.1,
+                 3: 0.3 + random.random() * 0.1,
+                 4: 0.2 + random.random() * 0.1
+                 }.get(clu_num, 0.3))
+    obj_size = clu_size * (0.3 + random.random() * 0.1)
+    color_val = random.choice(config.color_large_exclude_gray)
+    size_val = obj_size
+
     for _ in range(clu_num):
-        group_anchors.append(pos_utils.generate_random_anchor(group_anchors, cluster_dist, x_min, x_max, y_min, y_max))
+        group_anchors.append(pos_utils.generate_random_anchor(group_anchors, 0.2, 0.25, 0.75, 0.5, 0.95))
 
+    objs = []
     for i in range(clu_num):
-        clu_size = ({1: 0.3 + random.random() * 0.2,
-                     2: 0.3 + random.random() * 0.1,
-                     3: 0.3 + random.random() * 0.1,
-                     4: 0.2 + random.random() * 0.1
-                     }.get(clu_num, 0.3))
-        obj_size = clu_size * (0.3 + random.random() * 0.1)
-
         positions = get_feature_square_positions(group_anchors[i], clu_size)
         shapes = ["pac_man"] * obj_num
         # 50% of the negative images, random object positions but other properties as same as positive
@@ -48,55 +45,63 @@ def feature_closure_square(is_positive, clu_num, params, pin):
                 colors = random.choices(["blue", "red"], k=obj_num)
             else:
                 colors = data_utils.random_select_unique_mix(config.color_large_exclude_gray, obj_num)
+            if "color" in irrel_params:
+                colors = [color_val] * obj_num
 
-            if "size" in params or random.random() < 0.5:
+            if "size" in params:
                 sizes = [obj_size] * obj_num
             else:
                 sizes = data_utils.get_random_sizes(obj_num, obj_size)
+            if "size" in irrel_params:
+                sizes = [size_val] * obj_num
         else:
             cf_params = data_utils.get_proper_sublist(params)
             if "color" in cf_params:
                 colors = random.choices(["blue", "red"], k=obj_num)
             else:
                 colors = data_utils.random_select_unique_mix(config.color_large_exclude_gray, obj_num)
+            if "color" in irrel_params:
+                colors = [color_val] * obj_num
 
-            if "size" in cf_params:
-                sizes = [obj_size] * obj_num
-            else:
+            if "size" not in cf_params:
                 sizes = data_utils.get_random_sizes(obj_num, obj_size)
-        try:
-            if is_random:
-                group_id = -1
             else:
-                group_id = i
-            for i in range(len(positions)):
-                objs.append(encode_utils.encode_objs(
-                    x=positions[i][0],
-                    y=positions[i][1],
-                    size=sizes[i],
-                    color=colors[i],
-                    shape=shapes[i],
-                    line_width=-1,
-                    solid=True,
-                    start_angle=start_angles[i],
-                    end_angle=end_angles[i],
-                    group_id=group_id,
-                ))
-        except Exception as e:
-            raise e
+                sizes = [obj_size] * obj_num
+            if "size" in irrel_params:
+                sizes = [size_val] * obj_num
+
+        group_id = -1 if is_random else i
+        objs += encode_utils.encode_scene(positions, sizes, colors, shapes,
+                                          [group_id] * len(positions), is_positive, start_angles, end_angles)
 
     return objs
 
 
-def non_overlap_feature_square(params, is_positive, clu_num, pin):
-    objs = feature_closure_square(is_positive, clu_num, params, pin)
+def get_logic_rules(params):
+    head = "group_target(X)"
+
+    body = "in(O,X),in(G,X),"
+    if "color" in params:
+        body += "has_color(blue,O),has_color(red,O),"
+    if "size" in params:
+        body += "same_obj_size(G),"
+
+    rule = f"{head}:-{body}group_shape(square,G),principle(closure,G)."
+    return rule
+
+
+
+def non_overlap_feature_square(params, irrel_params, is_positive, clu_num, pin):
+    objs = feature_closure_square(is_positive, clu_num, params, irrel_params, pin)
     t = 0
     tt = 0
     max_try = 2000
     while (overlaps(objs) or overflow(objs)) and (t < max_try):
-        objs = feature_closure_square(is_positive, clu_num, params, pin)
+        objs = feature_closure_square(is_positive, clu_num, params, irrel_params, pin)
         if tt > 10:
             tt = 0
         tt = tt + 1
         t = t + 1
-    return objs
+    logic_rules = get_logic_rules(params)
+
+    return objs, logic_rules

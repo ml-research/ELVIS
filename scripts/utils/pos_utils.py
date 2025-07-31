@@ -222,16 +222,18 @@ def get_feature_triangle_positions(anchor, clu_size):
     x = anchor[0]
     y = anchor[1]
     r = 0.3 - min(abs(0.5 - x), abs(0.5 - y)) * 0.5
-    xs = x
-    ys = y - r
-    # correct the size to  the same area as an square
+
+    # Correct the size to the same area as a square
     s = 0.7 * math.sqrt(3) * clu_size / 3
     dx = s * math.cos(math.radians(30))
     dy = s * math.cos(math.radians(30))
 
-    positions.append([xs, ys - s])
-    positions.append([xs + dx, ys + dy])
-    positions.append([xs - dx, ys + dy])
+    # Apex at the top
+    positions.append([x, y + s])
+    # Base left
+    positions.append([x - dx, y - dy])
+    # Base right
+    positions.append([x + dx, y - dy])
     return positions
 
 

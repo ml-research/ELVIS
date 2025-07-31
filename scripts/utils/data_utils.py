@@ -74,6 +74,12 @@ def get_proper_sublist(lst):
     sublist_size = random.randint(1, len(lst) - 1)  # Ensure it's a proper sublist
     return random.sample(lst, sublist_size)  # Randomly select elements
 
+def get_non_empty_sublist(lst):
+    # Returns a non-empty random sublist of lst
+    if not lst:
+        return []
+    n = random.randint(1, len(lst))
+    return random.sample(lst, n)
 
 def confusion_matrix_elements(predictions, ground_truth):
     TN = sum(1 for p, gt in zip(predictions, ground_truth) if p == 0 and gt == 0)

@@ -24,7 +24,7 @@ def encode_objs(x, y, size, color, shape, line_width, solid, start_angle=0, end_
     return data
 
 
-def encode_scene(positions, sizes, colors, shapes, group_ids, is_positive):
+def encode_scene(positions, sizes, colors, shapes, group_ids, is_positive, start_angles=None, end_angles=None):
     objs = []
     for i in range(len(positions)):
         group_id = group_ids[i] if is_positive or group_ids[i] >= 0 else -1
@@ -37,6 +37,8 @@ def encode_scene(positions, sizes, colors, shapes, group_ids, is_positive):
             line_width=-1,
             solid=True,
             group_id=group_id,
+            start_angle=start_angles[i] if start_angles else 0,
+            end_angle=end_angles[i] if end_angles else 360
         ))
     return objs
 
@@ -47,9 +49,32 @@ s: size
 """
 
 
+# def create_tasks_v2(func, params, task_sizes, prin_in_neg):
+#     return {f"{func.__name__}_{'_'.join(map(str, comb))}_{s}": (lambda p, s=s, comb=comb: func(comb, p, s, prin_in_neg))
+#             for comb in get_all_combs(params) for s in task_sizes}
+
 def create_tasks_v2(func, params, task_sizes, prin_in_neg):
-    return {f"{func.__name__}_{'_'.join(map(str, comb))}_{s}": (lambda p, s=s, comb=comb: func(comb, p, s, prin_in_neg))
-            for comb in get_all_combs(params) for s in task_sizes}
+    tasks = []
+    names = []
+    counter = 0
+    for rel_comb in get_all_combs(params):
+        irrelevant_params = [k for k in params if k not in rel_comb and k != "position"]
+        irrelevant_params.append("")
+        for irrel_comb in get_all_combs(irrelevant_params):
+            for si in task_sizes:
+                task_name = (
+                        f"{counter}_{func.__name__}_rel_"
+                        + "_".join(f"{k}" for k in rel_comb)
+                        + f"_{si}_irrel_"
+                        + "_".join(f"{k}" for k in irrel_comb)
+                )
+                counter += 1
+                if task_name in tasks:
+                    raise ValueError(f"Duplicate task key detected: {task_name}")
+                tasks.append(lambda p, tn=task_name, s=si, relative_comb=rel_comb, irrelative_comb=irrel_comb: func(relative_comb, irrelative_comb, p, s, prin_in_neg))
+
+                names.append(task_name)
+    return tasks, names
 
 
 def create_tasks_v3(func, params, task_sizes, obj_quantities, prin_in_neg):

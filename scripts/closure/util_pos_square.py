@@ -17,7 +17,6 @@ def closure_big_square(obj_size, is_positive, clu_num, params, irrel_params, obj
         "color": ["blue", "red"],
         "size": obj_size,
         "count": True
-
     }
     all_shapes = config.all_shapes
     all_colors = config.color_large_exclude_gray
@@ -84,15 +83,18 @@ def closure_big_square(obj_size, is_positive, clu_num, params, irrel_params, obj
     objs = encode_utils.encode_scene(positions, sizes, colors, shapes, group_ids, is_positive)
     return objs
 
-def get_logic_rules(fixed_props):
-    head = "image_target(X)"
 
-    body = ""
-    if "shape" in fixed_props:
-        body += "has_shape(X,square),has_shape(X,circle),no_shape(X,triangle),"
-    if "color" in fixed_props:
-        body += "has_color(X,green),has_color(X,yellow)"
-    rule = f"{head}:-{body}principle(closure)."
+def get_logic_rules(params):
+    head = "group_target(X)"
+    body = "in(O,X),in(G,X),"
+    if "color" in params:
+        body += "has_color(blue,O),has_color(red,O),"
+    if "size" in params:
+        body += "same_obj_size(G),"
+    if "shape" in params:
+        body += ("has_shape(O1,trianlge),has_shape(O2,circle),no_shape(O3,square),"
+                 "in(O1,G),in(O2,G),in(O3,G),")
+    rule = f"{head}:-{body}group_shape(square,G),principle(closure,G)."
     return rule
 
 

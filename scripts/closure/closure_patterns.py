@@ -12,34 +12,46 @@ from scripts import config
 
 
 def get_patterns():
-    size_list = ["s", "m", "l", "xl", "xxl", "xxxl"]
+    size_list = [
+        "s",
+        "m",
+        "l",
+        "xl",
+        "xxl",
+        "xxxl"
+    ]
+    grp_num_range = range(1, 4)
     pin = config.prin_in_neg
     # Define task functions dynamically
     all_tasks = []
     all_names = []
 
-    props = [
-        "shape",
-        "color",
-        "position",
-        "size",
-        "count"
-    ]
-    # tasks, names = create_tasks_v3(separate_big_triangle, props, range(1, 4), size_list, pin)
-    # all_tasks.extend(tasks)
-    # all_names.extend(names)
+    feature_props = ["color", "size"]
+    separate_props = ["shape", "color", "position", "size", "count"]
 
-    # tasks, names = create_tasks_v3(separate_big_square, props, range(1, 3), size_list, pin)
-    # all_tasks.extend(tasks)
-    # all_names.extend(names)
-
-    tasks, names = create_tasks_v3(non_overlap_big_circle, props, range(1, 3), size_list,pin)
+    tasks, names = create_tasks_v2(non_overlap_feature_triangle, feature_props, grp_num_range, pin)
     all_tasks.extend(tasks)
     all_names.extend(names)
 
-    # tasks.update(create_tasks_v2(non_overlap_feature_triangle, ["color", "size"], range(1, 5), pin))
-    # tasks.update(create_tasks_v2(non_overlap_feature_square, ["color", "size"], range(1, 5), pin))
-    # tasks.update(create_tasks_v2(non_overlap_feature_circle, ["color","shape", "size"], range(1, 4), pin))
+    tasks, names = create_tasks_v2(non_overlap_feature_square, feature_props, grp_num_range, pin)
+    all_tasks.extend(tasks)
+    all_names.extend(names)
+
+    tasks, names = create_tasks_v2(non_overlap_feature_circle, feature_props, grp_num_range, pin)
+    all_tasks.extend(tasks)
+    all_names.extend(names)
+
+    tasks, names = create_tasks_v3(separate_big_triangle, separate_props, grp_num_range, size_list, pin)
+    all_tasks.extend(tasks)
+    all_names.extend(names)
+
+    tasks, names = create_tasks_v3(separate_big_square, separate_props, grp_num_range, size_list, pin)
+    all_tasks.extend(tasks)
+    all_names.extend(names)
+
+    tasks, names = create_tasks_v3(non_overlap_big_circle, separate_props, grp_num_range, size_list, pin)
+    all_tasks.extend(tasks)
+    all_names.extend(names)
 
     # Convert tasks to pattern dictionary
     all_patterns = [{"name": key, "module": task} for key, task in zip(all_names, all_tasks)]
