@@ -38,12 +38,9 @@ def get_spline_points(points, n):
     return positions
 
 
-def position_continuity_two_splines(obj_size, is_positive, clu_num, params, obj_quantity, pin):
-    objs = []
-
+def position_continuity_two_splines(obj_size, is_positive, clu_num, params, irrel_params, obj_quantity, pin):
     # draw the main road
     center_point = [random.uniform(0.4, 0.6), random.uniform(0.4, 0.6)]
-
     line1_key_points = np.array([
         [random.random() * 0.1 + 0.1, random.random() * 0.1 + 0.7],  # start point
         center_point,
@@ -55,83 +52,58 @@ def position_continuity_two_splines(obj_size, is_positive, clu_num, params, obj_
         center_point,
         [random.uniform(0.7, 0.8), random.uniform(0.7, 0.8)]
     ])
-
-    line_obj_num = {"s": 5, "m": 7, "l": 12}.get(obj_quantity, 2)
-
+    line_obj_num = {"s": 5, "m": 7, "l": 12, "xl": 17, "xxl": 21, "xxxl": 25}.get(obj_quantity, 2)
     line1_points = get_spline_points(line1_key_points, line_obj_num)
     line2_points = get_spline_points(line2_key_points, line_obj_num)
     group_ids = [0] * len(line1_points) + [1] * len(line2_points)
-    is_random = False
-    if is_positive:
-        if "shape" in params or random.random() < 0.5:
-            shapes = [random.choice(config.bk_shapes[1:])] * line_obj_num * 2
-        else:
-            shapes = data_utils.random_select_unique_mix(config.bk_shapes[1:], line_obj_num * 2)
+    logic = {"shape": ["square", "circle"], "color": ["green", "yellow"], "size": [obj_size], "count": True}
+    invariant_shape = random.choice(config.all_shapes)
+    invariant_color = random.choice(config.color_large_exclude_gray)
+    invariant_size = obj_size
+    cf_params = data_utils.get_proper_sublist(params + ["position"])
 
-        if "color" in params or random.random() < 0.5:
-            colors = [random.choice(config.color_large_exclude_gray)] * line_obj_num * 2
-        else:
-            colors = data_utils.random_select_unique_mix(config.color_large_exclude_gray, line_obj_num * 2)
+    shapes = data_utils.assign_property(is_positive, "shape", params, cf_params, irrel_params, invariant_shape, logic["shape"], config.all_shapes, line_obj_num * 2)
+    colors = data_utils.assign_property(is_positive, "color", params, cf_params, irrel_params, invariant_color, logic["color"], config.color_large_exclude_gray, line_obj_num * 2)
+    sizes = data_utils.assign_property(is_positive, "size", params, cf_params, irrel_params, invariant_size, logic["size"], data_utils.get_random_sizes(line_obj_num * 2, obj_size),
+                                       line_obj_num * 2)
 
-        if "size" in params or random.random() < 0.5:
-            sizes = [obj_size] * line_obj_num * 2
-        else:
-            sizes = [random.uniform(obj_size * 0.6, obj_size * 1.5) for _ in
-                     range(line_obj_num * 2)]
-
+    has_position = is_positive or "position" in cf_params
+    if has_position:
         positions = np.concatenate((line1_points, line2_points))
     else:
-        if "shape" in params or random.random() < 0.5:
-            shapes = data_utils.random_select_unique_mix(config.bk_shapes[1:], line_obj_num * 2)
-        else:
-            shapes = [random.choice(config.bk_shapes[1:])] * line_obj_num * 2
-
-        if "color" in params or random.random() < 0.5:
-            colors = data_utils.random_select_unique_mix(config.color_large_exclude_gray, line_obj_num * 2)
-        else:
-            colors = [random.choice(config.color_large_exclude_gray)] * line_obj_num * 2
-
-        if "size" in params or random.random() < 0.5:
-            sizes = [random.uniform(obj_size * 0.6, obj_size * 1.5) for _ in range(line_obj_num * 2)]
-        else:
-            sizes = [obj_size] * line_obj_num * 2
-        if pin:
-            positions = np.concatenate((line1_points, line2_points))
-        else:
-            is_random = True
-            positions = pos_utils.get_random_positions(len(line1_points) + len(line2_points), obj_size)
-    try:
-        for i in range(len(positions)):
-            if is_random:
-                group_id = -1
-            else:
-                group_id = group_ids[i]
-            objs.append(encode_utils.encode_objs(
-                x=positions[i][0],
-                y=positions[i][1],
-                size=sizes[i],
-                color=colors[i],
-                shape=shapes[i],
-                line_width=-1,
-                solid=True,
-                group_id=group_id,
-            ))
-    except Exception as e:
-        raise e
+        positions = pos_utils.get_random_positions(len(line1_points) + len(line2_points), obj_size)
+        group_ids = [-1] * len(positions)
+    objs = encode_utils.encode_scene(positions, sizes, colors, shapes, group_ids, is_positive)
     return objs
 
 
-def non_overlap_two_splines(params, is_positive, clu_num, obj_quantity, pin=True):
+def get_logic_rules(params):
+    head = "group_target(X)"
+    body = "in(O,X),in(G,X),"
+    if "color" in params:
+        body += "has_color(blue,O),has_color(red,O),"
+    if "size" in params:
+        body += "same_obj_size(G),"
+    if "shape" in params:
+        body += ("has_shape(O1,trianlge),has_shape(O2,circle),no_shape(O3,square),"
+                 "in(O1,G),in(O2,G),in(O3,G),")
+    rule = f"{head}:-{body}group_shape(square,G),principle(closure,G)."
+    return "Not Implemented yet"
+
+
+def non_overlap_two_splines(params, irrel_params, is_positive, clu_num, obj_quantity, pin=True):
     obj_size = 0.05
-    objs = position_continuity_two_splines(obj_size, is_positive, clu_num, params, obj_quantity, pin=pin)
+    objs = position_continuity_two_splines(obj_size, is_positive, clu_num, params, irrel_params, obj_quantity, pin=pin)
     t = 0
     tt = 0
     max_try = 1000
     while (overlaps(objs) or overflow(objs)) and (t < max_try):
-        objs = position_continuity_two_splines(obj_size, is_positive, clu_num, params, obj_quantity, pin=pin)
+        objs = position_continuity_two_splines(obj_size, is_positive, clu_num, params, irrel_params, obj_quantity, pin=pin)
         if tt > 10:
             tt = 0
             obj_size = obj_size * 0.90
         tt = tt + 1
         t = t + 1
-    return objs
+    logic_rules = get_logic_rules(params)
+
+    return objs, logic_rules

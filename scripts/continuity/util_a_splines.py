@@ -38,12 +38,7 @@ def get_spline_points(points, n):
     return positions
 
 
-def position_continuity_a_splines(obj_size, is_positive, clu_num, params, obj_quantity, pin):
-    objs = []
-
-    # draw the main road
-    colors = random.sample(config.color_large_exclude_gray, 3)
-    shape = random.choice(config.bk_shapes[1:])
+def position_continuity_a_splines(obj_size, is_positive, clu_num, params, irrel_params, obj_quantity, pin):
     center_point = [random.uniform(0.4, 0.6), random.uniform(0.4, 0.6)]
 
     line1_key_points = np.array([
@@ -58,8 +53,8 @@ def position_continuity_a_splines(obj_size, is_positive, clu_num, params, obj_qu
         [random.uniform(0.8, 0.9), random.uniform(0.8, 0.9)]
     ])
 
-    line_obj_num_1 = {"s": 5, "m": 7, "l": 12}.get(obj_quantity, 2)
-    line_obj_num_2 = {"s": 7, "m": 10, "l": 15}.get(obj_quantity, 2)
+    line_obj_num_1 = {"s": 5, "m": 7, "l": 12, "xl": 15, "xxl": 20, "xxxl": 25}.get(obj_quantity, 2)
+    line_obj_num_2 = {"s": 7, "m": 10, "l": 15, "xl": 20, "xxl": 25, "xxxl": 30}.get(obj_quantity, 2)
 
     line1_points = get_spline_points(line1_key_points, line_obj_num_1)
     line2_points = get_spline_points(line2_key_points, line_obj_num_2)
@@ -67,89 +62,58 @@ def position_continuity_a_splines(obj_size, is_positive, clu_num, params, obj_qu
     line1_num = len(line1_points)
     line2_num = len(line2_points)
     total_num = len(line1_points) + len(line2_points)
-    group_ids = [0]*line1_num + [1]*line2_num
-    is_random = False
-    if is_positive:
-        if "shape" in params or random.random() < 0.5:
-            shapes = [random.choice(config.bk_shapes[1:])] * line1_num
-            shapes += [random.choice(config.bk_shapes[1:])] * line2_num
-        else:
-            shapes = data_utils.random_select_unique_mix(config.bk_shapes[1:], line1_num)
-            shapes += data_utils.random_select_unique_mix(config.bk_shapes[1:], line2_num)
+    group_ids = [0] * line1_num + [1] * line2_num
 
-        if "color" in params or random.random() < 0.5:
-            colors = [random.choice(config.color_large_exclude_gray)] * line1_num
-            colors += [random.choice(config.color_large_exclude_gray)] * line2_num
-
-        else:
-            colors = data_utils.random_select_unique_mix(config.color_large_exclude_gray, line1_num)
-            colors += data_utils.random_select_unique_mix(config.color_large_exclude_gray, line2_num)
-        if "size" in params or random.random() < 0.5:
-            sizes = [obj_size] * line1_num
-            sizes += [obj_size] * line2_num
-        else:
-            sizes = [random.uniform(obj_size * 0.6, obj_size * 1.5) for _ in range(line1_num)]
-            sizes += [random.uniform(obj_size * 0.6, obj_size * 1.5) for _ in range(line2_num)]
-
+    logic = {
+        "shape": ["square", "circle"],
+        "color": ["green", "yellow"],
+        "size": [obj_size],
+        "count": True
+    }
+    invariant_shape = random.choice(config.all_shapes)
+    invariant_color = random.choice(config.color_large_exclude_gray)
+    invariant_size = obj_size
+    cf_params = data_utils.get_proper_sublist(params + ["position"])
+    shapes = data_utils.assign_property(is_positive, "shape", params, cf_params, irrel_params, invariant_shape, logic["shape"], config.all_shapes, total_num)
+    colors = data_utils.assign_property(is_positive, "color", params, cf_params, irrel_params, invariant_color, logic["color"], config.color_large_exclude_gray, total_num)
+    sizes = data_utils.assign_property(is_positive, "size", params, cf_params, irrel_params, invariant_size, logic["size"],
+                                       data_utils.get_random_sizes(line1_num + line2_num, obj_size), total_num)
+    has_position = is_positive or "position" in cf_params
+    if has_position:
         positions = np.concatenate((line1_points, line2_points))
     else:
-        if "shape" in params or random.random() < 0.5:
-            shapes = data_utils.random_select_unique_mix(config.bk_shapes[1:], line1_num)
-            shapes += data_utils.random_select_unique_mix(config.bk_shapes[1:], line2_num)
-        else:
-            shapes = [random.choice(config.bk_shapes[1:])] * line1_num
-            shapes += [random.choice(config.bk_shapes[1:])] * line2_num
-        if "color" in params or random.random() < 0.5:
-            colors = data_utils.random_select_unique_mix(config.color_large_exclude_gray, line1_num)
-            colors += data_utils.random_select_unique_mix(config.color_large_exclude_gray, line2_num)
-        else:
-            colors = [random.choice(config.color_large_exclude_gray)] * line1_num
-            colors += [random.choice(config.color_large_exclude_gray)] * line2_num
-        if "size" in params or random.random() < 0.5:
-            sizes = [random.uniform(obj_size * 0.6, obj_size * 1.5) for _ in range(line1_num)]
-            sizes += [random.uniform(obj_size * 0.6, obj_size * 1.5) for _ in range(line2_num)]
-
-        else:
-            sizes = [obj_size] * line1_num
-            sizes += [obj_size] * line2_num
-        if pin:
-            positions = np.concatenate((line1_points, line2_points))
-        else:
-            positions = pos_utils.get_random_positions(len(line1_points) + len(line2_points), obj_size)
-            is_random = True
-    try:
-        for i in range(len(positions)):
-            if is_random:
-                group_id = -1
-            else:
-                group_id = group_ids[i]
-            objs.append(encode_utils.encode_objs(
-                x=positions[i][0],
-                y=positions[i][1],
-                size=sizes[i],
-                color=colors[i],
-                shape=shapes[i],
-                line_width=-1,
-                solid=True,
-                group_id=group_id,
-            ))
-    except Exception as e:
-        raise e
-
+        positions = pos_utils.get_random_positions(len(line1_points) + len(line2_points), obj_size)
+        group_ids = [-1] * len(positions)
+    objs = encode_utils.encode_scene(positions, sizes, colors, shapes, group_ids, is_positive)
     return objs
 
 
-def non_overlap_a_splines(params, is_positive, clu_num, obj_quantity, pin):
+def get_logic_rules(params):
+    head = "group_target(X)"
+    body = "in(O,X),in(G,X),"
+    if "color" in params:
+        body += "has_color(blue,O),has_color(red,O),"
+    if "size" in params:
+        body += "same_obj_size(G),"
+    if "shape" in params:
+        body += ("has_shape(O1,trianlge),has_shape(O2,circle),no_shape(O3,square),"
+                 "in(O1,G),in(O2,G),in(O3,G),")
+    rule = f"{head}:-{body}group_shape(square,G),principle(closure,G)."
+    return "Not Implemented yet"
+
+
+def non_overlap_a_splines(params, irrel_params, is_positive, clu_num, obj_quantity, pin):
     obj_size = 0.05
-    objs = position_continuity_a_splines(obj_size, is_positive, clu_num, params, obj_quantity, pin)
+    objs = position_continuity_a_splines(obj_size, is_positive, clu_num, params, irrel_params, obj_quantity, pin)
     t = 0
     tt = 0
     max_try = 2000
     while (overlaps(objs) or overflow(objs)) and (t < max_try):
-        objs = position_continuity_a_splines(obj_size, is_positive, clu_num, params, obj_quantity, pin)
+        objs = position_continuity_a_splines(obj_size, is_positive, clu_num, params, irrel_params, obj_quantity, pin)
         if tt > 10:
             tt = 0
             obj_size = obj_size * 0.90
         tt = tt + 1
         t = t + 1
-    return objs
+    logic_rules = get_logic_rules(params)
+    return objs, logic_rules

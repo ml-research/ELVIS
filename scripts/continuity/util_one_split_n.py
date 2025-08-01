@@ -29,125 +29,83 @@ def get_main_split_positions(split_road_length, minx, dx, main_y, dy):
     return positions
 
 
-def continuity_one_splits_n(obj_size, is_positive, params, obj_quantity, prin_in_neg):
-    objs = []
-    main_road_length = {"s": 2, "m": 3, "l": 5}.get(obj_quantity, 2)
-    split_road_length = {"s": 2, "m": 3, "l": 5}.get(obj_quantity, 2)
-
-    dx = 0.08
-    dy = 0.08
+def continuity_one_splits_n(obj_size, is_positive, params, irrel_params, obj_quantity, prin_in_neg):
+    main_road_length = int(config.standard_quantity_dict[obj_quantity]*0.2)
+    split_road_length = int(config.standard_quantity_dict[obj_quantity]*0.3)
+    logic = {
+        "shape": ["square", "circle"],
+        "color": ["green", "yellow"],
+        "size": [obj_size],
+        "count": True
+    }
+    dx = 0.1
+    dy = 0.1
     minx = 0.1
     main_y = 0.5 + random.uniform(0, 0.1)
-    is_random = False
-    group_ids = []
-    if is_positive:
-        if "shape" in params:
-            shapes_main = [random.choice(config.bk_shapes[1:])] * (main_road_length + split_road_length)
-            shapes_split = [random.choice(config.bk_shapes[1:])] * split_road_length
-            shapes = shapes_main + shapes_split
-        else:
-            shapes_main = data_utils.random_select_unique_mix(config.bk_shapes[1:],
-                                                              (main_road_length + split_road_length))
-            shapes_split = data_utils.random_select_unique_mix(config.bk_shapes[1:], split_road_length)
-            shapes = shapes_main + shapes_split
+    invariant_shape = random.choice(config.all_shapes)
+    invariant_color = random.choice(config.color_large_exclude_gray)
+    invariant_size = obj_size
 
-        if "color" in params:
-            colors_main = [random.choice(config.color_large_exclude_gray)] * (main_road_length + split_road_length)
-            colors_split = [random.choice(config.color_large_exclude_gray)] * split_road_length
-            colors = colors_main + colors_split
+    total_main = main_road_length + split_road_length
+    total_split = split_road_length
 
-        else:
-            colors_main = data_utils.random_select_unique_mix(config.color_large_exclude_gray,
-                                                              (main_road_length + split_road_length))
-            colors_split = data_utils.random_select_unique_mix(config.color_large_exclude_gray, split_road_length)
-            colors = colors_main + colors_split
+    cf_params = data_utils.get_proper_sublist(params + ["position"])
 
-        if "size" in params:
-            sizes_main = [obj_size] * (main_road_length + split_road_length)
-            sizes_split = [obj_size] * split_road_length
-            sizes = sizes_main + sizes_split
-        else:
-            sizes_main = [random.uniform(obj_size * 0.6, obj_size * 1.5) for _ in
-                          range((main_road_length + split_road_length))]
-            sizes_split = [random.uniform(obj_size * 0.6, obj_size * 1.5) for _ in range(split_road_length)]
-            sizes = sizes_main + sizes_split
+    shapes_main = data_utils.assign_property(is_positive, "shape", params, cf_params, irrel_params, invariant_shape, logic["shape"], config.all_shapes, total_main)
+    shapes_split = data_utils.assign_property(is_positive, "shape", params, cf_params, irrel_params, invariant_shape, logic["shape"], config.all_shapes, total_split)
+    shapes = shapes_main + shapes_split
 
+    colors_main = data_utils.assign_property(is_positive, "color", params, cf_params, irrel_params, invariant_color, logic["color"], config.color_large_exclude_gray, total_main)
+    colors_split = data_utils.assign_property(is_positive, "color", params, cf_params, irrel_params, invariant_color, logic["color"], config.color_large_exclude_gray, total_split)
+    colors = colors_main + colors_split
+
+    sizes_main = data_utils.assign_property(is_positive, "size", params, cf_params, irrel_params, invariant_size, logic["size"], data_utils.get_random_sizes(total_main, obj_size),
+                                            total_main)
+    sizes_split = data_utils.assign_property(is_positive, "size", params, cf_params, irrel_params, invariant_size, logic["size"],
+                                             data_utils.get_random_sizes(total_split, obj_size),
+                                             total_split)
+    sizes = sizes_main + sizes_split
+
+    has_position = is_positive or "position" in cf_params
+    if has_position:
         positions_main = get_main_positions(main_road_length, minx, dx, main_y)
         position_split_1 = get_main_split_positions(split_road_length, minx + main_road_length * dx, dx, main_y, dy)
         position_split_2 = get_split_positions(split_road_length, minx + main_road_length * dx, dx, main_y, dy)
         positions = positions_main + position_split_1 + position_split_2
-        group_ids = [0] * len(positions_main) + [1]* len(position_split_1) + [2]* len(position_split_2)
+        group_ids = [0] * len(positions_main) + [1] * len(position_split_1) + [2] * len(position_split_2)
     else:
-        if "shape" in params or random.random() < 0.5:
-            shapes_main = data_utils.random_select_unique_mix(config.bk_shapes[1:],
-                                                              (main_road_length + split_road_length))
-            shapes_split = data_utils.random_select_unique_mix(config.bk_shapes[1:], split_road_length)
-            shapes = shapes_main + shapes_split
-        else:
-            shapes_main = [random.choice(config.bk_shapes[1:])] * (main_road_length + split_road_length)
-            shapes_split = [random.choice(config.bk_shapes[1:])] * split_road_length
-            shapes = shapes_main + shapes_split
-
-        if "color" in params or random.random() < 0.5:
-
-            colors_main = data_utils.random_select_unique_mix(config.color_large_exclude_gray,
-                                                              (main_road_length + split_road_length))
-            colors_split = data_utils.random_select_unique_mix(config.color_large_exclude_gray, split_road_length)
-            colors = colors_main + colors_split
-        else:
-            colors_main = [random.choice(config.color_large_exclude_gray)] * (main_road_length + split_road_length)
-            colors_split = [random.choice(config.color_large_exclude_gray)] * split_road_length
-            colors = colors_main + colors_split
-        if "size" in params or random.random() < 0.5:
-            sizes_main = [random.uniform(obj_size * 0.6, obj_size * 1.5) for _ in
-                          range((main_road_length + split_road_length))]
-            sizes_split = [random.uniform(obj_size * 0.6, obj_size * 1.5) for _ in range(split_road_length)]
-            sizes = sizes_main + sizes_split
-        else:
-            sizes_main = [obj_size] * (main_road_length + split_road_length)
-            sizes_split = [obj_size] * split_road_length
-            sizes = sizes_main + sizes_split
-
-        if prin_in_neg:
-            positions_main = get_main_positions(main_road_length, minx, dx, main_y)
-            position_split_1 = get_main_split_positions(split_road_length, minx + main_road_length * dx, dx, main_y, dy)
-            position_split_2 = get_split_positions(split_road_length, minx + main_road_length * dx, dx, main_y, dy)
-            positions = positions_main + position_split_1 + position_split_2
-            group_ids = [0] * len(positions_main) + [1] * len(position_split_1) + [2] * len(position_split_2)
-        else:
-            is_random = True
-            positions = pos_utils.get_random_positions(main_road_length + split_road_length, obj_size)
-
-    for i in range(len(positions)):
-        if is_random:
-            group_id = -1
-        else:
-            group_id = group_ids[i]
-        objs.append(encode_utils.encode_objs(
-            x=positions[i][0],
-            y=positions[i][1],
-            size=sizes[i],
-            color=colors[i],
-            shape=shapes[i],
-            line_width=-1,
-            solid=True,
-            group_id=group_id
-        ))
+        positions = pos_utils.get_random_positions(main_road_length + split_road_length, obj_size)
+        group_ids = [-1] * len(positions)
+    objs = encode_utils.encode_scene(positions, sizes, colors, shapes, group_ids, is_positive)
     return objs
 
 
-def non_overlap_one_split_n(params, is_positive, clu_num, obj_quantity, prin_in_neg=True):
-    obj_size = 0.05
+def get_logic_rules(params):
+    head = "group_target(X)"
+    body = "in(O,X),in(G,X),"
+    if "color" in params:
+        body += "has_color(blue,O),has_color(red,O),"
+    if "size" in params:
+        body += "same_obj_size(G),"
+    if "shape" in params:
+        body += ("has_shape(O1,trianlge),has_shape(O2,circle),no_shape(O3,square),"
+                 "in(O1,G),in(O2,G),in(O3,G),")
+    rule = f"{head}:-{body}group_shape(square,G),principle(closure,G)."
+    return "Not Implemented yet"
 
-    objs = continuity_one_splits_n(obj_size, is_positive, params, obj_quantity, prin_in_neg=prin_in_neg)
+
+def non_overlap_one_split_n(params, irrel_params, is_positive, clu_num, obj_quantity, prin_in_neg=True):
+    obj_size = 0.05
+    objs = continuity_one_splits_n(obj_size, is_positive, params, irrel_params, obj_quantity, prin_in_neg=prin_in_neg)
     t = 0
     tt = 0
     max_try = 1000
-    while (overlaps(objs) or overflow(objs)) and (t < max_try):
-        objs = continuity_one_splits_n(obj_size, is_positive, params, obj_quantity, prin_in_neg=prin_in_neg)
-        if tt > 10:
-            tt = 0
-            obj_size = obj_size * 0.90
-        tt = tt + 1
-        t = t + 1
-    return objs
+    # while (overlaps(objs) or overflow(objs)) and (t < max_try):
+    #     objs = continuity_one_splits_n(obj_size, is_positive, params, irrel_params, obj_quantity, prin_in_neg=prin_in_neg)
+    #     if tt > 10:
+    #         tt = 0
+    #         obj_size = obj_size * 0.90
+    #     tt = tt + 1
+    #     t = t + 1
+    logic_rules = get_logic_rules(params)
+    return objs, logic_rules

@@ -18,9 +18,7 @@ def get_patterns(lite=False):
         feature_props = ["color", "size"]
         separate_props = ["shape", "color"]
     else:
-        size_list = [
-            "s", "m", "l", "xl", "xxl", "xxxl"
-        ]
+        size_list = config.standard_quantity_dict.keys()
         grp_num_range = range(1, 4)
         feature_props = ["color", "size"]
         separate_props = ["shape", "color", "position", "size", "count"]
