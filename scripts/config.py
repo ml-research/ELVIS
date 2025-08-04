@@ -5,6 +5,7 @@ import matplotlib
 
 root = Path(__file__).parents[1]
 
+
 # settings
 
 def get_num_samples(lite=False):
@@ -13,20 +14,19 @@ def get_num_samples(lite=False):
     else:
         return 100
 
+
 img_width = 224
 prin_in_neg = False
 
 # quantity settings
 standard_quantity_dict = {"s": 5,
                           "m": 15,
-                          "l": 20,
-                          "xl": 25,
-                          "xxl": 30,
-                          "xxxl": 35}
+                          "l": 25,
+                          "xl": 35}
 
 
 def get_grp_r(r, grp_size):
-    standard_group_radius_dict = {"s": r * 0.8, "m": r, "l": r * 1.2, "xl": r * 1.4, "xxl": r * 1.6, "xxxl": r * 1.8}
+    standard_group_radius_dict = {"s": r * 0.8, "m": r, "l": r * 1.2, "xl": r * 1.4}
     return standard_group_radius_dict[grp_size]
 
 
