@@ -85,10 +85,10 @@ def get_logic_rules(params):
     if "size" in params:
         body += "same_obj_size(G),"
     if "shape" in params:
-        body += ("has_shape(O1,trianlge),has_shape(O2,circle),no_shape(O3,square),"
+        body += ("has_shape(O1,square),has_shape(O2,circle),no_shape(O3,triangle),"
                  "in(O1,G),in(O2,G),in(O3,G),")
-    rule = f"{head}:-{body}group_shape(square,G),principle(closure,G)."
-    return "Not Implemented yet"
+    rule = f"{head}:-{body}principle(continuity,G)."
+    return rule
 
 
 def non_overlap_two_splines(params, irrel_params, is_positive, clu_num, obj_quantity, pin=True):

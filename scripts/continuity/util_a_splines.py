@@ -92,14 +92,14 @@ def get_logic_rules(params):
     head = "group_target(X)"
     body = "in(O,X),in(G,X),"
     if "color" in params:
-        body += "has_color(blue,O),has_color(red,O),"
+        body += "has_color(green,O),has_color(yellow,O),"
     if "size" in params:
         body += "same_obj_size(G),"
     if "shape" in params:
-        body += ("has_shape(O1,trianlge),has_shape(O2,circle),no_shape(O3,square),"
+        body += ("has_shape(O1,square),has_shape(O2,circle),no_shape(O3,triangle),"
                  "in(O1,G),in(O2,G),in(O3,G),")
-    rule = f"{head}:-{body}group_shape(square,G),principle(closure,G)."
-    return "Not Implemented yet"
+    rule = f"{head}:-{body}principle(closure,G)."
+    return rule
 
 
 def non_overlap_a_splines(params, irrel_params, is_positive, clu_num, obj_quantity, pin):

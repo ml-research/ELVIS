@@ -21,14 +21,14 @@ def get_logic_rules(params):
     head = "group_target(X)"
     body = "in(O,X),in(G,X),"
     if "color" in params:
-        body += "has_color(blue,O),has_color(red,O),"
+        body += "has_color(green,O),has_color(yellow,O),"
     if "size" in params:
         body += "same_obj_size(G),"
     if "shape" in params:
-        body += ("has_shape(O1,trianlge),has_shape(O2,circle),no_shape(O3,square),"
+        body += ("has_shape(O1,square),has_shape(O2,circle),no_shape(O3,triangle),"
                  "in(O1,G),in(O2,G),in(O3,G),")
-    rule = f"{head}:-{body}group_shape(square,G),principle(closure,G)."
-    return "Not Implemented yet"
+    rule = f"{head}:-{body}principle(continuity,G)."
+    return rule
 
 
 def feature_continuity_x_splines(params, irrel_params, is_positive, clu_num, obj_quantity, pin):
@@ -50,15 +50,14 @@ def feature_continuity_x_splines(params, irrel_params, is_positive, clu_num, obj
     dx = random.uniform(0.005, 0.03)
     dy = random.uniform(-0.03, -0.005)
 
-    line1_num = {"s": 5, "m": 7, "l": 12}.get(obj_quantity, 2)
-    line2_num = {"s": 7, "m": 10, "l": 15}.get(obj_quantity, 2)
+    line1_num = {"s": 5, "m": 7, "l": 12, "xl": 17, "xxl": 21, "xxxl": 25}.get(obj_quantity, 2)
+    line2_num = {"s": 5, "m": 7, "l": 12, "xl": 17, "xxl": 21, "xxxl": 25}.get(obj_quantity, 2) + 2
     total_num = line1_num * 2 + line2_num
+
     line1_points = get_spline_points(line1_key_points, line1_num)
     line1_points_shade = get_shaded_points(line1_points, dx, dy)
     line2_points = get_spline_points(line2_key_points, line2_num)
-    is_random = False
     group_ids = [0] * line1_num * 2 + [1] * line2_num
-
     logic = {"shape": ["square", "circle"], "color": ["green", "yellow"], "size": [obj_size], "count": True}
     invariant_shape = random.choice(config.all_shapes)
     invariant_color = random.choice(config.color_large_exclude_gray)

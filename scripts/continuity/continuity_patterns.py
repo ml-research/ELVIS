@@ -25,26 +25,25 @@ def get_patterns(lite=False):
     all_tasks = []
     all_names = []
 
-    # tasks, names = create_tasks_v3(non_overlap_one_split_n, prop_list, grp_num_range, size_list, prin_in_neg)
-    # all_tasks.extend(tasks)
-    # all_names.extend(names)
-
+    tasks, names = create_tasks_v3(non_overlap_one_split_n, prop_list, grp_num_range, size_list, prin_in_neg)
+    all_tasks.extend(tasks)
+    all_names.extend(names)
 
     tasks, names = create_tasks_v3(non_overlap_two_splines, prop_list, grp_num_range, size_list, prin_in_neg)
     all_tasks.extend(tasks)
     all_names.extend(names)
 
-    # tasks, names = create_tasks_v3(non_overlap_a_splines, prop_list, grp_num_range, size_list, prin_in_neg)
-    # all_tasks.extend(tasks)
-    # all_names.extend(names)
+    tasks, names = create_tasks_v3(non_overlap_a_splines, prop_list, grp_num_range, size_list, prin_in_neg)
+    all_tasks.extend(tasks)
+    all_names.extend(names)
 
-    # tasks, names = create_tasks_v3(non_overlap_u_splines, prop_list, grp_num_range, size_list, prin_in_neg)
-    # all_tasks.extend(tasks)
-    # all_names.extend(names)
+    tasks, names = create_tasks_v3(non_overlap_u_splines, prop_list, grp_num_range, size_list, prin_in_neg)
+    all_tasks.extend(tasks)
+    all_names.extend(names)
 
-    # tasks, names = create_tasks_v3(feature_continuity_x_splines, prop_list, grp_num_range, size_list, prin_in_neg)
-    # all_tasks.extend(tasks)
-    # all_names.extend(names)
+    tasks, names = create_tasks_v3(feature_continuity_x_splines, prop_list, grp_num_range, size_list, prin_in_neg)
+    all_tasks.extend(tasks)
+    all_names.extend(names)
 
     # Convert tasks to pattern dictionary
     pattern_dicts = [{"name": key, "module": task} for key, task in zip(all_names, all_tasks)]
