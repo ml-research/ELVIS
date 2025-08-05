@@ -32,11 +32,12 @@ def hconcat_imgs(img_list):
 
 
 def save_img(img_path, data_path, pattern_data, img_data, image):
-
-    # save image
+    # Swap red and blue channels (RGB <-> BGR)
+    if image.ndim == 3 and image.shape[2] == 3:
+        image = image[..., [2, 1, 0]]
+    # Save image
     Image.fromarray(image).save(img_path)
-
-    # save data
+    # Save data
     pattern_data["img_data"] = img_data
     with open(data_path, 'w') as f:
         json.dump(pattern_data, f)

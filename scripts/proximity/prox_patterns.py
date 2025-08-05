@@ -22,16 +22,27 @@ def create_tasks(func, obj_size, task_sizes, *args):
     return {f"{func.__name__}_{'_'.join(map(str, args))}_{s}": (lambda p, s=s, args=args: func(obj_size, p, s, *args))
             for s in task_sizes}
 
-def get_patterns():
+def get_patterns(lite=False):
     # Define task functions dynamically
-    tasks = {}
-    num_lst = range(2, 5)
-    # symbolic features
+    if lite:
+        size_list = ["s"]
+        grp_num_range = range(2,4)
+        feature_props = ["color", "size", "shape", "count", "position"]
+        qua_list = ["exist"]
+    else:
+        size_list = config.standard_quantity_dict.keys()
+        qua_list = ["all", "exist"]
+        grp_num_range = range(2, 5)
+        feature_props = ["shape", "color", "size", "count", "position"]
     pin = config.prin_in_neg
 
-    # color, all
+    all_tasks = []
+    all_names = []
 
-    tasks.update(create_tasks_v4(non_overlap_red_triangle, ["shape", "color"], num_lst, size_list, qua_list, pin))
+    tasks, names = create_tasks_v4(non_overlap_red_triangle, feature_props, grp_num_range, size_list, qua_list, pin)
+    all_tasks.extend(tasks)
+    all_names.extend(names)
+
     # tasks.update(create_tasks_v3(non_overlap_grid, ["shape", "color"], num_lst, size_list, pin))
     # tasks.update(create_tasks_v2(non_overlap_fixed_props, ["shape", "color"], size_list, pin))
     # tasks.update(create_tasks_v3(overlap_big_small, ["shape", "color", "count"], num_lst, size_list, pin))
@@ -39,5 +50,5 @@ def get_patterns():
 
 
     # Convert tasks to pattern dictionary
-    pattern_dicts = [{"name": key, "module": task} for key, task in tasks.items()]
+    pattern_dicts = [{"name": key, "module": task} for key, task in zip(all_names, all_tasks)]
     return pattern_dicts

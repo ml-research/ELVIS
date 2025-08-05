@@ -186,7 +186,7 @@ def get_circle_positions(obj_quantity, x, y):
     return positions
 
 
-def generate_random_anchor(existing_anchors, cluster_dist=0.1, x_min=0.4, x_max=0.7, y_min=0.4, y_max=0.7):
+def generate_random_anchor(existing_anchors, cluster_dist=0.3, x_min=0.4, x_max=0.7, y_min=0.4, y_max=0.7):
     # Increased to ensure clear separation
     while True:
         anchor = [random.uniform(x_min, x_max), random.uniform(y_min, y_max)]

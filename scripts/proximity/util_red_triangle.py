@@ -8,115 +8,132 @@ from scripts.utils.shape_utils import overlaps, overflow
 from scripts.utils import pos_utils, encode_utils, data_utils
 
 
-def proximity_red_triangle(is_positive, obj_size, clu_num, params, obj_quantities, qualifiers, pin):
-    cluster_dist = 0.3  # Increased to ensure clear separation
-    neighbour_dist = 0.05
+def get_invariant_values(irrel_params, obj_size):
+    invariant = {
+        "shape": random.choice(config.all_shapes) if "shape" in irrel_params else None,
+        "color": random.choice(config.color_large_exclude_gray) if "color" in irrel_params else None,
+        "size": obj_size if "size" in irrel_params else None,
+        "count": True if "count" in irrel_params else False,
+    }
+    # cf_invariant = {
+    #     "shape": random.choice(config.all_shapes) if "shape" in cf_params else None,
+    #     "color": random.choice(config.color_large_exclude_gray) if "color" in cf_params else None,
+    #     "size": obj_size if "size" in cf_params else None,
+    # }
+    return invariant
 
+
+def assign_properties(grp_obj_num, has_red_triangle, params, invariant, cf_params, logic):
+    if "shape" in cf_params or ("shape" in params and has_red_triangle):
+        shapes = [logic["shape"][0]] + [random.choice(logic["shape"]) for _ in range(grp_obj_num - 1)]
+    else:
+        shapes = [random.choice(config.all_shapes) for _ in range(grp_obj_num)]
+    if "color" in cf_params or ("color" in params and has_red_triangle):
+        colors = [logic["color"][0]] + [random.choice(config.color_large_exclude_gray) for _ in range(grp_obj_num - 1)]
+    else:
+        selected_color = config.color_large_exclude_gray.copy()
+        selected_color.remove("red")
+        colors = [random.choice(selected_color) for _ in range(grp_obj_num)]
+    if "size" in cf_params or ("size" in params and has_red_triangle):
+        sizes = [logic["size"]] * grp_obj_num
+    else:
+        sizes = [random.uniform(logic["size"] * 0.4, logic["size"] * 0.7) for _ in range(grp_obj_num)]
+
+    if invariant["shape"] is not None:
+        shapes = [invariant["shape"]] * grp_obj_num
+    if invariant["color"] is not None:
+        colors = [invariant["color"]] * grp_obj_num
+    if invariant["size"] is not None:
+        sizes = [invariant["size"]] * grp_obj_num
+
+    return shapes, colors, sizes
+
+
+def proximity_red_triangle(is_positive, obj_size, clu_num, params, irrel_params, cf_params, obj_quantities, qualifiers):
+    # settings
+    cluster_dist = 0.3
+    neighbour_dist = 0.05
+    logic = {
+        "shape": ["triangle"],
+        "color": ["red"],
+        "size": obj_size,
+        "count": True,
+    }
     group_sizes = {"s": range(2, 4), "m": range(3, 5), "l": range(2, 7)}.get(obj_quantities, range(2, 4))
     group_radius = {"s": 0.05, "m": 0.08, "l": 0.1}.get(obj_quantities, 0.05)
+    invariant = get_invariant_values(irrel_params, obj_size)
 
-    x_min = 0.1
-    x_max = 0.9
-    y_min = 0.1
-    y_max = 0.9
-    objs = []
+    if invariant["count"]:
+        grp_obj_nums = [random.choice(group_sizes)] * clu_num
+    else:
+        grp_obj_nums = [random.choice(group_sizes) for _ in range(clu_num)]
 
-    # Generate random anchors for clusters ensuring proper distance
     group_anchors = []
     for _ in range(clu_num):
-        group_anchors.append(pos_utils.generate_random_anchor(group_anchors, cluster_dist, x_min, x_max, y_min, y_max))
-
-    # Determine how many clusters will contain a red triangle (0 to cluster_num - 1)
-
+        group_anchors.append(pos_utils.generate_random_anchor(group_anchors, cluster_dist, 0.1, 0.9, 0.1, 0.9))
     if "all" in qualifiers:
-        # red_triangle_clusters = random.randint(0, cluster_num - 1)
         red_triangle_neg_indices = data_utils.not_all_true(clu_num)
         red_triangle_pos_indices = [True] * clu_num
     elif "exist" in qualifiers:
-        # red_triangle_clusters = random.randint(1, cluster_num)
         red_triangle_neg_indices = [False] * clu_num
         red_triangle_pos_indices = data_utils.at_least_one_true(clu_num)
     else:
         raise ValueError("qualifiers must either be 'exist' or 'all'")
-
-    fixed_shape = "triangle"
-    fixed_color = "red"
-
+    objs = []
     for a_i in range(clu_num):
-        group_size = random.choice(group_sizes)
-        neighbour_points = pos_utils.generate_points(group_anchors[a_i], group_radius, group_size, neighbour_dist)
-        if not is_positive:
-            has_red_triangle = red_triangle_neg_indices[a_i]
+        grp_obj_num = grp_obj_nums[a_i]
+        if not is_positive and "proximity" not in cf_params:
+            neighbour_points = pos_utils.get_random_positions(grp_obj_num, obj_size)
         else:
-            has_red_triangle = red_triangle_pos_indices[a_i]
-
-        for i in range(group_size):
-            if i == 0:
-                if has_red_triangle:
-                    if "shape" not in params:
-                        shape = random.choice(config.bk_shapes[1:])
-                    else:
-                        shape = fixed_shape
-                    if "color" not in params:
-                        color = random.choice(config.color_large_exclude_gray)
-                    else:
-                        color = fixed_color
-                else:
-                    shape = random.choice(["triangle", "square", "circle"])
-                    color = random.choice(config.color_large_exclude_gray)
-                    if "color" in params:
-                        while color == fixed_color:
-                            color = random.choice(config.color_large_exclude_gray)
-                    if "shape" in params:
-                        while shape == fixed_shape:
-                            shape = random.choice(config.bk_shapes[1:])
-            else:
-
-                shape = random.choice(config.bk_shapes[1:])
-                while "shape" in params and shape == fixed_shape:
-                    shape = random.choice(config.bk_shapes[1:])
-
-                color = random.choice(config.color_large_exclude_gray)
-                while "color" in params and color == fixed_color:
-                    color = random.choice(config.color_large_exclude_gray)
-
-            x, y = neighbour_points[i]
-            obj = encode_utils.encode_objs(x=x, y=y, size=obj_size, color=color, shape=shape, line_width=-1, solid=True,
-                                           group_id=a_i)
-            objs.append(obj)
-
+            neighbour_points = pos_utils.generate_points(group_anchors[a_i], group_radius, grp_obj_num, neighbour_dist)
+        has_red_triangle = red_triangle_pos_indices[a_i] if is_positive else red_triangle_neg_indices[a_i]
+        shapes, colors, sizes = assign_properties(grp_obj_num, has_red_triangle, params, invariant, cf_params, logic)
+        group_ids = [a_i] * grp_obj_num
+        objs += encode_utils.encode_scene(neighbour_points, sizes, colors, shapes, group_ids, is_positive)
     return objs
 
 
-def get_logic_rules(qualifiers, fixed_props):
+
+def get_logics(is_positive, qualifiers, fixed_props, cf_params, irrel_params):
     if qualifiers == "all":
         head = "group_target(X)"
     else:
         head = "image_target(X)"
-
     body = ""
     if "shape" in fixed_props:
         body += "has_shape(X,triangle),"
     if "color" in fixed_props:
         body += "has_color(X,red),"
-
     rule = f"{head}:-{body}principle(proximity)."
-    return rule
+    logic = {
+        "rule": rule,
+        "is_positive": is_positive,
+        "qualifiers": qualifiers,
+        "fixed_props": fixed_props,
+        "cf_params": cf_params,
+        "irrel_params": irrel_params,
+        "principle": "proximity",
+
+    }
+    return logic
 
 
-def non_overlap_red_triangle(fixed_props, is_positive, cluster_num, obj_quantities, qualifiers, pin):
+def non_overlap_red_triangle(params, irrel_params, is_positive, cluster_num, obj_quantities, qualifiers, pin):
     obj_size = 0.05
-    objs = proximity_red_triangle(is_positive, obj_size, cluster_num, fixed_props, obj_quantities, qualifiers, pin)
+    # random determined properties
+    cf_params = data_utils.get_proper_sublist(params + ["proximity"])
+    objs = proximity_red_triangle(is_positive, obj_size, cluster_num, params, irrel_params, cf_params, obj_quantities, qualifiers)
     t = 0
     tt = 0
     max_try = 1000
     while (overlaps(objs) or overflow(objs)) and (t < max_try):
-        objs = proximity_red_triangle(is_positive, obj_size, cluster_num, fixed_props, obj_quantities, qualifiers, pin)
+        objs = proximity_red_triangle(is_positive, obj_size, cluster_num, params, irrel_params, cf_params, obj_quantities, qualifiers)
         if tt > 10:
             tt = 0
             obj_size = obj_size * 0.90
         tt = tt + 1
         t = t + 1
 
-    logic_rules = get_logic_rules(qualifiers, fixed_props)
-    return objs, logic_rules
+    logics = get_logics(is_positive, qualifiers, params, cf_params, irrel_params)
+
+    return objs, logics

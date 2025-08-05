@@ -104,10 +104,35 @@ def create_tasks_v3(func, params, task_sizes, obj_quantities, prin_in_neg):
                     )
                     names.append(task_name)
     return tasks, names
-    # return {
-    #     f"{func.__name__}_{'_'.join(map(str, comb))}_{s}_{oq}": (
-    #         lambda p, s=s, comb=comb, oq=oq: func(comb, p, s, oq, prin_in_neg))
-    #     for comb in get_all_combs(params) for s in task_sizes for oq in obj_quantities}
+
+
+def create_tasks_v4(func, params, task_sizes, obj_quantities, qualifiers, prin_in_neg):
+    tasks = []
+    names = []
+    counter = 0
+    for rel_comb in get_all_combs(params):
+        irrelevant_params = [k for k in params if k not in rel_comb and k != "position"]
+        for irrel_comb in get_all_combs(irrelevant_params):
+            for si in task_sizes:
+                for oq in obj_quantities:
+                    for qualifier in qualifiers:
+                        task_name = (
+                                f"{counter}_{func.__name__}_rel_"
+                                + "_".join(f"{k}" for k in rel_comb)
+                                + f"_{si}_{oq}_irrel_"
+                                + "_".join(f"{k}" for k in irrel_comb)
+                                + f"_{qualifier}"
+                        )
+                        counter += 1
+                        if task_name in tasks:
+                            raise ValueError(f"Duplicate task key detected: {task_name}")
+                        tasks.append(
+                            lambda p, qua=qualifier, tn=task_name, s=si, relative_comb=rel_comb, irrelative_comb=irrel_comb, obj_quantity=oq: func(relative_comb, irrelative_comb,
+                                                                                                                                                   p, s,
+                                                                                                                                                   obj_quantity, qua, prin_in_neg)
+                        )
+                        names.append(task_name)
+    return tasks, names
 
 
 def create_tasks_v4_legacy(func, params, task_sizes, obj_quantities, qualifiers, prin_in_neg):
@@ -117,13 +142,13 @@ def create_tasks_v4_legacy(func, params, task_sizes, obj_quantities, qualifiers,
         for comb in get_all_combs(params) for s in task_sizes for oq in obj_quantities for qua in qualifiers}
 
 
-def create_tasks_v4(func, params, task_sizes, obj_quantities, qualifiers, prin_in_neg):
-    return {
-        f"{func.__name__}_{'_'.join(map(str, comb))}_{s}_{oq}_{qua}": (
-            lambda p, s=s, comb=comb, oq=oq, qua=qua: func(comb, p, s, oq, qua, prin_in_neg)
-        )
-        for comb in get_all_combs(params) for s in task_sizes for oq in obj_quantities for qua in qualifiers
-    }
+# def create_tasks_v4(func, params, task_sizes, obj_quantities, qualifiers, prin_in_neg):
+#     return {
+#         f"{func.__name__}_{'_'.join(map(str, comb))}_{s}_{oq}_{qua}": (
+#             lambda p, s=s, comb=comb, oq=oq, qua=qua: func(comb, p, s, oq, qua, prin_in_neg)
+#         )
+#         for comb in get_all_combs(params) for s in task_sizes for oq in obj_quantities for qua in qualifiers
+#     }
 
 
 def create_mixed_tasks_v4(mix_func, features, num_lst, size_list, qua_list, pin):
