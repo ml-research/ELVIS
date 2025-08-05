@@ -3,71 +3,119 @@
 import random
 
 from scripts import config
-from scripts.utils import pos_utils, encode_utils
+from scripts.utils import pos_utils, encode_utils, data_utils
 from scripts.utils.shape_utils import overlaps, overflow
+import numpy as np
 
 
-def proximity_grid(is_positive, obj_size, cluster_num=1, fixed_props="", obj_quantities="s"):
-    objs = []
-    grid_directions = "horizontal" if random.random() > 0.5 else "vertical"
-    shape = random.choice(config.bk_shapes[1:])
-    color = random.choice(config.color_large_exclude_gray)
-
-    line_size = {"s": 2, "m": 5, "l": 8}.get(obj_quantities, 2)
-    obj_size = {"s": obj_size * 1.2, "m": obj_size, "l": obj_size * 0.8}.get(obj_quantities, obj_size * 1.2)
-    if cluster_num > 2:
-        max_lines = 2
+def proximity_grid(is_positive, obj_size, grid_row_num, fixed_props, irrel_params, cf_params, obj_quantities):
+    # fixed settings
+    logic = {
+        "shape": ["cross", "circle"],
+        "color": ["darkblue", "darkred"],
+    }
+    # random settings
+    grid_col_num = random.randint(2, 4)
+    del_axis = random.choice(["row", "col"])
+    if is_positive and "shape" in fixed_props or (not is_positive and "shape" in cf_params):
+        shapes = np.random.choice(logic["shape"], size=(grid_row_num, grid_col_num), replace=True)
     else:
-        max_lines = 3
-    if not is_positive:
-        if random.random() > 0.5 and cluster_num > 2:
-            cluster_num -= 1
-        else:
-            cluster_num += 1
-    for a_i in range(cluster_num):
-        grid_lines = random.randint(1, max_lines)
-        for i in range(grid_lines):
-            if grid_directions == "vertical":
-                x = 1 / cluster_num * a_i + 1 / cluster_num / (grid_lines + 1) * (i + 1) + 0.05
-                for y_i in range(line_size):
-                    y = (y_i + 1) / (line_size + 2)
-                    if "shape" not in fixed_props:
-                        shape = random.choice(config.bk_shapes[1:])
-                    if "color" not in fixed_props:
-                        color = random.choice(config.color_large_exclude_gray)
+        shapes = np.random.choice(config.all_shapes, size=(grid_row_num, grid_col_num), replace=True)
 
-                    obj = encode_utils.encode_objs(x=x, y=y, size=obj_size, color=color, shape=shape, line_width=-1,
-                                                   solid=True,
-                                                   group_id=a_i)
-                    objs.append(obj)
+    if is_positive and "color" in fixed_props or (not is_positive and "color" in cf_params):
+        colors = np.random.choice(logic["color"], size=(grid_row_num, grid_col_num), replace=True)
+    else:
+        colors = np.random.choice(config.color_large_exclude_gray, size=(grid_row_num, grid_col_num), replace=True)
 
-            else:
-                y = 1 / cluster_num * a_i + 1 / cluster_num / (grid_lines + 1) * (i + 1) + 0.05
-                for x_i in range(line_size):
-                    if "shape" not in fixed_props:
-                        shape = random.choice(config.bk_shapes[1:])
-                    if "color" not in fixed_props:
-                        color = random.choice(config.color_large_exclude_gray)
+    if is_positive and "size" in fixed_props or (not is_positive and "size" in cf_params):
+        sizes = np.zeros((grid_row_num, grid_col_num)) + obj_size
+    else:
+        sizes = np.random.uniform(obj_size * 0.5, obj_size * 1.8, size=(grid_row_num, grid_col_num))
 
-                    x = (x_i + 1) / (line_size + 2)
-                    obj = encode_utils.encode_objs(x=x, y=y, size=obj_size, color=color, shape=shape, line_width=-1,
-                                                   solid=True, group_id=a_i)
-                    objs.append(obj)
+    if "shape" in irrel_params:
+        shapes = np.full((grid_row_num, grid_col_num), random.choice(config.all_shapes), dtype='<U15')
+    if "color" in irrel_params:
+        colors = np.full((grid_row_num, grid_col_num), random.choice(config.color_large_exclude_gray), dtype='<U30')
+    if "size" in irrel_params:
+        sizes = np.zeros((grid_row_num, grid_col_num)) + random.uniform(obj_size * 0.5, obj_size * 1.5)
 
+    positions = np.zeros((grid_row_num, grid_col_num, 2))
+    if del_axis == "row":
+        x_vals = np.linspace(0.5 - (0.025 * grid_col_num), 0.5 + (0.025 * grid_col_num), grid_row_num)
+        y_vals = np.linspace(0.1, 0.9, grid_col_num)
+    else:
+        x_vals = np.linspace(0.1, 0.9, grid_row_num)
+        y_vals = np.linspace(0.5 - (0.025 * grid_col_num), 0.5 + (0.025 * grid_col_num), grid_col_num)
+
+    positions = np.stack(np.meshgrid(x_vals, y_vals, indexing='ij'), axis=-1)
+
+    group_ids = np.zeros((grid_row_num, grid_col_num))
+
+    # Randomly remove one non-border column or row from positions
+    non_border_rows = list(range(1, grid_row_num - 1))
+    non_border_cols = list(range(1, grid_col_num - 1))
+    if non_border_rows or non_border_cols:
+        if del_axis == 'row' and non_border_rows:
+            remove_row = random.choice(non_border_rows)
+            positions = np.delete(positions, remove_row, axis=0)
+            shapes = np.delete(shapes, remove_row, axis=0)
+            colors = np.delete(colors, remove_row, axis=0)
+            sizes = np.delete(sizes, remove_row, axis=0)
+            group_ids = np.delete(group_ids, remove_row, axis=0)
+        elif non_border_cols:
+            remove_col = random.choice(non_border_cols)
+            positions = np.delete(positions, remove_col, axis=1)
+            shapes = np.delete(shapes, remove_col, axis=1)
+            colors = np.delete(colors, remove_col, axis=1)
+            sizes = np.delete(sizes, remove_col, axis=1)
+            group_ids = np.delete(group_ids, remove_col, axis=1)
+
+    # flatten arrays for encode_scene
+    positions_flat = positions.reshape(-1, 2)
+    shapes_flat = shapes.flatten()
+    colors_flat = colors.flatten()
+    sizes_flat = sizes.flatten()
+    group_ids_flat = group_ids.flatten()
+
+    if not is_positive and "proximity" not in cf_params:
+        positions_flat = pos_utils.get_random_positions(len(positions_flat), obj_size)
+    objs = encode_utils.encode_scene(positions_flat, sizes_flat, colors_flat, shapes_flat, group_ids_flat, is_positive)
     return objs
 
 
-def non_overlap_grid(fixed_props, is_positive, cluster_num, obj_quantities, pin):
+def get_logics(is_positive, fixed_props, cf_params, irrel_params):
+    head = "image_target(X)"
+    body = ""
+    if "shape" in fixed_props:
+        body += "has_shape(X,triangle),"
+    if "color" in fixed_props:
+        body += "has_color(X,red),"
+    rule = f"{head}:-{body}principle(proximity)."
+    logic = {
+        "rule": rule,
+        "is_positive": is_positive,
+        "fixed_props": fixed_props,
+        "cf_params": cf_params,
+        "irrel_params": irrel_params,
+        "principle": "proximity",
+
+    }
+    return logic
+
+
+def non_overlap_grid(params, irrel_params, is_positive, cluster_num, obj_quantities, pin):
     obj_size = 0.05
-    objs = proximity_grid(is_positive, obj_size, cluster_num, fixed_props, obj_quantities)
+    cf_params = data_utils.get_proper_sublist(params + ["proximity"])
+    objs = proximity_grid(is_positive, obj_size, cluster_num, params, irrel_params, cf_params, obj_quantities)
     t = 0
     tt = 0
     max_try = 1000
     while (overlaps(objs) or overflow(objs)) and (t < max_try):
-        objs = proximity_grid(is_positive, obj_size, cluster_num, fixed_props, obj_quantities)
+        objs = proximity_grid(is_positive, obj_size, cluster_num, params, irrel_params, cf_params, obj_quantities)
         if tt > 10:
             tt = 0
             obj_size = obj_size * 0.90
         tt = tt + 1
         t = t + 1
-    return objs
+    logics = get_logics(is_positive, params, cf_params, irrel_params)
+    return objs, logics

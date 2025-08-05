@@ -39,11 +39,13 @@ def get_patterns(lite=False):
     all_tasks = []
     all_names = []
 
-    tasks, names = create_tasks_v4(non_overlap_red_triangle, feature_props, grp_num_range, size_list, qua_list, pin)
+    # tasks, names = create_tasks_v4(non_overlap_red_triangle, feature_props, grp_num_range, size_list, qua_list, pin)
+    # all_tasks.extend(tasks)
+    # all_names.extend(names)
+
+    tasks, names = create_tasks_v3(non_overlap_grid, feature_props, grp_num_range, size_list, pin)
     all_tasks.extend(tasks)
     all_names.extend(names)
-
-    # tasks.update(create_tasks_v3(non_overlap_grid, ["shape", "color"], num_lst, size_list, pin))
     # tasks.update(create_tasks_v2(non_overlap_fixed_props, ["shape", "color"], size_list, pin))
     # tasks.update(create_tasks_v3(overlap_big_small, ["shape", "color", "count"], num_lst, size_list, pin))
     # tasks.update(create_tasks_v4(overlap_circle_features, ["shape", "color"], num_lst, size_list, [0.8, 1, 1.2], pin))

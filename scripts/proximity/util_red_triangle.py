@@ -93,7 +93,6 @@ def proximity_red_triangle(is_positive, obj_size, clu_num, params, irrel_params,
     return objs
 
 
-
 def get_logics(is_positive, qualifiers, fixed_props, cf_params, irrel_params):
     if qualifiers == "all":
         head = "group_target(X)"
