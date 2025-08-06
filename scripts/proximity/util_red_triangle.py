@@ -15,11 +15,6 @@ def get_invariant_values(irrel_params, obj_size):
         "size": obj_size if "size" in irrel_params else None,
         "count": True if "count" in irrel_params else False,
     }
-    # cf_invariant = {
-    #     "shape": random.choice(config.all_shapes) if "shape" in cf_params else None,
-    #     "color": random.choice(config.color_large_exclude_gray) if "color" in cf_params else None,
-    #     "size": obj_size if "size" in cf_params else None,
-    # }
     return invariant
 
 

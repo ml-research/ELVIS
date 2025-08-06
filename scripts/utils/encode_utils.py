@@ -1,7 +1,7 @@
 # Created by jing at 25.02.25
 
 from scripts import config
-from scripts.utils.data_utils import get_all_combs
+from scripts.utils.data_utils import get_all_combs, get_proper_sublist, get_non_empty_sublist
 
 import random
 import itertools
@@ -60,7 +60,6 @@ def create_tasks_v2(func, params, task_sizes, prin_in_neg):
     counter = 0
     for rel_comb in get_all_combs(params):
         irrelevant_params = [k for k in params if k not in rel_comb and k != "position"]
-        irrelevant_params.append("")
         for irrel_comb in get_all_combs(irrelevant_params):
             for si in task_sizes:
                 task_name = (
@@ -94,8 +93,6 @@ def create_tasks_v3(func, params, task_sizes, obj_quantities, prin_in_neg):
                             + "_".join(f"{k}" for k in irrel_comb)
                     )
                     counter += 1
-                    # print(task_name)
-                    # print(f"relative params: {rel_comb} \t irrelative params: {irrel_comb}\t task size: {si} \t object quantity: {oq}")
                     if task_name in tasks:
                         raise ValueError(f"Duplicate task key detected: {task_name}")
                     tasks.append(

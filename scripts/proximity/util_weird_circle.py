@@ -4,7 +4,7 @@ import random
 import math
 
 from scripts import config
-from scripts.utils import encode_utils, data_utils
+from scripts.utils import encode_utils, data_utils, pos_utils
 
 
 def get_circumference_angles(cluster_num):
@@ -23,6 +23,7 @@ def get_circumference_positions(angle, radius, num_points=2, obj_dist_factor=1):
     """
     Generate multiple points near the given center, ensuring they remain on the circumference.
     """
+
     positions = []
     for p_i in range(num_points):
         angle_offset = 0.3 * p_i
@@ -33,9 +34,23 @@ def get_circumference_positions(angle, radius, num_points=2, obj_dist_factor=1):
     return positions
 
 
-def overlap_circle_features(fixed_props, is_positive, cluster_num, obj_quantities, obj_dist_factor, pin):
+def overlap_circle_features(params, irrel_params, is_positive, cluster_num, obj_quantities, obj_dist_factor, pin):
+    cf_params = data_utils.get_proper_sublist(params + ["proximity"])
+
+    group_size = config.standard_quantity_dict[obj_quantities]
     objs = []
-    group_sizes = {"s": range(2, 4), "m": range(3, 5), "l": range(2, 7)}.get(obj_quantities, range(2, 4))
+
+    setting = {
+        "big_radius": 0.3 + random.random() * 0.5,
+
+    }
+    setting["obj_size"] = setting["big_radius"] * 0.07
+    logic = {
+        "shape": random.sample(config.all_shapes, 2),
+        "color": random.sample(config.color_large_exclude_gray, 2),
+
+    }
+
     if not is_positive:
         new_cluster_num = random.randint(1, cluster_num + 2)
         while new_cluster_num == cluster_num:
@@ -43,57 +58,66 @@ def overlap_circle_features(fixed_props, is_positive, cluster_num, obj_quantitie
         cluster_num = new_cluster_num
     # Generate evenly distributed group centers on the circumference
     angles = get_circumference_angles(cluster_num)
-    if not is_positive and random.random() < 0.3:
-        cir_so = (0.3 + random.random() * 0.5) * 0.7
-        is_positive = True
-    else:
-        cir_so = 0.3 + random.random() * 0.5
 
     big_color = random.choice(config.color_large_exclude_gray)
-    obj_size = cir_so * 0.07
-    obj = encode_utils.encode_objs(x=0.5, y=0.5, size=cir_so, color=big_color,
+
+    obj_size = setting["obj_size"]
+    obj = encode_utils.encode_objs(x=0.5, y=0.5, size=setting["big_radius"], color=big_color,
                                    shape="circle", line_width=-1, solid=True,
                                    group_id=-1)
     objs.append(obj)
 
     for a_i in range(cluster_num):
-        group_size = random.choice(group_sizes)
-        if is_positive:
-            if "shape" in fixed_props:
-                shapes = [random.choice(config.bk_shapes[1:])] * group_size
-            else:
-                shapes = data_utils.random_select_unique_mix(config.bk_shapes[1:], group_size)
-            if "color" in fixed_props:
-                selected_color = random.choice(config.color_large_exclude_gray)
-                while selected_color == big_color:
-                    selected_color = random.choice(config.color_large_exclude_gray)
-                colors = [selected_color] * group_size
-            else:
-                colors = data_utils.random_select_unique_mix(config.color_large_exclude_gray, group_size)
+        if "count" in params and is_positive or ("count" in cf_params and not is_positive):
+            pass
         else:
-            cf_params = data_utils.get_proper_sublist(fixed_props)
-            if "shape" in cf_params:
-                shapes = [random.choice(config.bk_shapes[1:])] * group_size
-            else:
-                shapes = data_utils.random_select_unique_mix(config.bk_shapes[1:], group_size)
+            group_size = max(2, group_size + random.choice([-2, -1, 1, 2]))
 
-            if "color" in cf_params:
-                selected_color = random.choice(config.color_large_exclude_gray)
-                while selected_color == big_color:
-                    selected_color = random.choice(config.color_large_exclude_gray)
-                colors = [selected_color] * group_size
-            else:
-                colors = data_utils.random_select_unique_mix(config.color_large_exclude_gray, group_size)
+        if "shape" in params or ("shape" in cf_params and not is_positive):
+            shapes = random.choices(logic["shape"], k=group_size)
+        else:
+            try:
+                shapes = random.choices(config.all_shapes, k=group_size)
+            except ValueError:
+                print("")
 
-        # Get multiple nearby positions along the circumference
-        positions = get_circumference_positions(angles[a_i], cir_so / 2, group_size, obj_dist_factor)
-        for i in range(len(positions)):
-            obj = encode_utils.encode_objs(x=positions[i][0], y=positions[i][1],
-                                           size=obj_size,
-                                           color=colors[i],
-                                           shape=shapes[i],
-                                           line_width=-1,
-                                           solid=True,
-                                           group_id=a_i)
-            objs.append(obj)
-    return objs
+        if "color" in params and is_positive or ("color" in cf_params and not is_positive):
+            colors = random.choices(logic["color"], k=group_size)
+        else:
+            colors = random.choices(config.color_large_exclude_gray, k= group_size)
+
+        if "size" in params or ("size" in cf_params and not is_positive):
+            sizes = [obj_size] * group_size
+        else:
+            sizes = [random.uniform(obj_size * 0.4, obj_size * 1.5) for _ in range(group_size)]
+
+        if "proximity" in cf_params and not is_positive or (is_positive):
+            cir_so = setting["big_radius"] * 0.8
+            obj_dist_factor = 1
+            positions = get_circumference_positions(angles[a_i], cir_so / 2, group_size, obj_dist_factor)
+        else:
+            positions = pos_utils.get_random_positions(group_size, obj_size)
+        group_ids = [a_i] * group_size
+        objs += encode_utils.encode_scene(positions, sizes, colors, shapes, group_ids, is_positive)
+    logics = get_logics(is_positive, params, cf_params, irrel_params)
+    return objs, logics
+
+
+def get_logics(is_positive, fixed_props, cf_params, irrel_params):
+    head = "group_target(X)"
+    body = ""
+    if "shape" in fixed_props:
+        body += "has_shape(X,triangle),"
+    if "color" in fixed_props:
+        body += "has_color(X,red),"
+    rule = f"{head}:-{body}principle(proximity)."
+    logic = {
+        "rule": rule,
+        "is_positive": is_positive,
+        "fixed_props": fixed_props,
+        "cf_params": cf_params,
+        "irrel_params": irrel_params,
+        "principle": "proximity",
+
+    }
+    return logic

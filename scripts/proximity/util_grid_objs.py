@@ -8,14 +8,16 @@ from scripts.utils.shape_utils import overlaps, overflow
 import numpy as np
 
 
-def proximity_grid(is_positive, obj_size, grid_row_num, fixed_props, irrel_params, cf_params, obj_quantities):
+def proximity_grid(is_positive, obj_size, fixed_props, irrel_params, cf_params, obj_quantities):
     # fixed settings
     logic = {
         "shape": ["cross", "circle"],
         "color": ["darkblue", "darkred"],
     }
+
+    grid_row_num = config.standard_quantity_dict[obj_quantities]
     # random settings
-    grid_col_num = random.randint(2, 4)
+    grid_col_num = grid_row_num + random.randint(-2, 2)
     del_axis = random.choice(["row", "col"])
     if is_positive and "shape" in fixed_props or (not is_positive and "shape" in cf_params):
         shapes = np.random.choice(logic["shape"], size=(grid_row_num, grid_col_num), replace=True)
@@ -40,29 +42,29 @@ def proximity_grid(is_positive, obj_size, grid_row_num, fixed_props, irrel_param
         sizes = np.zeros((grid_row_num, grid_col_num)) + random.uniform(obj_size * 0.5, obj_size * 1.5)
 
     positions = np.zeros((grid_row_num, grid_col_num, 2))
+    unit_shift = 0.03
     if del_axis == "row":
-        x_vals = np.linspace(0.5 - (0.025 * grid_col_num), 0.5 + (0.025 * grid_col_num), grid_row_num)
-        y_vals = np.linspace(0.1, 0.9, grid_col_num)
-    else:
+        y_vals = np.linspace(0.5 - (unit_shift * grid_col_num), 0.5 + (unit_shift * grid_col_num), grid_col_num)
         x_vals = np.linspace(0.1, 0.9, grid_row_num)
-        y_vals = np.linspace(0.5 - (0.025 * grid_col_num), 0.5 + (0.025 * grid_col_num), grid_col_num)
+    else:
+        y_vals = np.linspace(0.1, 0.9, grid_col_num)
+        x_vals = np.linspace(0.5 - (unit_shift * grid_row_num), 0.5 + (unit_shift * grid_row_num), grid_row_num)
 
     positions = np.stack(np.meshgrid(x_vals, y_vals, indexing='ij'), axis=-1)
 
     group_ids = np.zeros((grid_row_num, grid_col_num))
-
     # Randomly remove one non-border column or row from positions
     non_border_rows = list(range(1, grid_row_num - 1))
     non_border_cols = list(range(1, grid_col_num - 1))
     if non_border_rows or non_border_cols:
-        if del_axis == 'row' and non_border_rows:
+        if del_axis == 'row':
             remove_row = random.choice(non_border_rows)
             positions = np.delete(positions, remove_row, axis=0)
             shapes = np.delete(shapes, remove_row, axis=0)
             colors = np.delete(colors, remove_row, axis=0)
             sizes = np.delete(sizes, remove_row, axis=0)
             group_ids = np.delete(group_ids, remove_row, axis=0)
-        elif non_border_cols:
+        else:
             remove_col = random.choice(non_border_cols)
             positions = np.delete(positions, remove_col, axis=1)
             shapes = np.delete(shapes, remove_col, axis=1)
@@ -102,16 +104,15 @@ def get_logics(is_positive, fixed_props, cf_params, irrel_params):
     }
     return logic
 
-
-def non_overlap_grid(params, irrel_params, is_positive, cluster_num, obj_quantities, pin):
+def non_overlap_grid(params, irrel_params, is_positive, obj_quantity, pin):
     obj_size = 0.05
     cf_params = data_utils.get_proper_sublist(params + ["proximity"])
-    objs = proximity_grid(is_positive, obj_size, cluster_num, params, irrel_params, cf_params, obj_quantities)
+    objs = proximity_grid(is_positive, obj_size, params, irrel_params, cf_params, obj_quantity)
     t = 0
     tt = 0
     max_try = 1000
     while (overlaps(objs) or overflow(objs)) and (t < max_try):
-        objs = proximity_grid(is_positive, obj_size, cluster_num, params, irrel_params, cf_params, obj_quantities)
+        objs = proximity_grid(is_positive, obj_size, params, irrel_params, cf_params, obj_quantity)
         if tt > 10:
             tt = 0
             obj_size = obj_size * 0.90
