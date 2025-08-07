@@ -34,7 +34,7 @@ def get_circumference_positions(angle, radius, num_points=2, obj_dist_factor=1):
     return positions
 
 
-def overlap_circle_features(params, irrel_params, is_positive, cluster_num, obj_quantities, obj_dist_factor, pin):
+def overlap_circle_features(params, irrel_params, is_positive, cluster_num, obj_quantities, pin):
     cf_params = data_utils.get_proper_sublist(params + ["proximity"])
 
     group_size = config.standard_quantity_dict[obj_quantities]
@@ -84,7 +84,7 @@ def overlap_circle_features(params, irrel_params, is_positive, cluster_num, obj_
         if "color" in params and is_positive or ("color" in cf_params and not is_positive):
             colors = random.choices(logic["color"], k=group_size)
         else:
-            colors = random.choices(config.color_large_exclude_gray, k= group_size)
+            colors = random.choices(config.color_large_exclude_gray, k=group_size)
 
         if "size" in params or ("size" in cf_params and not is_positive):
             sizes = [obj_size] * group_size
