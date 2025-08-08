@@ -18,24 +18,46 @@ def get_circumference_angles(cluster_num):
     return angles
 
 
-def get_symmetry_surrounding_positions(angle, radius, dtype, num_points=2):
+def get_symmetry_surrounding_positions(num_points=2, symmetry_axis=0, min_dist_to_axis=0.2, min_dist_between_pairs=0.2, max_attempts=100):
     """
-    Generate multiple points near the given center, ensuring they remain on the circumference.
+    Generate num_points pairs of symmetric positions along the given symmetry axis.
+    symmetry_axis: axis in degrees (-45, 0, 45, 90)
+    min_dist_to_axis: minimum distance from each object to the axis
     """
     positions = []
-    for p_i in range(num_points):
-        angle_offset = 0.3 * p_i
-        shifted_angle = angle + angle_offset
-        x = 0.5 + radius * math.cos(shifted_angle)
-        y = 0.5 + radius * math.sin(shifted_angle)
-        if dtype:
-            x_symmetry = 0.5 - radius * math.cos(shifted_angle)
+    axis_rad = math.radians(symmetry_axis)
+    axis_dx = math.cos(axis_rad)
+    axis_dy = math.sin(axis_rad)
+    axis_point = (0.5, 0.5)
+    for _ in range(num_points):
+        for attempt in range(max_attempts):
+            dist = random.uniform(min_dist_to_axis, 0.4)
+            min_offset = math.pi / 12  # 15 degrees in radians
+            max_offset = math.pi / 4  # 45 degrees in radians
+            if random.random() < 0.5:
+                angle_offset = random.uniform(-max_offset, -min_offset)
+            else:
+                angle_offset = random.uniform(min_offset, max_offset)
 
-        else:
-            x_symmetry = 0.5 - radius * math.sin(shifted_angle)
-        positions.append((x, y))
-        positions.append((x_symmetry, y))
-
+            perp_angle = axis_rad + math.pi / 2 + angle_offset
+            x = axis_point[0] + dist * math.cos(perp_angle)
+            y = axis_point[1] + dist * math.sin(perp_angle)
+            px, py = x - axis_point[0], y - axis_point[1]
+            proj = px * axis_dx + py * axis_dy
+            sx = px - 2 * (proj * axis_dx)
+            sy = py - 2 * (proj * axis_dy)
+            x_sym = axis_point[0] + sx
+            y_sym = axis_point[1] + sy
+            # Check minimum distance to all existing positions
+            too_close = False
+            for (ox, oy) in positions:
+                if math.hypot(x - ox, y - oy) < min_dist_between_pairs or math.hypot(x_sym - ox, y_sym - oy) < min_dist_between_pairs:
+                    too_close = True
+                    break
+            if not too_close:
+                positions.append((x, y))
+                positions.append((x_sym, y_sym))
+                break
     return positions
 
 
@@ -57,6 +79,26 @@ def get_surrounding_positions(center, radius, num_points=2):
     return positions
 
 
+def get_logics(is_positive, fixed_props, cf_params, irrel_params):
+    head = "group_target(X)"
+    body = ""
+    if "shape" in fixed_props:
+        body += "has_shape(X,triangle),"
+    if "color" in fixed_props:
+        body += "has_color(X,red),"
+    rule = f"{head}:-{body}principle(proximity)."
+    logic = {
+        "rule": rule,
+        "is_positive": is_positive,
+        "fixed_props": fixed_props,
+        "cf_params": cf_params,
+        "irrel_params": irrel_params,
+        "principle": "symmetry",
+
+    }
+    return logic
+
+
 def get_circumference_points(cluster_num, x, y, radius):
     """
     Generate evenly spaced points on the circumference of a circle.
@@ -70,22 +112,25 @@ def get_circumference_points(cluster_num, x, y, radius):
     return points
 
 
-def feature_symmetry_circle(params, is_positive, clu_num=1):
+def feature_symmetry_circle(params, irrel_params, is_positive, clu_num, obj_quantity, symmetry_axis, pin):
     obj_size = 0.05
-    objs = []
-    shape = "circle"
-    color = random.choice(config.color_large_exclude_gray)
+    cf_params = data_utils.get_proper_sublist(params + ["symmetry"])
     cir_so = 0.3 + random.random() * 0.1
-    objs.append(encode_utils.encode_objs(
+    objs = [encode_utils.encode_objs(
         x=0.5,
         y=0.5,
         size=cir_so,
-        color=color,
-        shape=shape,
+        color=random.choice(config.color_large_exclude_gray),
+        shape="circle",
         line_width=-1,
         solid=True,
         group_id=-1
-    ))
+    )]
+
+    logic = {
+        "shape": ["hexagon", "star"],
+        "color": ["red", "blue", "green", "yellow", "purple"],
+    }
     if "count" in params and not is_positive:
         clu_num = data_utils.neg_clu_num(clu_num, 1, clu_num + 2)
 
@@ -93,76 +138,53 @@ def feature_symmetry_circle(params, is_positive, clu_num=1):
     angles = get_circumference_angles(clu_num)
     group_centers = get_circumference_points(clu_num, 0.5, 0.5, cir_so)
 
-    for a_i in range(clu_num):
-        is_random = False
-        if is_positive:
-            group_obj_num = random.randint(2, 4)
-            positions = get_symmetry_surrounding_positions(angles[a_i], cir_so / 2, is_positive, group_obj_num)
+    grp_obj_nums = [config.standard_quantity_dict[obj_quantity] - 3 for _ in range(clu_num)]
 
-            if "shape" in params:
-                shapes = [random.choice(config.bk_shapes[1:])] * group_obj_num
-                shapes = data_utils.duplicate_maintain_order(shapes, 2)
-
-            else:
-                shapes = data_utils.random_select_unique_mix(config.bk_shapes[1:], group_obj_num)
-                shapes = data_utils.duplicate_maintain_order(shapes, 2)
-            if "color" in params:
-                colors = [random.choice(config.color_large_exclude_gray)] * group_obj_num
-                colors = data_utils.duplicate_maintain_order(colors, 2)
-            else:
-                colors = data_utils.random_select_unique_mix(config.color_large_exclude_gray, group_obj_num)
-                colors = data_utils.duplicate_maintain_order(colors, 2)
-
-            if "size" in params:
-                sizes = [obj_size] * group_obj_num
-                sizes = data_utils.duplicate_maintain_order(sizes, 2)
-            else:
-                sizes = [random.uniform(obj_size * 0.6, obj_size * 1.5) for _ in range(group_obj_num)]
-                sizes = data_utils.duplicate_maintain_order(sizes, 2)
-
+    if is_positive or ("symmetry" in cf_params and not is_positive):
+        if "axis" in params:
+            # with symmetry and fixed axis
+            all_positions = [get_symmetry_surrounding_positions(grp_obj_nums[a_i], symmetry_axis)
+                             for a_i in range(clu_num)]
         else:
-            group_obj_num = random.randint(2, 4)
-            # shape
-            if "shape" in params:
-                shapes = data_utils.random_select_unique_mix(config.bk_shapes[1:], group_obj_num * 2)
+            # with symmetry and random axis
+            axis = random.choice([-45, 0, 45, 90])
+            all_positions = [get_symmetry_surrounding_positions(grp_obj_nums[a_i], axis)
+                             for a_i in range(clu_num)]
+    else:
+        all_positions = [get_surrounding_positions(group_centers[a_i], cir_so * 1, grp_obj_nums[a_i])
+                         for a_i in range(clu_num)]
 
-            else:
-                shapes = [random.choice(config.bk_shapes[1:])] * group_obj_num
-                shapes = data_utils.duplicate_maintain_order(shapes, 2)
-            if "color" in params:
-                colors = data_utils.random_select_unique_mix(config.color_large_exclude_gray, group_obj_num * 2)
+    invariant_shape = random.choice(config.all_shapes)
+    invariant_color = random.choice(config.color_large_exclude_gray)
 
-            else:
-                colors = [random.choice(config.color_large_exclude_gray)] * group_obj_num
-                colors = data_utils.duplicate_maintain_order(colors, 2)
-            if "size" in params:
-                sizes = [random.uniform(obj_size * 0.9, obj_size * 2) for _ in range(group_obj_num * 2)]
+    for a_i in range(clu_num):
+        grp_obj_num = grp_obj_nums[a_i]
+        if "shape" in params and is_positive or (not is_positive and "shape" in cf_params):
+            shapes = [random.choice(logic["shape"]) for _ in range(grp_obj_num)]
+            shapes = data_utils.duplicate_maintain_order(shapes, 2)
+        else:
+            shapes = [random.choice(config.all_shapes) for _ in range(grp_obj_num * 2)]
+        if "shape" in irrel_params:
+            shapes = [invariant_shape] * grp_obj_num * 2
 
+        if "color" in params and is_positive or (not is_positive and "color" in cf_params):
+            colors = [random.choice(logic["color"]) for _ in range(grp_obj_num)]
+            colors = data_utils.duplicate_maintain_order(colors, 2)
+        else:
+            colors = [random.choice(config.color_large_exclude_gray) for _ in range(grp_obj_num * 2)]
+        if "color" in irrel_params:
+            colors = [invariant_color] * grp_obj_num * 2
 
-            else:
-                sizes = [obj_size] * group_obj_num
-                sizes = data_utils.duplicate_maintain_order(sizes, 2)
-            if random.random() < 0.3:
-                positions = get_surrounding_positions(group_centers[a_i], cir_so * 1, group_obj_num)
-                is_random = True
-            else:
-                positions = get_symmetry_surrounding_positions(angles[a_i], cir_so / 2, is_positive, group_obj_num)
-        try:
-            for i in range(len(positions)):
-                if is_random:
-                    group_id = -1
-                else:
-                    group_id = a_i
-                objs.append(encode_utils.encode_objs(
-                    x=positions[i][0],
-                    y=positions[i][1],
-                    size=sizes[i],
-                    color=colors[i],
-                    shape=shapes[i],
-                    line_width=-1,
-                    solid=True,
-                    group_id=group_id
-                ))
-        except IndexError:
-            raise IndexError
-    return objs
+        if "size" in params and is_positive or (not is_positive and "size" in cf_params):
+            sizes = [obj_size] * grp_obj_num
+            sizes = data_utils.duplicate_maintain_order(sizes, 2)
+        else:
+            sizes = [random.uniform(obj_size * 0.5, obj_size * 1.5) for _ in range(grp_obj_num * 2)]
+        if "size" in irrel_params:
+            sizes = [obj_size] * grp_obj_num
+            sizes = data_utils.duplicate_maintain_order(sizes, 2)
+        positions = all_positions[a_i]
+        grp_ids = [a_i] * grp_obj_num * 2
+        objs = encode_utils.encode_scene(positions, sizes, colors, shapes, grp_ids, is_positive)
+    logics = get_logics(is_positive, params, cf_params, irrel_params)
+    return objs, logics

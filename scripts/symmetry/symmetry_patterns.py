@@ -3,6 +3,9 @@
 from itertools import combinations
 from scripts.symmetry.util_solar_system import non_overlap_soloar_sys
 from scripts.symmetry.util_symmetry_cir import feature_symmetry_circle
+from scripts.utils.encode_utils import create_tasks_v2, create_tasks_v3, create_tasks_v4
+
+from scripts import config
 
 """ 
 p: positive
@@ -22,25 +25,30 @@ def get_all_combs(given_list):
     return all_combinations
 
 
-# def create_tasks(func, obj_size, task_sizes, *args):
-#     return {f"{func.__name__}_{'_'.join(map(str, args))}_{s}": (lambda p, s=s, args=args: func(obj_size, p, s, *args))
-#             for s in task_sizes}
-def create_tasks_v2(func, params, task_sizes):
-    return {f"{func.__name__}_{'_'.join(map(str, comb))}_{s}": (lambda p, s=s, comb=comb: func(comb, p, s))
-            for comb in get_all_combs(params) for s in task_sizes}
-
-
-def create_tasks_v3(func, params, task_sizes, obj_quantities):
-    return {
-        f"{func.__name__}_{'_'.join(map(str, comb))}_{s}_{oq}": (lambda p, s=s, comb=comb, oq=oq: func(comb, p, s, oq))
-        for comb in get_all_combs(params) for s in task_sizes for oq in obj_quantities}
-
-def get_patterns():
+def get_patterns(lite=False):
     # Define task functions dynamically
-    tasks = {}
-    tasks.update(create_tasks_v2(non_overlap_soloar_sys, ["shape", "color", "size", "count"], range(1, 5)))
-    tasks.update(create_tasks_v2(feature_symmetry_circle, ["shape", "color", "size", "count"], range(1, 5)))
+    if lite:
+        size_list = ["s"]
+        grp_num_range = range(2, 3)
+        feature_props = ["color", "size", "shape", "axis"]
+        axis_list = [-45, 0, 45, 90]
+    else:
+        size_list = config.standard_quantity_dict.keys()
+        grp_num_range = range(2, 3)
+        axis_list = [-45, 0, 45, 90]
+        feature_props = ["shape", "color", "size", "axis"]
+    pin = config.prin_in_neg
+    all_tasks = []
+    all_names = []
+
+    tasks, names = create_tasks_v4(non_overlap_soloar_sys, feature_props, grp_num_range, size_list,axis_list, pin)
+    all_tasks.extend(tasks)
+    all_names.extend(names)
+
+    # tasks, names = create_tasks_v4(feature_symmetry_circle, feature_props, grp_num_range, size_list, axis_list, pin)
+    # all_tasks.extend(tasks)
+    # all_names.extend(names)
 
     # Convert tasks to pattern dictionary
-    pattern_dicts = [{"name": key, "module": task} for key, task in tasks.items()]
+    pattern_dicts = [{"name": key, "module": task} for key, task in zip(all_names, all_tasks)]
     return pattern_dicts
