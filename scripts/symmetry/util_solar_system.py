@@ -54,7 +54,7 @@ def get_symmetry_on_cir_positions(center, radius, num_points, axis=0, min_dist_t
     axis_dy = math.sin(axis_rad)
     axis_point = (0.5, 0.5)
     # Generate evenly spaced offsets in both positive and negative ranges
-    offsets_pos = np.linspace(min_offset, max_offset, sum(num_points))
+    offsets_pos = np.linspace(min_offset, max_offset, sum(num_points)+10)
 
     np.random.shuffle(offsets_pos)  # Shuffle offsets to ensure randomness
     counter = 0
@@ -126,7 +126,7 @@ def symmetry_solar_sys(obj_size, is_positive, clu_num, params, irrel_params, cf_
     invariant_color = random.choice(config.color_large_exclude_gray)
 
     if not is_positive and "symmetry" not in cf_params:
-        all_positions = pos_utils.get_almost_symmetry_positions(group_centers, cir_so * dist, grp_obj_nums)
+        all_positions = pos_utils.get_almost_symmetry_positions(group_centers, cir_so * random.uniform(0.3, 0.6), grp_obj_nums)
     for a_i in range(clu_num):
         grp_obj_num = grp_obj_nums[a_i]
         if "shape" in params and is_positive or (not is_positive and "shape" in cf_params):
@@ -175,7 +175,6 @@ def get_logics(is_positive, fixed_props, cf_params, irrel_params):
         "cf_params": cf_params,
         "irrel_params": irrel_params,
         "principle": "symmetry",
-
     }
     return logic
 
@@ -183,18 +182,6 @@ def get_logics(is_positive, fixed_props, cf_params, irrel_params):
 def non_overlap_soloar_sys(params, irrel_params, is_positive, clu_num, obj_quantity, sym_axis, pin):
     obj_size = 0.05
     cf_params = data_utils.get_proper_sublist(params + ["symmetry"])
-
     objs = symmetry_solar_sys(obj_size, is_positive, clu_num, params, irrel_params, cf_params, obj_quantity, sym_axis)
-    # t = 0
-    # tt = 0
-    # max_try = 1000
-    # while (overlaps(objs) or overflow(objs)) and (t < max_try):
-    #     objs = symmetry_solar_sys(obj_size, is_positive, clu_num, params, irrel_params, cf_params, obj_quantity, sym_axis)
-    #     if tt > 10:
-    #         tt = 0
-    #         obj_size = obj_size * 0.90
-    #     tt = tt + 1
-    #     t = t + 1
     logics = get_logics(is_positive, params, cf_params, irrel_params)
-
     return objs, logics

@@ -31,13 +31,13 @@ def get_patterns(lite=False):
     if lite:
         size_list = ["s"]
         grp_num_range = range(2, 4)
-        feature_props = ["color", "size", "shape", "count", "position"]
+        feature_props = ["color", "size", "shape", "count"]
         qua_list = ["exist"]
     else:
         size_list = config.standard_quantity_dict.keys()
         qua_list = ["all", "exist"]
         grp_num_range = range(2, 5)
-        feature_props = ["shape", "color", "size", "count", "position"]
+        feature_props = ["shape", "color", "size", "count"]
     pin = config.prin_in_neg
 
     all_tasks = []

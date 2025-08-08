@@ -45,9 +45,9 @@ def get_patterns(lite=False):
     all_tasks.extend(tasks)
     all_names.extend(names)
 
-    # tasks, names = create_tasks_v4(feature_symmetry_circle, feature_props, grp_num_range, size_list, axis_list, pin)
-    # all_tasks.extend(tasks)
-    # all_names.extend(names)
+    tasks, names = create_tasks_v4(feature_symmetry_circle, feature_props, grp_num_range, size_list, axis_list, pin)
+    all_tasks.extend(tasks)
+    all_names.extend(names)
 
     # Convert tasks to pattern dictionary
     pattern_dicts = [{"name": key, "module": task} for key, task in zip(all_names, all_tasks)]

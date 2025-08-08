@@ -73,12 +73,12 @@ def position_continuity_a_splines(obj_size, is_positive, clu_num, params, irrel_
     invariant_shape = random.choice(config.all_shapes)
     invariant_color = random.choice(config.color_large_exclude_gray)
     invariant_size = obj_size
-    cf_params = data_utils.get_proper_sublist(params + ["position"])
+    cf_params = data_utils.get_proper_sublist(params + ["continuity"])
     shapes = data_utils.assign_property(is_positive, "shape", params, cf_params, irrel_params, invariant_shape, logic["shape"], config.all_shapes, total_num)
     colors = data_utils.assign_property(is_positive, "color", params, cf_params, irrel_params, invariant_color, logic["color"], config.color_large_exclude_gray, total_num)
     sizes = data_utils.assign_property(is_positive, "size", params, cf_params, irrel_params, invariant_size, logic["size"],
                                        data_utils.get_random_sizes(line1_num + line2_num, obj_size), total_num)
-    has_position = is_positive or "position" in cf_params
+    has_position = is_positive or "continuity" in cf_params
     if has_position:
         positions = np.concatenate((line1_points, line2_points))
     else:
@@ -98,7 +98,7 @@ def get_logic_rules(params):
     if "shape" in params:
         body += ("has_shape(O1,square),has_shape(O2,circle),no_shape(O3,triangle),"
                  "in(O1,G),in(O2,G),in(O3,G),")
-    rule = f"{head}:-{body}principle(closure,G)."
+    rule = f"{head}:-{body}principle(continuity,G)."
     return rule
 
 

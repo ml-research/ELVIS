@@ -18,7 +18,7 @@ def get_patterns(lite=False):
     else:
         size_list = list(config.standard_quantity_dict.keys())[:3]
         grp_num_range = range(2, 3)
-        prop_list = ["shape", "color", "size", "count"]
+        prop_list = ["shape", "color", "size"]
     prin_in_neg = config.prin_in_neg
 
     # Define task functions dynamically

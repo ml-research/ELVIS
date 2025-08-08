@@ -49,7 +49,7 @@ def continuity_one_splits_n(obj_size, is_positive, params, irrel_params, obj_qua
     total_main = main_road_length + split_road_length
     total_split = split_road_length
 
-    cf_params = data_utils.get_proper_sublist(params + ["position"])
+    cf_params = data_utils.get_proper_sublist(params + ["continuity"])
 
     shapes_main = data_utils.assign_property(is_positive, "shape", params, cf_params, irrel_params, invariant_shape, logic["shape"], config.all_shapes, total_main)
     shapes_split = data_utils.assign_property(is_positive, "shape", params, cf_params, irrel_params, invariant_shape, logic["shape"], config.all_shapes, total_split)
@@ -66,7 +66,7 @@ def continuity_one_splits_n(obj_size, is_positive, params, irrel_params, obj_qua
                                              total_split)
     sizes = sizes_main + sizes_split
 
-    has_position = is_positive or "position" in cf_params
+    has_position = is_positive or "continuity" in cf_params
     if has_position:
         positions_main = get_main_positions(main_road_length, minx, dx, main_y)
         position_split_1 = get_main_split_positions(split_road_length, minx + main_road_length * dx, dx, main_y, dy)
