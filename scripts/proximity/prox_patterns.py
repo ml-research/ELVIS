@@ -48,7 +48,7 @@ def get_patterns(lite=False):
     all_tasks.extend(tasks)
     all_names.extend(names)
 
-    tasks, names = create_tasks_v3(non_overlap_fixed_props, feature_props, grp_num_range, size_list, pin)
+    tasks, names = create_tasks_v3(non_overlap_fixed_props, feature_props, grp_num_range, ["s", "m", "l"], pin)
     all_tasks.extend(tasks)
     all_names.extend(names)
 

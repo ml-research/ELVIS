@@ -61,19 +61,20 @@ def add_label_on_img(image, pattern_data):
     irrel_props = pattern_data.get("irrel_params", [])
     cf_params = pattern_data.get("cf_params", [])
 
+    scale_factor = config.img_width / 1024
     font = cv2.FONT_HERSHEY_SIMPLEX
-    font_scale = 1.0
-    thickness = 2
+    font_scale = scale_factor
+    thickness = max(1, int(2 * scale_factor))
     black = (0, 0, 0)
     red = (0, 0, 255)
     bg_color = (255, 255, 255)
     gray = (128, 128, 128)
-    margin = 10
-    line_spacing = 10
+    margin = int(10 * scale_factor)
+    line_spacing = int(10 * scale_factor)
 
     labels = ([f"{str(is_positive)}", f"{pattern_data['principle']}"] +
               [f"{str(prop)}" for prop in fixed_props] + [f"{str(p)}" for p in irrel_props])
-    text_sizes = [cv2.getTextSize("(IR)" +label, font, font_scale, thickness)[0] for label in labels]
+    text_sizes = [cv2.getTextSize("(IR)" + label, font, font_scale, thickness)[0] for label in labels]
     max_width = max(w for w, h in text_sizes)
     total_height = sum(h for w, h in text_sizes) + line_spacing * (len(labels) - 1)
 
@@ -87,12 +88,12 @@ def add_label_on_img(image, pattern_data):
         prefix = "(R)"
         if not is_positive and label not in cf_params + ["False"]:
             color = red
-            prefix= "(R)"
+            prefix = "(R)"
         if (label not in fixed_props and label in irrel_props) or (label in irrel_props and label not in cf_params):
             color = gray
-            prefix= "(IR)"
+            prefix = "(IR)"
         (text_w, text_h), _ = cv2.getTextSize(label, font, font_scale, thickness)
-        cv2.putText(image, prefix+label, (margin, y + text_h), font, font_scale, color, thickness, cv2.LINE_AA)
+        cv2.putText(image, prefix + label, (margin, y + text_h), font, font_scale, color, thickness, cv2.LINE_AA)
         y += text_h + line_spacing
 
     return image

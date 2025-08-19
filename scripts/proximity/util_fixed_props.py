@@ -9,19 +9,19 @@ from scripts.utils import pos_utils, encode_utils, data_utils
 
 
 def proximity_fixed_props(fixed_props, irrel_params, cf_params, clu_num, is_positive, obj_size, obj_quantities):
-    cluster_dist = 0.3  # Increased to ensure clear separation
+    cluster_dist = 0.25  # Increased to ensure clear separation
     neighbour_dist = 0.05
     group_size = config.standard_quantity_dict[obj_quantities]
     group_radius = config.get_grp_r(0.1, obj_quantities)
     # group_radius = {"s": 0.05, "m": 0.08, "l": 0.1}.get(obj_quantities, 0.05)
     logic = {
-        "shape": random.sample(config.all_shapes, group_size),
-        "color": random.sample(config.color_large_exclude_gray, group_size),
+        "shape": random.sample(config.all_shapes, 2),
+        "color": random.sample(config.color_large_exclude_gray, 2),
     }
 
     def generate_random_anchor(existing_anchors):
         while True:
-            anchor = [random.uniform(0.15, 0.85), random.uniform(0.15, 0.85)]
+            anchor = [random.uniform(0.10, 0.9), random.uniform(0.1, 0.9)]
             if all(pos_utils.euclidean_distance(anchor, existing) > cluster_dist for existing in existing_anchors):
                 return anchor
 
@@ -46,12 +46,12 @@ def proximity_fixed_props(fixed_props, irrel_params, cf_params, clu_num, is_posi
             neighbour_points = pos_utils.get_random_positions(group_size, obj_size)
 
         if grp_all_same and "shape" in fixed_props or ("shape" in cf_params and not is_positive):
-            shapes = logic["shape"]
+            shapes = [random.choice(logic["shape"]) for _ in range(group_size)]
         else:
             shapes = [random.choice(config.all_shapes) for _ in range(group_size)]
 
         if grp_all_same and "color" in fixed_props or ("color" in cf_params and not is_positive):
-            colors = logic["color"]
+            colors = [random.choice(logic["color"]) for _ in range(group_size)]
         else:
             colors = [random.choice(config.color_large_exclude_gray) for _ in range(group_size)]
 

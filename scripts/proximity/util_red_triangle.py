@@ -12,7 +12,7 @@ def get_invariant_values(irrel_params, obj_size):
     invariant = {
         "shape": random.choice(config.all_shapes) if "shape" in irrel_params else None,
         "color": random.choice(config.color_large_exclude_gray) if "color" in irrel_params else None,
-        "size": obj_size if "size" in irrel_params else None,
+        "size": obj_size,
         "count": True if "count" in irrel_params else False,
     }
     return invariant
@@ -32,7 +32,7 @@ def assign_properties(grp_obj_num, has_red_triangle, params, invariant, cf_param
     if "size" in cf_params or ("size" in params and has_red_triangle):
         sizes = [logic["size"]] * grp_obj_num
     else:
-        sizes = [random.uniform(logic["size"] * 0.4, logic["size"] * 0.7) for _ in range(grp_obj_num)]
+        sizes = [random.uniform(logic["size"] * 0.5, logic["size"] * 1.7) for _ in range(grp_obj_num)]
 
     if invariant["shape"] is not None:
         shapes = [invariant["shape"]] * grp_obj_num
@@ -54,8 +54,8 @@ def proximity_red_triangle(is_positive, obj_size, clu_num, params, irrel_params,
         "size": obj_size,
         "count": True,
     }
-    group_sizes = {"s": range(2, 4), "m": range(3, 5), "l": range(2, 7)}.get(obj_quantities, range(2, 4))
-    group_radius = {"s": 0.05, "m": 0.08, "l": 0.1}.get(obj_quantities, 0.05)
+    group_sizes = {"s": range(2, 4), "m": range(3, 5), "l": range(5, 7), "xl": range(10, 15)}.get(obj_quantities, range(2, 4))
+    group_radius = {"s": 0.06, "m": 0.08, "l": 0.11, "xl": 0.13}.get(obj_quantities, 0.05)
     invariant = get_invariant_values(irrel_params, obj_size)
 
     if invariant["count"]:

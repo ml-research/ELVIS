@@ -27,7 +27,8 @@ def generate_points(center, radius, n, min_distance):
             points.append(new_point)
 
         attempts += 1
-
+        if attempts > max_attempts:
+            raise ValueError("Unable to generate enough points within the specified radius and min distance.")
     return points
 
 

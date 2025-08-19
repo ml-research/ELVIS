@@ -37,20 +37,16 @@ def get_circumference_positions(angle, radius, num_points=2, obj_dist_factor=1):
 def overlap_circle_features(params, irrel_params, is_positive, cluster_num, obj_quantities, pin):
     cf_params = data_utils.get_proper_sublist(params + ["proximity"])
 
-    group_size = config.standard_quantity_dict[obj_quantities]
+    group_size = {"s": 2, "m": 3, "l": 4, "xl": 5}.get(obj_quantities, 2)
     objs = []
-
     setting = {
-        "big_radius": 0.3 + random.random() * 0.5,
-
+        "big_radius": 0.45 + random.random() * 0.5,
     }
     setting["obj_size"] = setting["big_radius"] * 0.07
     logic = {
-        "shape": random.sample(config.all_shapes, 2),
-        "color": random.sample(config.color_large_exclude_gray, 2),
-
+        "shape": ["circle", "square"],
+        "color": ["blue", "brown"],
     }
-
     if not is_positive:
         new_cluster_num = random.randint(1, cluster_num + 2)
         while new_cluster_num == cluster_num:
@@ -68,25 +64,19 @@ def overlap_circle_features(params, irrel_params, is_positive, cluster_num, obj_
     objs.append(obj)
 
     for a_i in range(cluster_num):
-        if "count" in params and is_positive or ("count" in cf_params and not is_positive):
+        if is_positive and "count" in params and is_positive or ("count" in cf_params and not is_positive):
             pass
         else:
             group_size = max(2, group_size + random.choice([-2, -1, 1, 2]))
-
-        if "shape" in params or ("shape" in cf_params and not is_positive):
-            shapes = random.choices(logic["shape"], k=group_size)
+        if is_positive and "shape" in params or ("shape" in cf_params and not is_positive):
+            shapes = [random.choice(logic["shape"])] * group_size
         else:
-            try:
-                shapes = random.choices(config.all_shapes, k=group_size)
-            except ValueError:
-                print("")
-
-        if "color" in params and is_positive or ("color" in cf_params and not is_positive):
-            colors = random.choices(logic["color"], k=group_size)
+            shapes = random.choices(config.all_shapes, k=group_size)
+        if is_positive and "color" in params and is_positive or ("color" in cf_params and not is_positive):
+            colors = [random.choice(logic["color"])] * group_size
         else:
             colors = random.choices(config.color_large_exclude_gray, k=group_size)
-
-        if "size" in params or ("size" in cf_params and not is_positive):
+        if is_positive and "size" in params or ("size" in cf_params and not is_positive):
             sizes = [obj_size] * group_size
         else:
             sizes = [random.uniform(obj_size * 0.4, obj_size * 1.5) for _ in range(group_size)]

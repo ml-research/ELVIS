@@ -334,9 +334,9 @@ def save_principle_patterns(args, principle_name, pattern_dicts):
 def main(args):
     principles = {
         # "od": object_patterns.pattern_dicts,
-        # "proximity": prox_patterns.get_patterns(args.lite),
+        "proximity": prox_patterns.get_patterns(args.lite),
         # "similarity": similarity_patterns.get_patterns(args.lite),
-        "symmetry": symmetry_patterns.get_patterns(args.lite),
+        # "symmetry": symmetry_patterns.get_patterns(args.lite),
         # "closure": closure_patterns.get_patterns(args.lite),
         # "continuity": continuity_patterns.get_patterns(args.lite),
         # "mixed":mixed_patterns.pattern_dicts

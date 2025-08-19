@@ -15,9 +15,9 @@ def proximity_grid(is_positive, obj_size, fixed_props, irrel_params, cf_params, 
         "color": ["darkblue", "darkred"],
     }
 
-    grid_row_num = config.standard_quantity_dict[obj_quantities]
+    grid_row_num = {"s":3, "m": 5, "l": 7, "xl": 9}.get(obj_quantities, 2)
     # random settings
-    grid_col_num = grid_row_num + random.randint(-2, 2)
+    grid_col_num = max(3, grid_row_num + random.randint(-2, 2))
     del_axis = random.choice(["row", "col"])
     if is_positive and "shape" in fixed_props or (not is_positive and "shape" in cf_params):
         shapes = np.random.choice(logic["shape"], size=(grid_row_num, grid_col_num), replace=True)
@@ -32,7 +32,7 @@ def proximity_grid(is_positive, obj_size, fixed_props, irrel_params, cf_params, 
     if is_positive and "size" in fixed_props or (not is_positive and "size" in cf_params):
         sizes = np.zeros((grid_row_num, grid_col_num)) + obj_size
     else:
-        sizes = np.random.uniform(obj_size * 0.5, obj_size * 1.8, size=(grid_row_num, grid_col_num))
+        sizes = np.random.uniform(obj_size * 0.5, obj_size * 1.5, size=(grid_row_num, grid_col_num))
 
     if "shape" in irrel_params:
         shapes = np.full((grid_row_num, grid_col_num), random.choice(config.all_shapes), dtype='<U15')
@@ -58,7 +58,10 @@ def proximity_grid(is_positive, obj_size, fixed_props, irrel_params, cf_params, 
     non_border_cols = list(range(1, grid_col_num - 1))
     if non_border_rows or non_border_cols:
         if del_axis == 'row':
-            remove_row = random.choice(non_border_rows)
+            try:
+                remove_row = random.choice(non_border_rows)
+            except IndexError:
+                remove_row = 1
             positions = np.delete(positions, remove_row, axis=0)
             shapes = np.delete(shapes, remove_row, axis=0)
             colors = np.delete(colors, remove_row, axis=0)

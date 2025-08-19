@@ -12,21 +12,21 @@ def get_num_samples(lite=False):
     if lite:
         return 5
     else:
-        return 100
+        return 10
 
 
-img_width = 1024
+img_width = 200
 prin_in_neg = False
 
 # quantity settings
 standard_quantity_dict = {"s": 5,
                           "m": 15,
-                          "l": 25,
-                          "xl": 35}
+                          "l": 20,
+                          "xl": 25}
 
 
 def get_grp_r(r, grp_size):
-    standard_group_radius_dict = {"s": r * 0.8, "m": r, "l": r * 1.2, "xl": r * 1.4}
+    standard_group_radius_dict = {"s": 0.08, "m": 0.15, "l": 0.2, "xl": 0.23}
     return standard_group_radius_dict[grp_size]
 
 
