@@ -75,7 +75,7 @@ def get_triangle_positions(obj_quantity, x, y):
     positions = []
     r = 0.3 - min(abs(0.5 - x), abs(0.5 - y))
     n = config.standard_quantity_dict[obj_quantity]
-    r = config.get_grp_r(r, obj_quantity)
+    r = config.get_grp_r(r, obj_quantity) * 1.2
     innerdegree = math.radians(30)
     dx = r * math.cos(innerdegree)
     dy = r * math.sin(innerdegree)
@@ -109,6 +109,7 @@ def get_triangle_positions(obj_quantity, x, y):
         positions.append([xs + (i + 1) * dxi, ys + (i + 1) * dyi])
 
     return positions
+
 
 # def get_triangle_positions(obj_quantity, x, y):
 #     positions = []
@@ -187,8 +188,8 @@ def get_circle_positions(obj_quantity, x, y):
     return positions
 
 
-def generate_random_anchor(existing_anchors, cluster_dist=0.3, x_min=0.4, x_max=0.7, y_min=0.4, y_max=0.7):
-    # Increased to ensure clear separation
+def generate_random_anchor(existing_anchors, cluster_dist=0.3, x_min=0.3, x_max=0.8, y_min=0.3, y_max=0.7):
+    # Loop until a valid anchor is found
     while True:
         anchor = [random.uniform(x_min, x_max), random.uniform(y_min, y_max)]
         if all(euclidean_distance(anchor, existing) > cluster_dist for existing in existing_anchors):
@@ -263,10 +264,11 @@ def get_feature_square_positions(anchor, clu_size):
 
 def get_random_positions(obj_quantity, obj_size):
     group_anchors = []
-    for _ in range(obj_quantity):
-        group_anchors.append(
-            generate_random_anchor(group_anchors, cluster_dist=obj_size, x_min=0.1, x_max=0.9, y_min=0.1, y_max=0.9))
-
+    for _ in range(int(obj_quantity)):
+        new_anchor = generate_random_anchor(group_anchors, cluster_dist=obj_size, x_min=0.1, x_max=0.9, y_min=0.1, y_max=0.9)
+        if new_anchor is None:
+            raise ValueError("Failed to generate a valid anchor.")
+        group_anchors.append(new_anchor)
     return group_anchors
 
 

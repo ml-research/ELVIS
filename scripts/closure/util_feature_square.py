@@ -9,22 +9,23 @@ from scripts.utils.shape_utils import overlaps, overflow
 from scripts.utils.pos_utils import get_feature_square_positions
 
 
-def feature_closure_square(is_positive, clu_num, params, irrel_params, pin):
+def feature_closure_square(is_positive, clu_num, params, irrel_params, cf_params, pin, try_count):
     obj_num = 4
 
     # Generate random anchors for clusters ensuring proper distance
     group_anchors = []
-    clu_size = ({1: 0.3 + random.random() * 0.2,
+    clu_size = ({1: 0.4 + random.random() * 0.1,
                  2: 0.3 + random.random() * 0.1,
-                 3: 0.3 + random.random() * 0.1,
-                 4: 0.2 + random.random() * 0.1
+                 3: 0.25 + random.random() * 0.1,
+                 4: 0.18 + random.random() * 0.1,
+                 5: 0.16 + random.random() * 0.1,
                  }.get(clu_num, 0.3))
-    obj_size = clu_size * (0.3 + random.random() * 0.1)
+    obj_size = clu_size * (0.3 + random.random() * 0.1)* 0.98 ** try_count
     color_val = random.choice(config.color_large_exclude_gray)
     size_val = obj_size
 
     for _ in range(clu_num):
-        group_anchors.append(pos_utils.generate_random_anchor(group_anchors, 0.2, 0.25, 0.75, 0.5, 0.95))
+        group_anchors.append(pos_utils.generate_random_anchor(group_anchors, clu_size, 0.15, 0.85, 0.35, 0.95))
 
     objs = []
     for i in range(clu_num):
@@ -55,7 +56,6 @@ def feature_closure_square(is_positive, clu_num, params, irrel_params, pin):
             if "size" in irrel_params:
                 sizes = [size_val] * obj_num
         else:
-            cf_params = data_utils.get_proper_sublist(params)
             if "color" in cf_params:
                 colors = random.choices(["blue", "red"], k=obj_num)
             else:
@@ -77,7 +77,7 @@ def feature_closure_square(is_positive, clu_num, params, irrel_params, pin):
     return objs
 
 
-def get_logic_rules(params):
+def get_logic_rules(is_positive, params, cf_params, irrel_params):
     head = "group_target(X)"
 
     body = "in(O,X),in(G,X),"
@@ -87,21 +87,32 @@ def get_logic_rules(params):
         body += "same_obj_size(G),"
 
     rule = f"{head}:-{body}group_shape(square,G),principle(closure,G)."
-    return rule
 
+    logic = {
+        "rule": rule,
+        "is_positive": is_positive,
+        "fixed_props": params,
+        "cf_params": cf_params,
+        "irrel_params": irrel_params,
+        "principle": "similarity",
+
+    }
+    return logic
 
 
 def non_overlap_feature_square(params, irrel_params, is_positive, clu_num, pin):
-    objs = feature_closure_square(is_positive, clu_num, params, irrel_params, pin)
+    cf_params = data_utils.get_proper_sublist(params)
     t = 0
     tt = 0
+    objs = feature_closure_square(is_positive, clu_num, params, irrel_params, cf_params, pin, t)
+
     max_try = 2000
     while (overlaps(objs) or overflow(objs)) and (t < max_try):
-        objs = feature_closure_square(is_positive, clu_num, params, irrel_params, pin)
+        objs = feature_closure_square(is_positive, clu_num, params, irrel_params, cf_params, pin, t)
         if tt > 10:
             tt = 0
         tt = tt + 1
         t = t + 1
-    logic_rules = get_logic_rules(params)
+    logic_rules = get_logic_rules(is_positive, params, cf_params, irrel_params)
 
     return objs, logic_rules

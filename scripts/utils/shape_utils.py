@@ -10,7 +10,13 @@ def overlaps(objects):
     :return: True if any objects overlap, False otherwise
     """
     for i, obj1 in enumerate(objects):
-        x1, y1, w1, h1 = obj1["x"], obj1["y"], obj1["size"], obj1["size"]
+        try:
+            x1, y1, w1, h1 = obj1["x"], obj1["y"], obj1["size"], obj1["size"]
+        except TypeError:
+            raise TypeError(
+                f"Object {i} is missing required keys or has incorrect types: {obj1}. "
+                "Each object must have 'x', 'y', and 'size' keys with numeric values."
+            )
         for j, obj2 in enumerate(objects):
             if i == j:
                 continue

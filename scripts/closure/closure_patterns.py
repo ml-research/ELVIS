@@ -18,41 +18,40 @@ def get_patterns(lite=False):
         feature_props = ["color", "size"]
         separate_props = ["shape", "color"]
     else:
-        size_list = config.standard_quantity_dict.keys()
-        grp_num_range = range(1, 4)
+        size_list = list(config.standard_quantity_dict.keys())
+        grp_num_range = range(1, 5)
         feature_props = ["color", "size"]
-        separate_props = ["shape", "color", "position", "size", "count"]
+        separate_props = ["shape", "color", "size"]
 
     pin = config.prin_in_neg
     # Define task functions dynamically
     all_tasks = []
     all_names = []
-
-    tasks, names = create_tasks_v2(non_overlap_feature_triangle, feature_props, grp_num_range, pin)
+    #
+    tasks, names = create_tasks_v2(non_overlap_feature_triangle, feature_props, range(1, 6), pin)
     all_tasks.extend(tasks)
     all_names.extend(names)
-    #
-    # if not lite:
-    #     tasks, names = create_tasks_v2(non_overlap_feature_square, feature_props, grp_num_range, pin)
-    #     all_tasks.extend(tasks)
-    #     all_names.extend(names)
-    #
-    #     tasks, names = create_tasks_v2(non_overlap_feature_circle, feature_props, grp_num_range, pin)
-    #     all_tasks.extend(tasks)
-    #     all_names.extend(names)
-    #
-    # tasks, names = create_tasks_v3(separate_big_triangle, separate_props, grp_num_range, size_list, pin)
-    # all_tasks.extend(tasks)
-    # all_names.extend(names)
-    #
-    # if not lite:
-    #     tasks, names = create_tasks_v3(separate_big_square, separate_props, grp_num_range, size_list, pin)
-    #     all_tasks.extend(tasks)
-    #     all_names.extend(names)
-    #
-    #     tasks, names = create_tasks_v3(non_overlap_big_circle, separate_props, grp_num_range, size_list, pin)
-    #     all_tasks.extend(tasks)
-    #     all_names.extend(names)
+
+    tasks, names = create_tasks_v2(non_overlap_feature_square, feature_props,  range(1, 6), pin)
+    all_tasks.extend(tasks)
+    all_names.extend(names)
+
+    tasks, names = create_tasks_v2(non_overlap_feature_circle, feature_props+["shape"], grp_num_range, pin)
+    all_tasks.extend(tasks)
+    all_names.extend(names)
+
+    tasks, names = create_tasks_v3(separate_big_triangle, separate_props, grp_num_range, size_list[:-1], pin)
+    all_tasks.extend(tasks)
+    all_names.extend(names)
+
+
+    tasks, names = create_tasks_v3(separate_big_square, separate_props, grp_num_range, size_list, pin)
+    all_tasks.extend(tasks)
+    all_names.extend(names)
+
+    tasks, names = create_tasks_v3(non_overlap_big_circle, separate_props, grp_num_range, size_list, pin)
+    all_tasks.extend(tasks)
+    all_names.extend(names)
 
     # Convert tasks to pattern dictionary
     all_patterns = [{"name": key, "module": task} for key, task in zip(all_names, all_tasks)]

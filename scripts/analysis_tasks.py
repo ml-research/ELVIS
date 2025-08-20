@@ -77,7 +77,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Evaluate baseline models with CUDA support.")
     parser.add_argument("--remote", action="store_true")
-    parser.add_argument("--principle", type=str, default="similarity")
+    parser.add_argument("--principle", type=str, default="closure")
     parser.add_argument("--labelOn", action="store_true", help="Show labels on the generated images.")
     args = parser.parse_args()
 

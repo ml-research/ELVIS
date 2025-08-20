@@ -10,13 +10,12 @@ from scripts.utils import encode_utils, data_utils, pos_utils
 from scripts.utils.shape_utils import overlaps, overflow
 
 
-def closure_big_circle(obj_size, is_positive, clu_num, params, irrel_params, obj_quantity, pin):
+def closure_big_circle(obj_size, is_positive, clu_num, params, irrel_params, cf_params, obj_quantity, pin):
     logic = {
         "shape": ["triangle", "square"],
         "color": ["blue", "yellow"],
         "size": obj_size,
         "count": True
-
     }
     all_shapes = config.all_shapes
     all_colors = config.color_large_exclude_gray
@@ -25,7 +24,7 @@ def closure_big_circle(obj_size, is_positive, clu_num, params, irrel_params, obj
     if is_positive:
         counts = [obj_quantity] * clu_num
     else:
-        rules = params + ["position"]
+        rules = params + ["closure"]
         to_break = set([random.choice(rules)])
         for rule in rules:
             if rule not in to_break and random.random() < 0.1:
@@ -39,7 +38,7 @@ def closure_big_circle(obj_size, is_positive, clu_num, params, irrel_params, obj
 
     # --- Position logic ---
     cluster = True
-    if not is_positive and "position" in to_break:
+    if not is_positive and "closure" in to_break:
         cluster = False
 
     # --- Position and group id generation ---
@@ -47,8 +46,9 @@ def closure_big_circle(obj_size, is_positive, clu_num, params, irrel_params, obj
     group_ids = []
     group_anchors = []
     for i in range(clu_num):
-        count = config.standard_quantity_dict[counts[i]]
-        group_anchors.append(pos_utils.generate_random_anchor(group_anchors))
+        count = int(config.standard_quantity_dict[counts[i]] // 1.5)
+        new_anchor = pos_utils.generate_random_anchor(group_anchors, cluster_dist=0.1, x_min=0.35, x_max=0.80, y_min=0.34, y_max=0.75)
+        group_anchors.append(new_anchor)
         if cluster:
             pos = pos_utils.get_circle_positions(counts[i], group_anchors[i][0], group_anchors[i][1])
         else:
@@ -84,7 +84,7 @@ def closure_big_circle(obj_size, is_positive, clu_num, params, irrel_params, obj
     return objs
 
 
-def get_logic_rules(params):
+def get_logic_rules(is_positive, params, cf_params, irrel_params):
     head = "group_target(X)"
     body = "in(O,X),in(G,X),"
     if "color" in params:
@@ -95,22 +95,31 @@ def get_logic_rules(params):
         body += ("has_shape(O1,trianlge),has_shape(O2,square),no_shape(O3,circle),"
                  "in(O1,G),in(O2,G),in(O3,G),")
     rule = f"{head}:-{body}group_shape(circle,G),principle(closure,G)."
-    return rule
+    logic = {
+        "rule": rule,
+        "is_positive": is_positive,
+        "fixed_props": params,
+        "cf_params": cf_params,
+        "irrel_params": irrel_params,
+        "principle": "closure",
+    }
+    return logic
 
 
 def non_overlap_big_circle(params, irrel_params, is_positive, clu_num, obj_quantity, pin):
     obj_size = 0.05
-    objs = closure_big_circle(obj_size, is_positive, clu_num, params, irrel_params, obj_quantity, pin)
+    cf_params = data_utils.get_proper_sublist(params + ["closure"])
+    objs = closure_big_circle(obj_size, is_positive, clu_num, params, irrel_params, cf_params, obj_quantity, pin)
     t = 0
     tt = 0
     max_try = 2000
     while (overlaps(objs) or overflow(objs)) and (t < max_try):
-        objs = closure_big_circle(obj_size, is_positive, clu_num, params, irrel_params, obj_quantity, pin)
+        objs = closure_big_circle(obj_size, is_positive, clu_num, params, irrel_params, cf_params, obj_quantity, pin)
         if tt > 10:
             tt = 0
             obj_size = obj_size * 0.90
         tt = tt + 1
         t = t + 1
-    logic_rules = get_logic_rules(params)
+    logic_rules = get_logic_rules(is_positive, params, cf_params, irrel_params)
 
     return objs, logic_rules

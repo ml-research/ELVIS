@@ -246,9 +246,10 @@ def get_logics(is_positive, fixed_props, cf_params, irrel_params):
 def non_overlap_fixed_number(params, irrel_params, is_positive, cluster_num, quantity, pin):
     obj_size = 0.05
     cf_params = data_utils.get_proper_sublist(params)
-    objs = similarity_fixed_number(is_positive, obj_size, cluster_num, params, irrel_params, cf_params, quantity)
     t = 0
     tt = 0
+
+    objs = similarity_fixed_number(is_positive, obj_size, cluster_num, params, irrel_params, cf_params, quantity)
     max_try = 1000
     while (overlaps(objs) or overflow(objs)) and (t < max_try):
         objs = similarity_fixed_number(is_positive, obj_size, cluster_num, params, irrel_params, cf_params, quantity)

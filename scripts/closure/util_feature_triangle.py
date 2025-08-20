@@ -12,18 +12,19 @@ from scripts.utils.shape_utils import overlaps, overflow
 from scripts.utils.pos_utils import get_feature_triangle_positions
 
 
-def feature_closure_triangle(is_positive, clu_num, params, irrel_params, pin):
+def feature_closure_triangle(is_positive, clu_num, params, irrel_params, cf_params, pin, try_count):
     obj_num = 3
     # Generate random anchors for clusters ensuring proper distance
     group_anchors = []
     for _ in range(clu_num):
-        group_anchors.append(pos_utils.generate_random_anchor(group_anchors, 0.25, 0.25, 0.75, 0.45, 0.95))
+        group_anchors.append(pos_utils.generate_random_anchor(group_anchors, 0.25, 0.15, 0.85, 0.35, 0.95))
     clu_size = ({1: 0.4 + random.random() * 0.1,
                  2: 0.3 + random.random() * 0.1,
-                 3: 0.3 + random.random() * 0.1,
-                 4: 0.3 + random.random() * 0.1
+                 3: 0.25 + random.random() * 0.1,
+                 4: 0.2 + random.random() * 0.1,
+                 5: 0.2 + random.random() * 0.1,
                  }.get(clu_num, 0.3))
-    obj_size = clu_size * (0.3 + random.random() * 0.1)
+    obj_size = clu_size * (0.3 + random.random() * 0.1) * 0.98 ** try_count
 
     color_val = random.choice(config.color_large_exclude_gray)
     size_val = obj_size
@@ -58,7 +59,6 @@ def feature_closure_triangle(is_positive, clu_num, params, irrel_params, pin):
             if "size" in irrel_params:
                 sizes = [size_val] * obj_num
         else:
-            cf_params = data_utils.get_proper_sublist(params)
             # if "position" not in cf_params and random.random() < 0.5:
             #     positions = pos_utils.get_random_positions(obj_num, obj_size)
             if "color" in cf_params:
@@ -74,7 +74,8 @@ def feature_closure_triangle(is_positive, clu_num, params, irrel_params, pin):
                 sizes = [obj_size] * obj_num
             if "size" in irrel_params:
                 sizes = [size_val] * obj_num
-
+            if not is_positive and "closure" not in cf_params:
+                positions = pos_utils.get_random_positions(obj_num, obj_size)
         group_id = -1 if is_random else i
         objs += encode_utils.encode_scene(positions, sizes, colors, shapes,
                                           [group_id] * len(positions), is_positive, start_angles, end_angles)
@@ -82,7 +83,7 @@ def feature_closure_triangle(is_positive, clu_num, params, irrel_params, pin):
     return objs
 
 
-def get_logic_rules(params):
+def get_logic_rules(is_positive, params, cf_params, irrel_params):
     head = "group_target(X)"
     body = "in(O,X),in(G,X),"
     if "color" in params:
@@ -90,19 +91,31 @@ def get_logic_rules(params):
     if "size" in params:
         body += "same_obj_size(G),"
     rule = f"{head}:-{body}group_shape(triangle,G),principle(closure,G)."
-    return rule
+    logic = {
+        "rule": rule,
+        "is_positive": is_positive,
+        "fixed_props": params,
+        "cf_params": cf_params,
+        "irrel_params": irrel_params,
+        "principle": "similarity",
+
+    }
+    return logic
+
 
 def non_overlap_feature_triangle(params, irrel_params, is_positive, clu_num, pin):
-    objs = feature_closure_triangle(is_positive, clu_num, params, irrel_params, pin)
+    cf_params = data_utils.get_proper_sublist(params + ["closure"])
     t = 0
     tt = 0
+    objs = feature_closure_triangle(is_positive, clu_num, params, irrel_params, cf_params, pin, t)
+
     max_try = 2000
     while (overlaps(objs) or overflow(objs)) and (t < max_try):
-        objs = feature_closure_triangle(is_positive, clu_num, params, irrel_params, pin)
+        objs = feature_closure_triangle(is_positive, clu_num, params, irrel_params, cf_params, pin, t)
         if tt > 10:
             tt = 0
         tt = tt + 1
         t = t + 1
-    logic_rules = get_logic_rules(params)
+    logic_rules = get_logic_rules(is_positive, params, cf_params, irrel_params)
 
     return objs, logic_rules
