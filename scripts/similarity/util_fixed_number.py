@@ -167,7 +167,7 @@ def similarity_fixed_number(is_positive, obj_size, cluster_num, params, irrel_pa
     - List of kandinskyShape objects.
     """
     logic = {
-        "shape": ["circle", "square"],
+        "shape": ["circle", "square", "triangle", "cross", "star"],
         "color": ["yellow", "blue", "red", "green", "purple", "orange", "pink", "brown"],
     }
 
@@ -176,7 +176,7 @@ def similarity_fixed_number(is_positive, obj_size, cluster_num, params, irrel_pa
         return base if is_positive else max(2, base + random.randint(-5, 5))
 
     # Define object count ranges based on quantity parameter
-    base_count = max(2, config.standard_quantity_dict[quantity] + random.randint(-1, 2))
+    base_count = max(2, config.standard_quantity_dict[quantity]//2 + random.randint(-6, -3))
     if is_positive:
         grp_obj_nums = [base_count] * cluster_num
     else:

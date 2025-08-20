@@ -20,9 +20,9 @@ prin_in_neg = False
 
 # quantity settings
 standard_quantity_dict = {"s": 5,
-                          "m": 15,
-                          "l": 20,
-                          "xl": 25}
+                          "m": 8,
+                          "l": 12,
+                          "xl": 15}
 
 
 def get_grp_r(r, grp_size):

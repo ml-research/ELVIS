@@ -80,6 +80,12 @@ def similarity_pacman(obj_size, is_positive, clu_num, params, irrel_params, cf_p
     """
 
     # Adjust cluster number if negative pattern
+
+    standard_quantity_dict = {"s": 5,
+                              "m": 10,
+                              "l": 12,
+                              "xl": 15}
+
     if not is_positive:
         new_clu_num = clu_num
         while new_clu_num == clu_num:
@@ -100,15 +106,16 @@ def similarity_pacman(obj_size, is_positive, clu_num, params, irrel_params, cf_p
         # determine cluster size based on parameters
         if is_positive and "count" in params or (not is_positive and "count" in cf_params):
             # For positive patterns, use the fixed cluster size
-            cluster_size = config.standard_quantity_dict[obj_quantity]
+            cluster_size = standard_quantity_dict[obj_quantity]
         else:
-            cluster_size = config.standard_quantity_dict[obj_quantity] + random.choice([-2, -1, 1, 2])
+            cluster_size = standard_quantity_dict[obj_quantity] + random.choice([-2, -1, 1, 2])
         clu_sizes.append(cluster_size)
 
     if "count" in irrel_params:
-        clu_sizes = [config.standard_quantity_dict[obj_quantity]] * clu_num
+        clu_sizes = [standard_quantity_dict[obj_quantity]] * clu_num
     raw_positions = generate_positions(sum(clu_sizes), obj_size)
     splitted_positions = np.split(raw_positions, np.cumsum(clu_sizes)[:-1])
+    invariant_color = random.choice(config.color_large_exclude_gray)
 
     objs = []
     # Generate objects
@@ -129,7 +136,7 @@ def similarity_pacman(obj_size, is_positive, clu_num, params, irrel_params, cf_p
         shapes = [logics["shape"]] * cluster_size
 
         if "color" in irrel_params:
-            colors = [random.choice(config.color_large_exclude_gray)] * cluster_size
+            colors = [invariant_color] * cluster_size
         if "size" in irrel_params:
             sizes = [obj_size for _ in range(cluster_size)]
 

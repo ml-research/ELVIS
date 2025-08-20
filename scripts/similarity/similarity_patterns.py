@@ -32,10 +32,10 @@ def get_patterns(lite=False):
         size_list = ["s"]
         grp_num_range = range(2, 4)
         feature_props = ["color", "size", "shape", "count"]
-        qua_list = ["exist"]
+
     else:
-        size_list = config.standard_quantity_dict.keys()
-        qua_list = ["all", "exist"]
+        size_list = list(config.standard_quantity_dict.keys())
+
         grp_num_range = range(2, 5)
         feature_props = ["shape", "color", "size", "count"]
     pin = config.prin_in_neg
@@ -43,14 +43,14 @@ def get_patterns(lite=False):
     all_tasks = []
     all_names = []
 
-    tasks, names = create_tasks_v3(non_overlap_fixed_number, feature_props, grp_num_range, size_list, pin)
+    tasks, names = create_tasks_v3(non_overlap_fixed_number, feature_props, range(2,4), size_list[:2], pin)
     all_tasks.extend(tasks)
     all_names.extend(names)
 
-    tasks, names = create_tasks_v3(non_overlap_pacman, feature_props, grp_num_range, size_list, pin)
+    tasks, names = create_tasks_v3(non_overlap_pacman, ["color", "size", "count"], range(2, 4), size_list[:3], pin)
     all_tasks.extend(tasks)
     all_names.extend(names)
-
+    #
     tasks, names = create_tasks_v3(non_overlap_palette, feature_props, grp_num_range, size_list, pin)
     all_tasks.extend(tasks)
     all_names.extend(names)

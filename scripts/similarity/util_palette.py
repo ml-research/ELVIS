@@ -64,29 +64,30 @@ def similarity_palette(obj_size, params, irrel_params, cf_params, is_positive, c
     - List of objects with their properties and positions.
     """
     objs = []
-    num_rings = min(8, config.standard_quantity_dict[quantity])
-    num_objects_per_cluster = config.standard_quantity_dict[quantity]
+    num_rings = max(3, config.standard_quantity_dict[quantity]//2)
+    num_objects_per_cluster = config.standard_quantity_dict[quantity]//2
 
     all_positions = generate_cluster_positions(clu_num, num_rings, obj_size, num_objects_per_cluster)
     logics = {
-        "shape": random.choice(config.all_shapes),
-        "color": random.choice(config.color_large_exclude_gray),
+        "shape": random.choices(config.all_shapes, k=clu_num),
+        "color": random.choices(config.color_large_exclude_gray, k=clu_num),
     }
+    invariant_color = random.choice(config.color_large_exclude_gray)
+    invariant_shape = random.choice(config.all_shapes)
     for i in range(clu_num):
         clu_size = len(all_positions[i])
         if "color" in params and is_positive or (not is_positive and "color" in cf_params):
-            colors = [random.choice(config.color_large_exclude_gray)] * clu_size
+            colors = [logics["color"][i]] * clu_size
         else:
             colors = [random.choice(config.color_large_exclude_gray) for _ in range(clu_size)]
         if "color" in irrel_params:
-            colors = [random.choice(config.color_large_exclude_gray)] * clu_size
-
+            colors = [invariant_color] * clu_size
         if "shape" in params and is_positive or (not is_positive and "shape" in cf_params):
             shapes = [logics["shape"][i]] * clu_size
         else:
             shapes = [random.choice(config.all_shapes) for _ in range(clu_size)]
         if "shape" in irrel_params:
-            shapes = [random.choice(config.all_shapes)] * clu_size
+            shapes = [invariant_shape] * clu_size
 
         if "size" in params and is_positive or (not is_positive and "size" in cf_params):
             sizes = [obj_size] * clu_size

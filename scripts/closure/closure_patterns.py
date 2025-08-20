@@ -31,28 +31,28 @@ def get_patterns(lite=False):
     tasks, names = create_tasks_v2(non_overlap_feature_triangle, feature_props, grp_num_range, pin)
     all_tasks.extend(tasks)
     all_names.extend(names)
-
-    if not lite:
-        tasks, names = create_tasks_v2(non_overlap_feature_square, feature_props, grp_num_range, pin)
-        all_tasks.extend(tasks)
-        all_names.extend(names)
-
-        tasks, names = create_tasks_v2(non_overlap_feature_circle, feature_props, grp_num_range, pin)
-        all_tasks.extend(tasks)
-        all_names.extend(names)
-
-    tasks, names = create_tasks_v3(separate_big_triangle, separate_props, grp_num_range, size_list, pin)
-    all_tasks.extend(tasks)
-    all_names.extend(names)
-
-    if not lite:
-        tasks, names = create_tasks_v3(separate_big_square, separate_props, grp_num_range, size_list, pin)
-        all_tasks.extend(tasks)
-        all_names.extend(names)
-
-        tasks, names = create_tasks_v3(non_overlap_big_circle, separate_props, grp_num_range, size_list, pin)
-        all_tasks.extend(tasks)
-        all_names.extend(names)
+    #
+    # if not lite:
+    #     tasks, names = create_tasks_v2(non_overlap_feature_square, feature_props, grp_num_range, pin)
+    #     all_tasks.extend(tasks)
+    #     all_names.extend(names)
+    #
+    #     tasks, names = create_tasks_v2(non_overlap_feature_circle, feature_props, grp_num_range, pin)
+    #     all_tasks.extend(tasks)
+    #     all_names.extend(names)
+    #
+    # tasks, names = create_tasks_v3(separate_big_triangle, separate_props, grp_num_range, size_list, pin)
+    # all_tasks.extend(tasks)
+    # all_names.extend(names)
+    #
+    # if not lite:
+    #     tasks, names = create_tasks_v3(separate_big_square, separate_props, grp_num_range, size_list, pin)
+    #     all_tasks.extend(tasks)
+    #     all_names.extend(names)
+    #
+    #     tasks, names = create_tasks_v3(non_overlap_big_circle, separate_props, grp_num_range, size_list, pin)
+    #     all_tasks.extend(tasks)
+    #     all_names.extend(names)
 
     # Convert tasks to pattern dictionary
     all_patterns = [{"name": key, "module": task} for key, task in zip(all_names, all_tasks)]
