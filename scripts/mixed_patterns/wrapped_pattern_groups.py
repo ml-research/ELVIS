@@ -86,7 +86,7 @@ def wrap_non_overlap_one_split_n(fixed_props, is_positive, cluster_num, obj_quan
 
 
 def wrap_non_overlap_two_splines(fixed_props, is_positive, cluster_num, obj_quantities, qualifiers, pin):
-    return util_two_splines.non_overlap_two_splines(fixed_props, is_positive, cluster_num, obj_quantities, pin)
+    return util_two_splines.intersected_n_splines(fixed_props, is_positive, cluster_num, obj_quantities, pin)
 
 
 def wrap_non_overlap_u_splines(fixed_props, is_positive, cluster_num, obj_quantities, qualifiers, pin):
@@ -94,4 +94,4 @@ def wrap_non_overlap_u_splines(fixed_props, is_positive, cluster_num, obj_quanti
 
 
 def wrap_feature_continuity_x_splines(fixed_props, is_positive, cluster_num, obj_quantities, qualifiers, pin):
-    return util_x_feature_splines.feature_continuity_x_splines(fixed_props, is_positive, cluster_num, obj_quantities, pin)
+    return util_x_feature_splines.feature_continuity_overlap_splines(fixed_props, is_positive, cluster_num, obj_quantities, pin)

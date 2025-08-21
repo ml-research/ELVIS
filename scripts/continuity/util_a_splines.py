@@ -38,7 +38,7 @@ def get_spline_points(points, n):
     return positions
 
 
-def position_continuity_a_splines(obj_size, is_positive, clu_num, params, irrel_params, obj_quantity, pin):
+def position_continuity_a_splines(obj_size, is_positive, clu_num, params, irrel_params,cf_params, obj_quantity, pin):
     center_point = [random.uniform(0.4, 0.6), random.uniform(0.4, 0.6)]
 
     line1_key_points = np.array([
@@ -73,7 +73,7 @@ def position_continuity_a_splines(obj_size, is_positive, clu_num, params, irrel_
     invariant_shape = random.choice(config.all_shapes)
     invariant_color = random.choice(config.color_large_exclude_gray)
     invariant_size = obj_size
-    cf_params = data_utils.get_proper_sublist(params + ["continuity"])
+    # cf_params = data_utils.get_proper_sublist(params + ["continuity"])
     shapes = data_utils.assign_property(is_positive, "shape", params, cf_params, irrel_params, invariant_shape, logic["shape"], config.all_shapes, total_num)
     colors = data_utils.assign_property(is_positive, "color", params, cf_params, irrel_params, invariant_color, logic["color"], config.color_large_exclude_gray, total_num)
     sizes = data_utils.assign_property(is_positive, "size", params, cf_params, irrel_params, invariant_size, logic["size"],
@@ -88,7 +88,7 @@ def position_continuity_a_splines(obj_size, is_positive, clu_num, params, irrel_
     return objs
 
 
-def get_logic_rules(params):
+def get_logic_rules(is_positive, params, cf_params, irrel_params):
     head = "group_target(X)"
     body = "in(O,X),in(G,X),"
     if "color" in params:
@@ -99,21 +99,31 @@ def get_logic_rules(params):
         body += ("has_shape(O1,square),has_shape(O2,circle),no_shape(O3,triangle),"
                  "in(O1,G),in(O2,G),in(O3,G),")
     rule = f"{head}:-{body}principle(continuity,G)."
-    return rule
+    logic = {
+        "rule": rule,
+        "is_positive": is_positive,
+        "fixed_props": params,
+        "cf_params": cf_params,
+        "irrel_params": irrel_params,
+        "principle": "continuity"
+    }
+    return logic
 
 
 def non_overlap_a_splines(params, irrel_params, is_positive, clu_num, obj_quantity, pin):
     obj_size = 0.05
-    objs = position_continuity_a_splines(obj_size, is_positive, clu_num, params, irrel_params, obj_quantity, pin)
+    cf_params = data_utils.get_proper_sublist(params + ["continuity"])
+
+    objs = position_continuity_a_splines(obj_size, is_positive, clu_num, params, irrel_params, cf_params, obj_quantity, pin)
     t = 0
     tt = 0
     max_try = 2000
     while (overlaps(objs) or overflow(objs)) and (t < max_try):
-        objs = position_continuity_a_splines(obj_size, is_positive, clu_num, params, irrel_params, obj_quantity, pin)
+        objs = position_continuity_a_splines(obj_size, is_positive, clu_num, params, irrel_params, cf_params, obj_quantity, pin)
         if tt > 10:
             tt = 0
             obj_size = obj_size * 0.90
         tt = tt + 1
         t = t + 1
-    logic_rules = get_logic_rules(params)
+    logic_rules = get_logic_rules(is_positive, params, cf_params, irrel_params)
     return objs, logic_rules

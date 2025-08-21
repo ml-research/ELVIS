@@ -337,8 +337,8 @@ def main(args):
         # "proximity": prox_patterns.get_patterns(args.lite),
         # "similarity": similarity_patterns.get_patterns(args.lite),
         # "symmetry": symmetry_patterns.get_patterns(args.lite),
-        "closure": closure_patterns.get_patterns(args.lite),
-        # "continuity": continuity_patterns.get_patterns(args.lite),
+        # "closure": closure_patterns.get_patterns(args.lite),
+        "continuity": continuity_patterns.get_patterns(args.lite),
         # "mixed":mixed_patterns.pattern_dicts
     }
     for principle_name, pattern_dicts in principles.items():

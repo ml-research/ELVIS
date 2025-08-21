@@ -9,6 +9,22 @@ from scripts import config
 from scripts.utils import encode_utils, data_utils, pos_utils
 from scripts.utils.shape_utils import overlaps, overflow
 
+def get_spline_keypoints(line_obj_num, x_min, x_max):
+    # Distance factor increases with object count
+    base_dist = 0.15
+    dist_factor = base_dist + 0.02 * line_obj_num
+    # Random endpoints within band
+    start = [random.uniform(x_min, x_max), random.uniform(0.1, 0.9)]
+    end = [random.uniform(x_min, x_max), random.uniform(0.1, 0.9)]
+    # Center point is offset from midpoint by dist_factor
+    midpoint = [(start[0] + end[0]) / 2, (start[1] + end[1]) / 2]
+    direction = np.array(end) - np.array(start)
+    norm_dir = direction / (np.linalg.norm(direction) + 1e-6)
+    # Offset perpendicular to the line
+    perp = np.array([-norm_dir[1], norm_dir[0]])
+    center_point = midpoint + perp * dist_factor
+    return np.array([start, center_point.tolist(), end])
+
 
 def get_spline_points(points, n):
     # Separate the points into x and y coordinates
@@ -38,28 +54,82 @@ def get_spline_points(points, n):
     return positions
 
 
-def position_continuity_n_splines(obj_size, is_positive, clu_num, params, irrel_params, cf_params, obj_quantity, pin):
-    # Number of objects per spline
-    line_obj_num = {"s": 5, "m": 7, "l": 12, "xl": 17, "xxl": 21, "xxxl": 25}.get(obj_quantity, 2)
+def get_band_mask(points, band_idx, band_width, slope_angle, clu_num):
+    # Project points onto the slope direction
+    theta = np.deg2rad(slope_angle)
+    direction = np.array([np.cos(theta), np.sin(theta)])
+    projections = np.dot(points, direction)
+    band_start = band_idx * band_width
+    band_end = (band_idx + 1) * band_width
+    return (projections >= band_start) & (projections < band_end)
+
+def get_spline_keypoints_in_band(line_obj_num, band_idx, band_width, slope_angle, clu_num, th=1, curve_prob=0.5):
+    theta = np.deg2rad(slope_angle)
+    direction = np.array([np.cos(theta), np.sin(theta)])
+    max_tries = 50000
+    margin = 0.02
+    min_end_dist = 0.2
+    tries = 0
+    while True:
+        pts = np.random.uniform(0.0, 1.0, (3, 2))
+        projections = np.dot(pts, direction)
+        band_start = band_idx * band_width - margin
+        band_end = (band_idx + 1) * band_width + margin
+        start, end = pts[0], pts[2]
+        diff_x = abs(start[0] - end[0])
+        diff_y = abs(start[1] - end[1])
+        if (
+            np.all((projections >= band_start) & (projections < band_end))
+            and np.linalg.norm(start - end) >= min_end_dist
+            and (diff_x + diff_y) < th
+        ):
+            break
+        tries += 1
+        if tries > max_tries:
+            raise RuntimeError("Failed to sample keypoints in band")
+    midpoint = (start + end) / 2
+    line_dir = end - start
+    norm_dir = line_dir / (np.linalg.norm(line_dir) + 1e-6)
+    perp = np.array([-norm_dir[1], norm_dir[0]])
+    base_dist = 0.15
+    dist_factor = base_dist + 0.015 * line_obj_num
+    # Randomly decide if the spline is straight/slightly curved or U-shaped
+    if random.random() < curve_prob:
+        center_point = midpoint + perp * dist_factor * random.uniform(0.0, 0.5)  # Slight curve
+    else:
+        center_point = midpoint  # Straight line
+    return np.array([start, center_point, end])
+
+def position_continuity_non_intersected_n_splines(obj_size, is_positive, clu_num, params, irrel_params, cf_params, obj_quantity, pin):
+    line_obj_num = {"s": 5, "m": 7, "l": 9, "xl": 11, "xxl": 14, "xxxl": 18}.get(obj_quantity, 2)
     logic = {"shape": ["square", "circle"], "color": ["green", "yellow"], "size": [obj_size], "count": True}
     invariant_shape = random.choice(config.all_shapes)
     invariant_color = random.choice(config.color_large_exclude_gray)
     invariant_size = obj_size
 
-    center_point = [random.uniform(0.4, 0.6), random.uniform(0.4, 0.6)]
     all_spline_points = []
     group_ids = []
+    min_spline_dist = 0.1
+
+    # Random slope angle between 0 and 90 degrees
+    slope_angle = random.uniform(0, 90)
+    band_width = 1.0 / clu_num
 
     for i in range(clu_num):
         valid = False
-        while not valid:
-            start = [random.uniform(0.05, 0.95), random.uniform(0.05, 0.95)]
-            end = [random.uniform(0.05, 0.95), random.uniform(0.05, 0.95)]
-            key_points = np.array([start, center_point, end])
+        tries = 0
+        while not valid and tries < 1000:
+            key_points = get_spline_keypoints_in_band(line_obj_num, i, band_width, slope_angle, clu_num)
             spline_points = get_spline_points(key_points, line_obj_num)
-            # Check if all points are inside [0,1]
-            if np.all((spline_points >= 0) & (spline_points <= 1)):
+            if not np.all((spline_points >= 0) & (spline_points <= 1)):
+                tries += 1
+                continue
+            if all(
+                np.min(cdist(spline_points, prev_spline)) > min_spline_dist
+                for prev_spline in all_spline_points
+            ):
                 valid = True
+            tries += 1
         all_spline_points.append(spline_points)
         group_ids.extend([i] * line_obj_num)
 
@@ -76,6 +146,7 @@ def position_continuity_n_splines(obj_size, is_positive, clu_num, params, irrel_
         group_ids = [-1] * len(positions)
     objs = encode_utils.encode_scene(positions, sizes, colors, shapes, group_ids, is_positive)
     return objs
+
 
 def get_logic_rules(is_positive, params, cf_params, irrel_params):
     head = "group_target(X)"
@@ -99,15 +170,15 @@ def get_logic_rules(is_positive, params, cf_params, irrel_params):
     return logic
 
 
-def intersected_n_splines(params, irrel_params, is_positive, clu_num, obj_quantity, pin=True):
+def non_intersected_n_splines(params, irrel_params, is_positive, clu_num, obj_quantity, pin=True):
     obj_size = 0.05
     cf_params = data_utils.get_proper_sublist(params + ["continuity"])
-    objs = position_continuity_n_splines(obj_size, is_positive, clu_num, params, irrel_params, cf_params, obj_quantity, pin=pin)
+    objs = position_continuity_non_intersected_n_splines(obj_size, is_positive, clu_num, params, irrel_params, cf_params, obj_quantity, pin=pin)
     t = 0
     tt = 0
     max_try = 1000
     while (overlaps(objs) or overflow(objs)) and (t < max_try):
-        objs = position_continuity_n_splines(obj_size, is_positive, clu_num, params, irrel_params, cf_params, obj_quantity, pin=pin)
+        objs = position_continuity_non_intersected_n_splines(obj_size, is_positive, clu_num, params, irrel_params, cf_params, obj_quantity, pin=pin)
         if tt > 10:
             tt = 0
             obj_size = obj_size * 0.90
