@@ -31,6 +31,7 @@ if __name__ == "__main__":
 
     parser.add_argument("--epochs", type=int, default=10)
     parser.add_argument("--img_num", type=int, default=5)
+    parser.add_argument("--task_num", type=str, default="full")
     parser.add_argument("--batch_size", type=int)
     args = parser.parse_args()
     # Determine device based on device_id flag

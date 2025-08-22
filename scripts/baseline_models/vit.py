@@ -175,7 +175,7 @@ def evaluate_vit(model, test_loader, device, principle, pattern_name):
     return accuracy, f1_score, precision, recall
 
 
-def run_vit(data_path, principle, batch_size, device, img_num, epochs):
+def run_vit(data_path, principle, batch_size, device, img_num, epochs, task_num):
     init_wandb(batch_size, epochs)
     model_name = "vit_base_patch16_224"
     output_dir = Path(f"/elvis_result/vit/{principle}")
@@ -195,6 +195,10 @@ def run_vit(data_path, principle, batch_size, device, img_num, epochs):
     results[principle] = {}
 
     pattern_folders = sorted([p for p in (principle_path / "train").iterdir() if p.is_dir()], key=lambda x: x.stem)
+
+    if task_num != "full":
+        task_num = int(task_num)
+        pattern_folders = pattern_folders[:task_num]
 
     rtpt = RTPT(name_initials='JS', experiment_name='Elvis-vit', max_iterations=len(pattern_folders))
     rtpt.start()
