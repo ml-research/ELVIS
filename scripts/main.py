@@ -24,6 +24,8 @@ from scripts.proximity import prox_patterns
 from scripts.similarity import similarity_patterns
 from scripts.symmetry import symmetry_patterns
 from scripts.object_detector import object_patterns
+
+
 # from scripts.mixed_patterns import mixed_patterns
 
 def gen_image_matplotlib(objs):
@@ -237,8 +239,6 @@ def gen_image_matplotlib(objs):
     return img
 
 
-
-
 def save_patterns(pattern_data, pattern, save_path, num_samples, is_positive):
     imgs = []
     for example_i in range(num_samples):
@@ -274,6 +274,7 @@ def save_task_overview_image(pos_imgs, neg_imgs, save_path, img_size, margin=8, 
         y = margin + row * (img_size + margin)
         overview_img.paste(img, (x, y))
     overview_img.save(save_path)
+
 
 def save_principle_patterns(args, principle_name, pattern_dicts):
     resolution_folder = config.get_raw_patterns_path(args.remote) / f"res_{config.img_width}_pin_{config.prin_in_neg}"
@@ -335,19 +336,24 @@ def main(args):
     principles = {
         # "od": object_patterns.pattern_dicts,
         "proximity": prox_patterns.get_patterns(args.lite),
-        # "similarity": similarity_patterns.get_patterns(args.lite),
-        # "closure": closure_patterns.get_patterns(args.lite),
-        # "continuity": continuity_patterns.get_patterns(args.lite),
-        # "symmetry": symmetry_patterns.get_patterns(args.lite),
+        "similarity": similarity_patterns.get_patterns(args.lite),
+        "closure": closure_patterns.get_patterns(args.lite),
+        "continuity": continuity_patterns.get_patterns(args.lite),
+        "symmetry": symmetry_patterns.get_patterns(args.lite),
         # "mixed":mixed_patterns.pattern_dicts
     }
-    for principle_name, pattern_dicts in principles.items():
-        save_principle_patterns(args, principle_name, pattern_dicts)
+    if args.principle == "all":
+        for principle_name, pattern_dicts in principles.items():
+            save_principle_patterns(args, principle_name, pattern_dicts)
+    else:
+        save_principle_patterns(args, args.principle, principles[args.principle])
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Evaluate baseline models with CUDA support.")
     parser.add_argument("--remote", action="store_true")
     parser.add_argument("--lite", action="store_true")
+    parser.add_argument("--principle", type=str)
     parser.add_argument("--labelOn", action="store_true", help="Show labels on the generated images.")
     args = parser.parse_args()
 

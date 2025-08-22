@@ -652,7 +652,7 @@ def analysis_average_performance(json_path, principle):
     print(f"F1 Score: {avg_f1:.3f} ± {std_f1:.3f}")
     print(f"Precision: {avg_precision:.3f} ± {std_precision:.3f}")
     print(f"Recall: {avg_recall:.3f} ± {std_recall:.3f}")
-
+    print(f"\n\n")
 
 def analysis_per_category(json_path, principle, category_name=None):
     # load the JSON data
@@ -681,6 +681,7 @@ def analysis_per_category(json_path, principle, category_name=None):
     print(f"F1 Score: {avg_f1:.3f} ± {std_f1:.3f}")
     print(f"Precision: {avg_precision:.3f} ± {std_precision:.3f}")
     print(f"Recall: {avg_recall:.3f} ± {std_recall:.3f}")
+    print(f"\n\n")
 
 def get_results_path(remote=False, principle=None, model_name=None):
     if remote:
@@ -713,6 +714,9 @@ if __name__ == "__main__":
     # show average performance of all models
     analysis_average_performance(json_path, args.principle)
     analysis_per_category(json_path, args.principle, "red_triangle")
+
+
+
 
     # analysis_model_category_performance(['shape', 'color', 'count', "size"], "prop")
     # analysis_model_category_performance(["_s", "_m", "_l"], "size")
