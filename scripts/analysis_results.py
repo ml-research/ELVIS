@@ -646,12 +646,41 @@ def analysis_average_performance(json_path, principle):
     std_precision = np.std([v['precision'] for v in per_task_data.values()])
     std_recall = np.std([v['recall'] for v in per_task_data.values()])
 
+    print(f"Number of tasks: {len(per_task_data)}")
     print(f"Average Performance for {principle}:")
     print(f"Accuracy: {avg_acc:.3f} ± {std_acc:.3f}")
     print(f"F1 Score: {avg_f1:.3f} ± {std_f1:.3f}")
     print(f"Precision: {avg_precision:.3f} ± {std_precision:.3f}")
     print(f"Recall: {avg_recall:.3f} ± {std_recall:.3f}")
 
+
+def analysis_per_category(json_path, principle, category_name=None):
+    # load the JSON data
+    with open(json_path, 'r') as f:
+        data = json.load(f)
+    per_task_data = data[principle]
+
+    category_acc = [v["accuracy"] for k, v in per_task_data.items() if category_name in k]
+    category_f1 = [v["f1_score"] for k, v in per_task_data.items() if category_name in k]
+    category_precision = [v["precision"] for k, v in per_task_data.items() if category_name in k]
+    category_recall = [v["recall"] for k, v in per_task_data.items() if category_name in k]
+
+    avg_acc = np.mean(category_acc)
+    avg_f1 = np.mean(category_f1)
+    avg_precision = np.mean(category_precision)
+    avg_recall = np.mean(category_recall)
+
+    std_acc = np.std(category_acc)
+    std_f1 = np.std(category_f1)
+    std_precision = np.std(category_precision)
+    std_recall = np.std(category_recall)
+
+    print(f"Number of tasks in category '{category_name}': {len(category_acc)}")
+    print(f"Average Performance for {principle} - {category_name}:")
+    print(f"Accuracy: {avg_acc:.3f} ± {std_acc:.3f}")
+    print(f"F1 Score: {avg_f1:.3f} ± {std_f1:.3f}")
+    print(f"Precision: {avg_precision:.3f} ± {std_precision:.3f}")
+    print(f"Recall: {avg_recall:.3f} ± {std_recall:.3f}")
 
 def get_results_path(remote=False, principle=None, model_name=None):
     if remote:
@@ -683,6 +712,8 @@ if __name__ == "__main__":
     json_path = get_results_path(args.remote, args.principle, args.model)
     # show average performance of all models
     analysis_average_performance(json_path, args.principle)
+    analysis_per_category(json_path, args.principle, "red_triangle")
+
     # analysis_model_category_performance(['shape', 'color', 'count', "size"], "prop")
     # analysis_model_category_performance(["_s", "_m", "_l"], "size")
     # analysis_model_category_performance(["exist", "all"], "exist")
