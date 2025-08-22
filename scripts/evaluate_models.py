@@ -38,7 +38,7 @@ if __name__ == "__main__":
         device = "cpu"
 
     # Construct the data path based on the principle argument
-    data_path = os.path.join(config.raw_patterns, args.principle)
+    data_path = config.get_raw_patterns_path(args.remote) / "res_224_pin_False" / args.principle
 
     print(f"Starting model evaluations with data from {data_path}...")
     model = baseline_models[args.model]
