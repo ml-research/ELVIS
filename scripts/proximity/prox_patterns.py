@@ -44,7 +44,7 @@ def get_patterns(lite=False):
     all_tasks.extend(tasks)
     all_names.extend(names)
 
-    tasks, names = create_tasks_v2(non_overlap_grid, feature_props, size_list, pin)
+    tasks, names = create_tasks_v3(non_overlap_grid, feature_props, range(4, 5), size_list, pin)
     all_tasks.extend(tasks)
     all_names.extend(names)
 

@@ -15,7 +15,7 @@ def proximity_grid(is_positive, obj_size, fixed_props, irrel_params, cf_params, 
         "color": ["darkblue", "darkred"],
     }
 
-    grid_row_num = {"s":3, "m": 5, "l": 7, "xl": 9}.get(obj_quantities, 2)
+    grid_row_num = {"s": 3, "m": 5, "l": 7, "xl": 9}.get(obj_quantities, 2)
     # random settings
     grid_col_num = max(3, grid_row_num + random.randint(-2, 2))
     del_axis = random.choice(["row", "col"])
@@ -107,7 +107,8 @@ def get_logics(is_positive, fixed_props, cf_params, irrel_params):
     }
     return logic
 
-def non_overlap_grid(params, irrel_params, is_positive, obj_quantity, pin):
+
+def non_overlap_grid(params, irrel_params, is_positive, clu_num, obj_quantity, pin):
     obj_size = 0.05
     cf_params = data_utils.get_proper_sublist(params + ["proximity"])
     objs = proximity_grid(is_positive, obj_size, params, irrel_params, cf_params, obj_quantity)

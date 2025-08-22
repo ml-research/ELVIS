@@ -11,6 +11,7 @@ import scipy.stats as stats
 import torch
 import seaborn as sns
 from pathlib import Path
+import re
 
 
 def analysis_llava(principle, model_name):
@@ -654,6 +655,7 @@ def analysis_average_performance(json_path, principle):
     print(f"Recall: {avg_recall:.3f} ± {std_recall:.3f}")
     print(f"\n\n")
 
+
 def analysis_per_category(json_path, principle, category_name=None):
     # load the JSON data
     with open(json_path, 'r') as f:
@@ -676,12 +678,124 @@ def analysis_per_category(json_path, principle, category_name=None):
     std_recall = np.std(category_recall)
 
     print(f"Number of tasks in category '{category_name}': {len(category_acc)}")
-    print(f"Average Performance for {principle} - {category_name}:")
-    print(f"Accuracy: {avg_acc:.3f} ± {std_acc:.3f}")
-    print(f"F1 Score: {avg_f1:.3f} ± {std_f1:.3f}")
-    print(f"Precision: {avg_precision:.3f} ± {std_precision:.3f}")
-    print(f"Recall: {avg_recall:.3f} ± {std_recall:.3f}")
-    print(f"\n\n")
+
+    print(f"\tAccuracy: {avg_acc:.3f} ± {std_acc:.3f}")
+    print(f"\tF1 Score: {avg_f1:.3f} ± {std_f1:.3f}")
+    print(f"\tPrecision: {avg_precision:.3f} ± {std_precision:.3f}")
+    print(f"\tRecall: {avg_recall:.3f} ± {std_recall:.3f}")
+    print(f"\n")
+
+
+def parse_task_name(task_name):
+    info = {}
+    # Related concepts after 'rel_'
+    rel_match = re.search(r'rel_([a-zA-Z_]+)', task_name)
+    if rel_match:
+        info['related_concepts'] = rel_match.group(1).split('_')[:-1]
+
+    # Group number (number after related concepts)
+    group_num_match = re.search(r'rel_[a-zA-Z_]+_(\d+)', task_name)
+    if group_num_match:
+        info['group_num'] = int(group_num_match.group(1))
+    else:
+        if "grid" in task_name:
+            info['group_num'] = 4
+        else:
+            raise ValueError(f"Task name '{task_name}' does not contain a valid group number.")
+    # Group size (s, m, l, xl after group number)
+    size_match = re.search(r'rel_[a-zA-Z_]+_\d+_(s|m|l|xl)', task_name)
+    if size_match:
+        info['group_size'] = size_match.group(1)
+
+    # Irrelated concepts after 'irrel_'
+    irrel_match = re.search(r'irrel_([a-zA-Z_]+)', task_name)
+    if irrel_match:
+        info['irrelated_concepts'] = irrel_match.group(1).split('_')[:-1]
+
+    # Rule type at the end ('all' or 'exist')
+    rule_match = re.search(r'(all|exist)$', task_name)
+    if rule_match:
+        info['rule_type'] = rule_match.group(1)
+
+    return info
+
+
+def plot_principle_concept_heatmaps(results_dict, principles, concept_sets,
+                                    cmap="viridis", vmin=40, vmax=100, figsize=(20, 6)):
+    """
+    Plot heatmaps of accuracy across Gestalt principles and concept sets for multiple models.
+
+    Args:
+        results_dict (dict): Dictionary mapping model names to 2D accuracy arrays
+                             of shape (n_principles, n_concepts).
+                             Example: {"ViT": acc_vit, "LLaVA": acc_llava, ...}
+        principles (list of str): List of Gestalt principles (row labels).
+        concept_sets (list of str): List of concept sets (column labels).
+        cmap (str): Colormap for heatmap.
+        vmin, vmax (float): Color scale limits.
+        figsize (tuple): Size of the entire figure (width, height).
+    """
+    n_models = len(results_dict)
+    fig, axes = plt.subplots(1, n_models, figsize=figsize, sharey=True)
+
+    if n_models == 1:
+        axes = [axes]  # ensure iterable
+
+    for ax, (model, acc_matrix) in zip(axes, results_dict.items()):
+        df = pd.DataFrame(acc_matrix, index=principles, columns=concept_sets)
+        sns.heatmap(df, annot=True, fmt=".1f", cmap=cmap, cbar=True,
+                    vmin=vmin, vmax=vmax, ax=ax, annot_kws={"size": 7})
+        ax.set_title(model, fontsize=12)
+        ax.set_xlabel("Concepts")
+        if ax == axes[0]:
+            ax.set_ylabel("Principles")
+        else:
+            ax.set_ylabel("")
+
+    plt.tight_layout()
+    plt.show()
+
+
+def get_per_task_data(json_path, principle):
+    # load the JSON data
+    with open(json_path, 'r') as f:
+        data = json.load(f)
+    per_task_data = data[principle]
+    return per_task_data
+
+
+# def analysis_grp_num(json_path, principle):
+#     per_task_data = get_per_task_data(json_path, principle)
+#     group_size_analysis = {}
+#     for task_name, task_res in per_task_data.items():
+#         task_info = parse_task_name(task_name)
+#         if task_info["group_num"] not in group_size_analysis:
+#             group_size_analysis[task_info["group_num"]] = []
+#         group_size_analysis[task_info["group_num"]].append(per_task_data[task_name]["accuracy"])
+#     grp_size_avg_acc = {k: np.mean(v) for k, v in group_size_analysis.items()}
+#     grp_size_std_acc = {k: np.std(v) for k, v in group_size_analysis.items()}
+#     print(f"Group Size Analysis:")
+#     for grp_size, avg_acc in grp_size_avg_acc.items():
+#         std_acc = grp_size_std_acc[grp_size]
+#         print(f"\tGroup Size {grp_size}: Avg Accuracy = {avg_acc:.3f} ± {std_acc:.3f}")
+#
+
+def analysis_ablation_performance(json_path, principle, prop):
+    per_task_data = get_per_task_data(json_path, principle)
+    group_size_analysis = {}
+    for task_name, task_res in per_task_data.items():
+        task_info = parse_task_name(task_name)
+        if prop not in task_info:
+            continue
+        if task_info[prop] not in group_size_analysis:
+            group_size_analysis[task_info[prop]] = []
+        group_size_analysis[task_info[prop]].append(per_task_data[task_name]["accuracy"])
+    logic_avg_acc = {k: np.mean(v) for k, v in group_size_analysis.items()}
+    grp_size_std_acc = {k: np.std(v) for k, v in group_size_analysis.items()}
+    for name, avg_acc in logic_avg_acc.items():
+        std_acc = grp_size_std_acc[name]
+        print(f"\t{prop} {name}: Avg Accuracy = {avg_acc:.3f} ± {std_acc:.3f}")
+
 
 def get_results_path(remote=False, principle=None, model_name=None):
     if remote:
@@ -708,19 +822,30 @@ if __name__ == "__main__":
     parser.add_argument("--model", type=str, required=True, help="Specify the principle to filter data.")
     parser.add_argument("--principle", type=str, required=True)
     parser.add_argument("--remote", action="store_true")
+    parser.add_argument("--mode", type=str, default="avg_principle")
     args = parser.parse_args()
 
     json_path = get_results_path(args.remote, args.principle, args.model)
     # show average performance of all models
-    analysis_average_performance(json_path, args.principle)
-    analysis_per_category(json_path, args.principle, "red_triangle")
-    analysis_per_category(json_path, args.principle, "grid")
-    analysis_per_category(json_path, args.principle, "fixed_props")
-    analysis_per_category(json_path, args.principle, "circle_features")
 
-
-
-
+    if args.mode == "principle":
+        analysis_average_performance(json_path, args.principle)
+    elif args.mode == "category":
+        if args.principle == "proximity":
+            analysis_per_category(json_path, args.principle, "red_triangle")
+            analysis_per_category(json_path, args.principle, "grid")
+            analysis_per_category(json_path, args.principle, "fixed_props")
+            analysis_per_category(json_path, args.principle, "circle_features")
+        else:
+            raise ValueError(f"Unsupported principle for category analysis: {args.principle}")
+    elif args.mode == "group_num":
+        analysis_ablation_performance(json_path, args.principle, "group_num")
+    elif args.mode == "grp_size":
+        analysis_ablation_performance(json_path, args.principle, "group_size")
+    elif args.mode == "rule_type":
+        analysis_ablation_performance(json_path, args.principle, "rule_type")
+    else:
+        raise ValueError(f"Unsupported mode: {args.mode}")
     # analysis_model_category_performance(['shape', 'color', 'count', "size"], "prop")
     # analysis_model_category_performance(["_s", "_m", "_l"], "size")
     # analysis_model_category_performance(["exist", "all"], "exist")
