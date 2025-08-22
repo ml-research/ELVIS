@@ -17,9 +17,9 @@ baseline_models = {
 }
 
 
-def evaluate_model(model, principle, batch_size, data_path, device, img_num, epochs):
+def evaluate_model(model, principle, batch_size, data_path, device, img_num, epochs, task_num):
     print(f"{principle} Evaluating on {device}...")
-    model(data_path, principle, batch_size, device=device, img_num=img_num, epochs=epochs)
+    model(data_path, principle, batch_size, device=device, img_num=img_num, epochs=epochs, task_num=task_num)
 
 
 if __name__ == "__main__":
