@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import scipy.stats as stats
 import torch
 import seaborn as sns
+from pathlib import Path
 
 
 def analysis_llava(principle, model_name):
@@ -654,7 +655,7 @@ def analysis_average_performance(json_path, principle):
 
 def get_results_path(remote=False, principle=None, model_name=None):
     if remote:
-        results_path = "/elvis_result/"
+        results_path = Path("/elvis_result/")
     else:
         results_path = config.result_path
 
