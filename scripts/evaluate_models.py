@@ -27,6 +27,8 @@ if __name__ == "__main__":
     parser.add_argument("--principle", type=str, required=True, help="Specify the principle to filter data.")
     parser.add_argument("--model", type=str, required=True)
     parser.add_argument("--device_id", type=int, help="Specify GPU device ID. If not provided, CPU will be used.")
+    parser.add_argument("--remote", action="store_true")
+
     parser.add_argument("--epochs", type=int, default=10)
     parser.add_argument("--img_num", type=int, default=5)
     parser.add_argument("--batch_size", type=int)
@@ -38,7 +40,7 @@ if __name__ == "__main__":
         device = "cpu"
 
     # Construct the data path based on the principle argument
-    data_path = config.get_raw_patterns_path(args.remote) / "res_224_pin_False" / args.principle
+    data_path = config.get_raw_patterns_path(True) / "res_224_pin_False" / args.principle
 
     print(f"Starting model evaluations with data from {data_path}...")
     model = baseline_models[args.model]
