@@ -45,6 +45,6 @@ if __name__ == "__main__":
 
     print(f"Starting model evaluations with data from {data_path}...")
     model = baseline_models[args.model]
-    evaluate_model(model, args.principle, args.batch_size, data_path, device, args.img_num, args.epochs)
+    evaluate_model(model, args.principle, args.batch_size, data_path, device, args.img_num, args.epochs, args.task_num)
 
     print("All model evaluations completed.")
