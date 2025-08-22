@@ -26,4 +26,5 @@ accelerate>=0.26.0
 bitsandbytes
 ace_tools
 ace-tools-open
+seaborn
 
