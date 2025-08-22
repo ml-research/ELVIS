@@ -10,7 +10,7 @@ import os
 
 # List of baseline models
 baseline_models = {
-    "ViT-Base-Patch32-384": vit.run_vit,
+    "vit": vit.run_vit,
     # {"name": "Llava", "module": llava.run_llava},
     # {"name": "deepseek", "module": deepseek.run_deepseek},
     "llama": llama.run_llama
