@@ -2,7 +2,8 @@
 
 from itertools import combinations
 from scripts.symmetry.util_solar_system import non_overlap_soloar_sys
-from scripts.symmetry.util_symmetry_cir import feature_symmetry_circle
+from scripts.symmetry.util_symmetry_bilateral import feature_symmetry_circle
+from scripts.symmetry.util_symmetry_rotational import rotational_symmetry_pattern
 from scripts.utils.encode_utils import create_tasks_v2, create_tasks_v3, create_tasks_v4
 
 from scripts import config
@@ -33,7 +34,7 @@ def get_patterns(lite=False):
         feature_props = ["color", "size", "shape", "axis"]
         axis_list = [-45, 0, 45, 90]
     else:
-        size_list = config.standard_quantity_dict.keys()
+        size_list = list(config.standard_quantity_dict.keys())
         grp_num_range = range(2, 3)
         axis_list = [-45, 0, 45, 90]
         feature_props = ["shape", "color", "size", "axis"]
@@ -41,11 +42,15 @@ def get_patterns(lite=False):
     all_tasks = []
     all_names = []
 
-    tasks, names = create_tasks_v4(non_overlap_soloar_sys, feature_props, grp_num_range, size_list,axis_list, pin)
+    tasks, names = create_tasks_v3(non_overlap_soloar_sys, feature_props, grp_num_range, size_list, pin)
     all_tasks.extend(tasks)
     all_names.extend(names)
 
-    tasks, names = create_tasks_v4(feature_symmetry_circle, feature_props, grp_num_range, size_list, axis_list, pin)
+    tasks, names = create_tasks_v3(feature_symmetry_circle, feature_props, grp_num_range, size_list, pin)
+    all_tasks.extend(tasks)
+    all_names.extend(names)
+
+    tasks, names = create_tasks_v3(rotational_symmetry_pattern, feature_props, range(2, 7), size_list[:2], pin)
     all_tasks.extend(tasks)
     all_names.extend(names)
 

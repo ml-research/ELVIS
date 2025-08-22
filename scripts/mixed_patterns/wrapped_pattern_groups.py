@@ -4,7 +4,7 @@
 from scripts.proximity import util_red_triangle, util_fixed_props, util_big_small, util_grid_objs, util_weird_circle
 from scripts.similarity import util_fixed_number, util_pacman, util_palette
 from scripts.closure import util_feature_circle, util_feature_square, util_feature_triangle, util_pos_triangle, util_pos_circle, util_pos_square
-from scripts.symmetry import util_solar_system, util_symmetry_cir
+from scripts.symmetry import util_solar_system, util_symmetry_bilateral
 from scripts.continuity import util_a_splines, util_one_split_n, util_two_splines, util_u_splines, util_x_feature_splines
 
 
@@ -73,7 +73,7 @@ def wrap_non_overlap_solar_sys(fixed_props, is_positive, cluster_num, obj_quanti
 
 
 def wrap_feature_symmetry_circle(fixed_props, is_positive, cluster_num, obj_quantities, qualifiers, pin):
-    return util_symmetry_cir.feature_symmetry_circle(fixed_props, is_positive, cluster_num)
+    return util_symmetry_cir.rotational_symmetry_pattern(fixed_props, is_positive, cluster_num)
 
 
 # Continuity wrappers

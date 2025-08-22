@@ -94,7 +94,7 @@ def get_symmetry_on_cir_positions(center, radius, num_points, axis=0, min_dist_t
     return all_positions
 
 
-def symmetry_solar_sys(obj_size, is_positive, clu_num, params, irrel_params, cf_params, obj_quantity, sym_axis):
+def symmetry_solar_sys(obj_size, is_positive, clu_num, params, irrel_params, cf_params, obj_quantity, axis_list):
     cir_so = 0.6 + random.random() * 0.1
     logic = {
         "shape": ["cross", "plus"],
@@ -117,9 +117,16 @@ def symmetry_solar_sys(obj_size, is_positive, clu_num, params, irrel_params, cf_
     if "count" in params and not is_positive:
         clu_num = data_utils.neg_clu_num(clu_num, 1, clu_num + 2)
 
+
     # Generate evenly distributed group centers on the circumference
     group_centers = get_circumference_points(clu_num, 0.5, 0.5, cir_so)
     grp_obj_nums = [config.standard_quantity_dict[obj_quantity] - 3 for i in range(clu_num)]
+
+    if "axis" in params and is_positive or (not is_positive and "axis" in cf_params):
+        sym_axis = axis_list[0]
+    else:
+        sym_axis = random.choice(axis_list)
+
     all_positions = get_symmetry_on_cir_positions(group_centers, cir_so * random.uniform(0.3, 0.6), grp_obj_nums, sym_axis)
 
     invariant_shape = random.choice(config.all_shapes)
@@ -179,8 +186,10 @@ def get_logics(is_positive, fixed_props, cf_params, irrel_params):
     return logic
 
 
-def non_overlap_soloar_sys(params, irrel_params, is_positive, clu_num, obj_quantity, sym_axis, pin):
+def non_overlap_soloar_sys(params, irrel_params, is_positive, clu_num, obj_quantity, pin):
+
     obj_size = 0.05
+    sym_axis = [-45, 0, 45, 90]
     cf_params = data_utils.get_proper_sublist(params + ["symmetry"])
     objs = symmetry_solar_sys(obj_size, is_positive, clu_num, params, irrel_params, cf_params, obj_quantity, sym_axis)
     logics = get_logics(is_positive, params, cf_params, irrel_params)

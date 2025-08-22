@@ -4,7 +4,7 @@ import random
 import math
 
 from scripts import config
-from scripts.utils import encode_utils, data_utils
+from scripts.utils import encode_utils, data_utils, pos_utils
 
 
 def get_circumference_angles(cluster_num):
@@ -18,7 +18,7 @@ def get_circumference_angles(cluster_num):
     return angles
 
 
-def get_symmetry_surrounding_positions(num_points=2, symmetry_axis=0, min_dist_to_axis=0.2, min_dist_between_pairs=0.2, max_attempts=100):
+def get_symmetry_surrounding_positions(num_points=2, symmetry_axis=0, min_dist_to_axis=0.1, min_dist_between_pairs=0.1, max_attempts=1000):
     """
     Generate num_points pairs of symmetric positions along the given symmetry axis.
     symmetry_axis: axis in degrees (-45, 0, 45, 90)
@@ -112,8 +112,9 @@ def get_circumference_points(cluster_num, x, y, radius):
     return points
 
 
-def feature_symmetry_circle(params, irrel_params, is_positive, clu_num, obj_quantity, symmetry_axis, pin):
+def feature_symmetry_circle(params, irrel_params, is_positive, clu_num, obj_quantity, pin):
     obj_size = 0.05
+    axis_list = [-45, 0, 45, 90]
     cf_params = data_utils.get_proper_sublist(params + ["symmetry"])
     cir_so = 0.3 + random.random() * 0.1
     objs = [encode_utils.encode_objs(
@@ -138,12 +139,16 @@ def feature_symmetry_circle(params, irrel_params, is_positive, clu_num, obj_quan
     angles = get_circumference_angles(clu_num)
     group_centers = get_circumference_points(clu_num, 0.5, 0.5, cir_so)
 
-    grp_obj_nums = [config.standard_quantity_dict[obj_quantity] - 3 for _ in range(clu_num)]
+    grp_obj_nums = [config.standard_quantity_dict[obj_quantity] for _ in range(clu_num)]
 
+    if "axis" in params and is_positive or (not is_positive and "axis" in cf_params):
+        sym_axis=axis_list[0]
+    else:
+        sym_axis = random.choice(axis_list)
     if is_positive or ("symmetry" in cf_params and not is_positive):
         if "axis" in params:
             # with symmetry and fixed axis
-            all_positions = [get_symmetry_surrounding_positions(grp_obj_nums[a_i], symmetry_axis)
+            all_positions = [get_symmetry_surrounding_positions(grp_obj_nums[a_i], sym_axis)
                              for a_i in range(clu_num)]
         else:
             # with symmetry and random axis
@@ -151,8 +156,12 @@ def feature_symmetry_circle(params, irrel_params, is_positive, clu_num, obj_quan
             all_positions = [get_symmetry_surrounding_positions(grp_obj_nums[a_i], axis)
                              for a_i in range(clu_num)]
     else:
-        all_positions = [get_surrounding_positions(group_centers[a_i], cir_so * 1, grp_obj_nums[a_i])
-                         for a_i in range(clu_num)]
+        all_positions = [pos_utils.get_random_positions(grp_obj_nums[a_i]*2, obj_size) for a_i in range(clu_num)]
+
+        # all_positions = pos_utils.get_almost_symmetry_positions(group_centers, cir_so * random.uniform(0.3, 0.6), grp_obj_nums)
+
+        # all_positions = [get_surrounding_positions(group_centers[a_i], cir_so * 1, grp_obj_nums[a_i])
+        #                  for a_i in range(clu_num)]
 
     invariant_shape = random.choice(config.all_shapes)
     invariant_color = random.choice(config.color_large_exclude_gray)
