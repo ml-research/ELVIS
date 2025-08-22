@@ -87,7 +87,11 @@ docker run -it --gpus all -v /home/ml-jsha/ELVIS:/app -v /home/ml-jsha/storage/E
 
 ln -s /home/ml-jsha/nesy_causal_p/storage/dataset/grb /home/ml-jsha/ELVIS/grb
 
-python -m scripts.main --remote
+python -m scripts.main --remote --principle similarity
+python -m scripts.main --remote --principle closure
+python -m scripts.main --remote --principle similarity
+python -m scripts.main --remote --principle similarity
+python -m scripts.main --remote --principle similarity
 
 ##### train llama
 python -m scripts.evaluate_models --model llama --batch_size 2 --principle proximity --img_num 3 --device_id 0

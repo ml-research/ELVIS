@@ -714,6 +714,9 @@ if __name__ == "__main__":
     # show average performance of all models
     analysis_average_performance(json_path, args.principle)
     analysis_per_category(json_path, args.principle, "red_triangle")
+    analysis_per_category(json_path, args.principle, "grid")
+    analysis_per_category(json_path, args.principle, "fixed_props")
+    analysis_per_category(json_path, args.principle, "circle_features")
 
 
 
