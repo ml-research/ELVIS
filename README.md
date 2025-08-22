@@ -110,9 +110,15 @@ python -m scripts.evaluate_models --batch_size 100 --principle continuity --img_
 # train deepseek
 python -m scripts.evaluate_models --batch_size 1 --principle proximity --model deepseek --device_id 2
 
+
+##### Analysis Results
+
+``` 
+python -m scripts.analysis_results --principle proximity --remote --model vit
+
 ```
 
-
+```
 
 ## File Structure
 ```

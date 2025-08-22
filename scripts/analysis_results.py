@@ -1,4 +1,5 @@
 # Created by jing at 03.03.25
+import argparse
 import os
 from scripts import config
 import ace_tools_open as tools
@@ -629,13 +630,62 @@ def analysis_model_category_performance(categories, name):
     draw_category_subfigures(model_results, name, save_path=config.figure_path / f"model_category_accuracy_{name}.pdf")
 
 
-if __name__ == "__main__":
-    base_categories = ['shape', 'color', 'count', "size"]
+def analysis_average_performance(json_path, principle):
+    # load the JSON data
+    with open(json_path, 'r') as f:
+        data = json.load(f)
+    per_task_data = data[principle]
+    avg_acc = np.mean([v['accuracy'] for v in per_task_data.values()])
+    avg_f1 = np.mean([v['f1_score'] for v in per_task_data.values()])
+    avg_precision = np.mean([v['precision'] for v in per_task_data.values()])
+    avg_recall = np.mean([v['recall'] for v in per_task_data.values()])
 
-    analysis_model_category_performance(['shape', 'color', 'count', "size"], "prop")
-    analysis_model_category_performance(["_s", "_m", "_l"], "size")
-    analysis_model_category_performance(["exist", "all"], "exist")
-    analysis_model_category_performance(["_1", "_2", "_3", "_4", "_5"], "group_num")
+    std_acc = np.std([v['accuracy'] for v in per_task_data.values()])
+    std_f1 = np.std([v['f1_score'] for v in per_task_data.values()])
+    std_precision = np.std([v['precision'] for v in per_task_data.values()])
+    std_recall = np.std([v['recall'] for v in per_task_data.values()])
+
+    print(f"Average Performance for {principle}:")
+    print(f"Accuracy: {avg_acc:.3f} ± {std_acc:.3f}")
+    print(f"F1 Score: {avg_f1:.3f} ± {std_f1:.3f}")
+    print(f"Precision: {avg_precision:.3f} ± {std_precision:.3f}")
+    print(f"Recall: {avg_recall:.3f} ± {std_recall:.3f}")
+
+
+def get_results_path(remote=False, principle=None, model_name=None):
+    if remote:
+        results_path = "/elvis_result/"
+    else:
+        results_path = config.result_path
+
+    prin_path = results_path / args.principle
+
+    # get all the json file start with vit_
+    all_json_files = list(prin_path.glob(f"{model_name}_*.json"))
+
+    # get the latest json file with the latest timestamp
+    if all_json_files:
+        latest_json_file = max(all_json_files, key=os.path.getmtime)
+        json_path = latest_json_file
+    else:
+        raise FileNotFoundError(f"No JSON files found for model {model_name} in principle {principle}")
+    return json_path
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Evaluate baseline models with CUDA support.")
+    parser.add_argument("--model", type=str, required=True, help="Specify the principle to filter data.")
+    parser.add_argument("--principle", type=str, required=True)
+    parser.add_argument("--remote", action="store_true")
+    args = parser.parse_args()
+
+    json_path = get_results_path(args.remote, args.principle, args.model)
+    # show average performance of all models
+    analysis_average_performance(json_path, args.principle)
+    # analysis_model_category_performance(['shape', 'color', 'count', "size"], "prop")
+    # analysis_model_category_performance(["_s", "_m", "_l"], "size")
+    # analysis_model_category_performance(["exist", "all"], "exist")
+    # analysis_model_category_performance(["_1", "_2", "_3", "_4", "_5"], "group_num")
     # analysis_model_category_performance(["exist", "all"], "exist")
     # print_category_accuracy(data)
     # analysis_result(principles, data)
