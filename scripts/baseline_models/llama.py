@@ -127,7 +127,7 @@ def evaluate_llama(model, processor, test_images, logic_rules, device, principle
     return accuracy, f1_score, precision, recall
 
 
-def run_llama(data_path, principle, batch_size, device, img_num, epochs):
+def run_llama(data_path, principle, batch_size, device, img_num, epochs, task_num):
     init_wandb(batch_size)
     model, processor = load_llama_model(device)
     principle_path = Path(data_path)

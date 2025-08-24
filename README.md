@@ -101,7 +101,7 @@ python -m scripts.main --remote --principle continuity
 
 
 ##### train llama
-python -m scripts.evaluate_models --model llama --batch_size 2 --principle proximity --img_num 3 --device_id 0
+python -m scripts.evaluate_models --model llama --batch_size 2 --principle proximity --img_num 3 --task_num 5 --device_id 6
 
 #### train vit
 
