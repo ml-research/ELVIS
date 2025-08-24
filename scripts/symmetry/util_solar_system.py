@@ -186,7 +186,7 @@ def get_logics(is_positive, fixed_props, cf_params, irrel_params):
     return logic
 
 
-def non_overlap_soloar_sys(params, irrel_params, is_positive, clu_num, obj_quantity, pin):
+def non_overlap_solar_sys(params, irrel_params, is_positive, clu_num, obj_quantity, pin):
 
     obj_size = 0.05
     sym_axis = [-45, 0, 45, 90]

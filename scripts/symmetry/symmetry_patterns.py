@@ -1,7 +1,7 @@
 # Created by jing at 27.02.25
 
 from itertools import combinations
-from scripts.symmetry.util_solar_system import non_overlap_soloar_sys
+from scripts.symmetry.util_solar_system import non_overlap_solar_sys
 from scripts.symmetry.util_symmetry_bilateral import feature_symmetry_circle
 from scripts.symmetry.util_symmetry_rotational import rotational_symmetry_pattern
 from scripts.utils.encode_utils import create_tasks_v2, create_tasks_v3, create_tasks_v4
@@ -42,7 +42,7 @@ def get_patterns(lite=False):
     all_tasks = []
     all_names = []
 
-    tasks, names = create_tasks_v3(non_overlap_soloar_sys, feature_props, grp_num_range, size_list, pin)
+    tasks, names = create_tasks_v3(non_overlap_solar_sys, feature_props, grp_num_range, size_list, pin)
     all_tasks.extend(tasks)
     all_names.extend(names)
 

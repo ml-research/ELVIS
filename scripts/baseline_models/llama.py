@@ -157,7 +157,9 @@ def run_llama(data_path, principle, batch_size, device, img_num, epochs):
         print("len test images", len(test_images))
         accuracy, f1, precision, recall = evaluate_llama(model, processor, test_images, logic_rules, device, principle)
 
-        results[pattern_folder.name] = {"accuracy": accuracy, "f1_score": f1, "logic_rules": logic_rules,
+        results[pattern_folder.name] = {"accuracy": accuracy,
+                                        "f1_score": f1,
+                                        "logic_rules": logic_rules,
                                         "precision": precision,
                                         "recall": recall
                                         }
@@ -169,7 +171,8 @@ def run_llama(data_path, principle, batch_size, device, img_num, epochs):
     avg_accuracy = sum(total_accuracy) / len(total_accuracy) if total_accuracy else 0
     avg_f1 = sum(total_f1) / len(total_f1) if total_f1 else 0
 
-    results["average"] = {"accuracy": avg_accuracy, "f1_score": avg_f1}
+    results["average"] = {"accuracy": avg_accuracy,
+                          "f1_score": avg_f1}
 
     # Save results to JSON file
     output_dir = f"/elvis_result/{principle}"

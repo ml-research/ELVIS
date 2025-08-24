@@ -28,7 +28,6 @@ if __name__ == "__main__":
     parser.add_argument("--model", type=str, required=True)
     parser.add_argument("--device_id", type=int, help="Specify GPU device ID. If not provided, CPU will be used.")
     parser.add_argument("--remote", action="store_true")
-
     parser.add_argument("--epochs", type=int, default=10)
     parser.add_argument("--img_num", type=int, default=5)
     parser.add_argument("--task_num", type=str, default="full")

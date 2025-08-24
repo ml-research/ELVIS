@@ -4,7 +4,7 @@ from scripts.utils.encode_utils import create_tasks_v2, create_tasks_v3
 
 from scripts.continuity.util_one_split_n import non_overlap_one_split_n
 from scripts.continuity.util_non_intersect_n_splines import non_intersected_n_splines
-from scripts.continuity.util_two_splines import intersected_n_splines
+from scripts.continuity.util_two_splines import with_intersected_n_splines
 from scripts.continuity.util_a_splines import non_overlap_a_splines
 from scripts.continuity.util_u_splines import non_overlap_u_splines
 from scripts.continuity.util_x_feature_splines import feature_continuity_overlap_splines
@@ -30,7 +30,7 @@ def get_patterns(lite=False):
     all_tasks.extend(tasks)
     all_names.extend(names)
 
-    tasks, names = create_tasks_v3(intersected_n_splines, prop_list, range(2, 5), size_list[1:], prin_in_neg)
+    tasks, names = create_tasks_v3(with_intersected_n_splines, prop_list, range(2, 5), size_list[1:], prin_in_neg)
     all_tasks.extend(tasks)
     all_names.extend(names)
 

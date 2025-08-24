@@ -99,7 +99,7 @@ def get_logic_rules(is_positive, params, cf_params, irrel_params):
     return logic
 
 
-def intersected_n_splines(params, irrel_params, is_positive, clu_num, obj_quantity, pin=True):
+def with_intersected_n_splines(params, irrel_params, is_positive, clu_num, obj_quantity, pin=True):
     obj_size = 0.05
     cf_params = data_utils.get_proper_sublist(params + ["continuity"])
     objs = position_continuity_n_splines(obj_size, is_positive, clu_num, params, irrel_params, cf_params, obj_quantity, pin=pin)

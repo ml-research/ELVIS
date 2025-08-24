@@ -797,7 +797,7 @@ def analysis_ablation_performance(json_path, principle, prop):
         print(f"\t{prop} {name}: Avg Accuracy = {avg_acc:.3f} ± {std_acc:.3f}")
 
 
-def get_results_path(remote=False, principle=None, model_name=None):
+def get_results_path(remote=False, principle=None, model_name=None, img_num=None):
     if remote:
         results_path = Path("/elvis_result/")
     else:
@@ -806,7 +806,13 @@ def get_results_path(remote=False, principle=None, model_name=None):
     prin_path = results_path / args.principle
 
     # get all the json file start with vit_
-    all_json_files = list(prin_path.glob(f"{model_name}_*.json"))
+    if model_name == "vit":
+        all_json_files = list(prin_path.glob(f"{model_name}_*.json"))
+        all_json_files = [f for f in all_json_files if f"img_num_{img_num}" in f.name]
+    elif model_name == "llava":
+        all_json_files = list(prin_path.glob(f"{model_name}.json"))
+    else:
+        raise ValueError(f"Unsupported model name: {model_name}")
 
     # get the latest json file with the latest timestamp
     if all_json_files:
@@ -823,9 +829,10 @@ if __name__ == "__main__":
     parser.add_argument("--principle", type=str, required=True)
     parser.add_argument("--remote", action="store_true")
     parser.add_argument("--mode", type=str, default="avg_principle")
+    parser.add_argument("--img_num", type=int)
     args = parser.parse_args()
 
-    json_path = get_results_path(args.remote, args.principle, args.model)
+    json_path = get_results_path(args.remote, args.principle, args.model, args.img_num)
     # show average performance of all models
 
     if args.mode == "principle":
@@ -836,6 +843,26 @@ if __name__ == "__main__":
             analysis_per_category(json_path, args.principle, "grid")
             analysis_per_category(json_path, args.principle, "fixed_props")
             analysis_per_category(json_path, args.principle, "circle_features")
+        elif args.principle == "similarity":
+            analysis_per_category(json_path, args.principle, "fixed_number")
+            analysis_per_category(json_path, args.principle, "pacman")
+            analysis_per_category(json_path, args.principle, "palette")
+        elif args.principle == "closure":
+            analysis_per_category(json_path, args.principle, "big_triangle")
+            analysis_per_category(json_path, args.principle, "big_square")
+            analysis_per_category(json_path, args.principle, "big_circle")
+            analysis_per_category(json_path, args.principle, "feature_triangle")
+            analysis_per_category(json_path, args.principle, "feature_square")
+            analysis_per_category(json_path, args.principle, "feature_circle")
+        elif args.principle == "symmetry":
+            analysis_per_category(json_path, args.principle, "solar_system")
+            analysis_per_category(json_path, args.principle, "symmetry_circle")
+            analysis_per_category(json_path, args.principle, "symmetry_pattern")
+        elif args.principle == "continuity":
+            analysis_per_category(json_path, args.principle, "one_split_n")
+            analysis_per_category(json_path, args.principle, "with_intersected_n_splines")
+            analysis_per_category(json_path, args.principle, "non_intersected_n_splines")
+            analysis_per_category(json_path, args.principle, "continuity_overlap_splines")
         else:
             raise ValueError(f"Unsupported principle for category analysis: {args.principle}")
     elif args.mode == "group_num":
