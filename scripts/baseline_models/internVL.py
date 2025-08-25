@@ -179,10 +179,10 @@ def evaluate_llm(model, tokenizer, test_images, logic_rules, device, principle):
     all_labels, all_predictions = [], []
     generation_config = dict(max_new_tokens=1024, do_sample=True)
     torch.cuda.empty_cache()
-
     for image, label in test_images:
         question = conversations.internVL_eval_question(logic_rules)
-        response = model.chat(tokenizer, image, question, generation_config)
+        img = load_image(image)
+        response = model.chat(tokenizer, img, question, generation_config)
 
         # inputs = processor.apply_chat_template(conversation, padding=True, add_generation_prompt=True, tokenize=True, return_dict=True, return_tensors="pt").to(model.device,
         #                                                                                                                                                         dtype=torch.bfloat16)
@@ -191,7 +191,7 @@ def evaluate_llm(model, tokenizer, test_images, logic_rules, device, principle):
         # output = model.generate(**inputs, max_new_tokens=25)
         # answer = processor.batch_decode(output, skip_special_tokens=True)
         # answer = processor.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)
-        answer = answer[0].split("assistant")[-1]
+        answer = response[0].split("assistant")[-1]
         print(f"Answer: {answer}")
         # print(f"Prediction : {prediction_label}\n\n")
         predicted_label = 1 if "positive" in answer.lower() else 0
