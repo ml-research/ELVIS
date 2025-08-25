@@ -15,7 +15,7 @@ from torchvision.transforms.functional import InterpolationMode
 
 # from transformers import AutoProcessor, AutoModelForImageTextToText
 from scripts.baseline_models import conversations
-from scripts.utils import data_utils
+from scripts.utils import data_utils, file_utils
 
 
 def init_wandb(batch_size, principle):
@@ -202,8 +202,8 @@ def run_internVL(data_path, principle, batch_size, device, img_num, epochs, task
     init_wandb(batch_size, principle)
 
     principle_path = Path(data_path)
-
-    pattern_folders = sorted((principle_path / "train").iterdir())
+    pattern_folders = sorted(file_utils.list_folders(str(principle_path/ "train")))
+    # pattern_folders = sorted((principle_path / "train").iterdir())
     if not pattern_folders:
         print("No pattern folders found in", principle_path)
         return
@@ -221,8 +221,8 @@ def run_internVL(data_path, principle, batch_size, device, img_num, epochs, task
     model = load_intern_model(device)
     tokenizer = AutoTokenizer.from_pretrained('OpenGVLab/InternVL3-2B', trust_remote_code=True, use_fast=False)
 
-    for pattern_folder in pattern_folders:
-        print(f"Processing pattern folder: {pattern_folder.name}")
+    # for pattern_folder in pattern_folders:
+    #     print(f"Processing pattern folder: {pattern_folder.name}")
 
     for pattern_folder in tqdm(pattern_folders):
         print(f"Evaluating pattern: {pattern_folder.name}")

@@ -5,6 +5,11 @@ from PIL import Image
 import numpy as np
 import torch
 import shutil
+from pathlib import Path
+def list_folders(path: str):
+    p = Path(path)
+    return [d for d in p.iterdir() if d.is_dir()]
+
 
 def img_padding(img, pad_width=2):
     if img.ndim == 3:
