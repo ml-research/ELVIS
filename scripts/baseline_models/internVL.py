@@ -209,7 +209,6 @@ def evaluate_llm(model, tokenizer, test_images, logic_rules, device, principle):
 def run_internVL(data_path, principle, batch_size, device, img_num, epochs, task_num):
     init_wandb(batch_size, principle)
 
-    model = load_intern_model(device)
     principle_path = Path(data_path)
 
     pattern_folders = sorted((principle_path / "train").iterdir())
@@ -227,10 +226,11 @@ def run_internVL(data_path, principle, batch_size, device, img_num, epochs, task
 
     rtpt = RTPT(name_initials='JIS', experiment_name='Elvis-vit', max_iterations=len(pattern_folders))
     rtpt.start()
-    path = 'OpenGVLab/InternVL3-2B'
-    tokenizer = AutoTokenizer.from_pretrained(path, trust_remote_code=True, use_fast=False)
 
     for pattern_folder in tqdm(pattern_folders):
+        model = load_intern_model(device)
+        tokenizer = AutoTokenizer.from_pretrained('OpenGVLab/InternVL3-2B', trust_remote_code=True, use_fast=False)
+
         train_positive = load_images(pattern_folder / "positive", img_num)
         train_negative = load_images(pattern_folder / "negative", img_num)
         test_positive = load_images((principle_path / "test" / pattern_folder.name) / "positive", img_num)
