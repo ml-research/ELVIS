@@ -66,6 +66,11 @@ def infer_logic_rules(model, tokenizer, train_positive, train_negative, device, 
     torch.cuda.empty_cache()
     # Prepare a batch of two prompts, where the first one is a multi-turn conversation and the second is not
     question = conversations.get_internVL_question(principle)
+
+
+    print(type(train_positive))
+    print(type(train_negative))
+
     imgs = torch.cat(train_positive + train_negative, dim=0)
 
     # num_patches_list = [pixel_values1.size(0), pixel_values2.size(0)]
