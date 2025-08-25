@@ -28,4 +28,7 @@ ace_tools
 ace-tools-open
 seaborn
 openai
+soxr
+soundfile
+librosa
 

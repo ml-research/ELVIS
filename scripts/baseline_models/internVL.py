@@ -30,7 +30,6 @@ def load_intern_model(device):
         path,
         torch_dtype=torch.bfloat16,
         low_cpu_mem_usage=True,
-        use_flash_attn=True,
         trust_remote_code=True).eval().cuda()
     # model = AutoModel.from_pretrained("OpenGVLab/InternVL3-2B", trust_remote_code=True, torch_dtype="auto"),
     # processor = AutoProcessor.from_pretrained(model_checkpoint)
