@@ -26,7 +26,7 @@ def load_intern_model(device):
     torch.backends.cuda.enable_math_sdp(True)  # Fallback to standard math-based SDP
     torch_device = "cuda"
     # model_checkpoint = "OpenGVLab/InternVL3-2B-hf"
-    path = "OpenGVLab/InternVL3-2B-hf"
+    path = "OpenGVLab/InternVL3-2B"
     model = AutoModel.from_pretrained(
         path,
         torch_dtype=torch.bfloat16,
