@@ -217,10 +217,10 @@ def run_internVL(data_path, principle, batch_size, device, img_num, epochs, task
 
     rtpt = RTPT(name_initials='JIS', experiment_name='Elvis-vit', max_iterations=len(pattern_folders))
     rtpt.start()
+    model = load_intern_model(device)
+    tokenizer = AutoTokenizer.from_pretrained('OpenGVLab/InternVL3-2B', trust_remote_code=True, use_fast=False)
 
     for pattern_folder in tqdm(pattern_folders):
-        model = load_intern_model(device)
-        tokenizer = AutoTokenizer.from_pretrained('OpenGVLab/InternVL3-2B', trust_remote_code=True, use_fast=False)
 
         train_positive = load_images(pattern_folder / "positive", img_num)
         train_negative = load_images(pattern_folder / "negative", img_num)
