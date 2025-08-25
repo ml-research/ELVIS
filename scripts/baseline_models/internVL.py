@@ -27,6 +27,7 @@ def load_intern_model(device):
 
     torch_device = "cuda"
     model_checkpoint = "OpenGVLab/InternVL3-2B-hf"
+
     processor = AutoProcessor.from_pretrained(model_checkpoint)
     model = AutoModelForImageTextToText.from_pretrained(model_checkpoint, device_map=torch_device, torch_dtype=torch.bfloat16)
     return model.to(device), processor

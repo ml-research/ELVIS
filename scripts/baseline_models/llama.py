@@ -1,7 +1,7 @@
 # Created by MacBook Pro at 28.07.25
 
 
-from transformers import AutoProcessor, Llama4ForConditionalGeneration
+
 import torch
 import wandb
 from pathlib import Path
@@ -26,6 +26,8 @@ def load_images(image_dir, num_samples=5):
 
 
 def load_llama_model(device):
+    from transformers import AutoProcessor, Llama4ForConditionalGeneration
+
     model_id = "meta-llama/Llama-4-Scout-17B-16E-Instruct"
 
     processor = AutoProcessor.from_pretrained(model_id)

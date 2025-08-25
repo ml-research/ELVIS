@@ -3,8 +3,6 @@ import argparse
 from scripts import config
 from scripts.baseline_models import vit
 from scripts.baseline_models import gpt5
-# from scripts.baseline_models import llava
-# from scripts.baseline_models import deepseek
 from scripts.baseline_models import llama
 from scripts.baseline_models import internVL
 import torch
