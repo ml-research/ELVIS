@@ -70,9 +70,7 @@ def infer_logic_rules(model, tokenizer, train_positive, train_negative, device, 
 
     imgs = train_positive + train_negative
     to_tensor = transforms.ToTensor()
-    tensor_imgs = [to_tensor(img) for img in imgs]
-    for img in tensor_imgs:
-        print(type(img))
+    tensor_imgs = torch.cat([to_tensor(img) for img in imgs], dim=0)
     # num_patches_list = [pixel_values1.size(0), pixel_values2.size(0)]
     # tokenizer = AutoTokenizer.from_pretrained('OpenGVLab/InternVL3-2B', trust_remote_code=True, use_fast=False)
     generation_config = dict(max_new_tokens=1024, do_sample=True)
