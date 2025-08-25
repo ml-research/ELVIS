@@ -13,9 +13,11 @@ import os
 from datetime import datetime
 from openai import OpenAI
 
-client = OpenAI()
-
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+
+def init_openai():
+    return OpenAI()
 
 
 def init_wandb(batch_size):
@@ -39,7 +41,7 @@ def load_images(image_dir, num_samples=5):
 #     return model, processor
 
 
-def infer_logic_rules(train_positive, train_negative, device, principle):
+def infer_logic_rules(client, train_positive, train_negative, device, principle):
     torch.cuda.empty_cache()
 
     response = client.responses.create(
@@ -50,8 +52,7 @@ def infer_logic_rules(train_positive, train_negative, device, principle):
     return text
 
 
-def evaluate_gpt5(test_images, logic_rules, device, principle):
-
+def evaluate_gpt5(client, test_images, logic_rules, device, principle):
     correct, total = 0, 0
     all_labels, all_predictions = [], []
     torch.cuda.empty_cache()
@@ -89,6 +90,8 @@ def run_gpt5(data_path, principle, batch_size, device, img_num, epochs, task_num
     if not pattern_folders:
         print("No pattern folders found in", principle_path)
         return
+
+    client = init_openai()
     total_accuracy, total_f1 = [], []
     results = {}
     total_precision_scores = []
@@ -101,10 +104,10 @@ def run_gpt5(data_path, principle, batch_size, device, img_num, epochs, task_num
         train_negative = load_images(pattern_folder / "negative", img_num)
         test_positive = load_images((principle_path / "test" / pattern_folder.name) / "positive", img_num)
         test_negative = load_images((principle_path / "test" / pattern_folder.name) / "negative", img_num)
-        logic_rules = infer_logic_rules(train_positive, train_negative, device, principle)
+        logic_rules = infer_logic_rules(client, train_positive, train_negative, device, principle)
         test_images = [(img, 1) for img in test_positive] + [(img, 0) for img in test_negative]
         print("len test images", len(test_images))
-        accuracy, f1, precision, recall = evaluate_gpt5(test_images, logic_rules, device, principle)
+        accuracy, f1, precision, recall = evaluate_gpt5(client, test_images, logic_rules, device, principle)
         results[pattern_folder.name] = {"accuracy": accuracy,
                                         "f1_score": f1,
                                         "logic_rules": logic_rules,
