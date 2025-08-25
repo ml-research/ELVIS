@@ -1,6 +1,6 @@
 # Created by MacBook Pro at 24.08.25
 
-from transformers import AutoProcessor, GPT5ForConditionalGeneration
+# from transformers import AutoProcessor, GPT5ForConditionalGeneration
 import torch
 import wandb
 from pathlib import Path
@@ -27,16 +27,16 @@ def load_images(image_dir, num_samples=5):
     return [Image.open(img_path).convert("RGB").resize((224, 224)) for img_path in image_paths]
 
 
-def load_gpt5_model(device):
-    model_id = "openai-gpt5/GPT-5-Scout-17B-16E-Instruct"
-    processor = AutoProcessor.from_pretrained(model_id)
-    model = GPT5ForConditionalGeneration.from_pretrained(
-        model_id,
-        attn_implementation="flex_attention",
-        device_map="auto",
-        torch_dtype=torch.bfloat16,
-    )
-    return model, processor
+# def load_gpt5_model(device):
+#     model_id = "openai-gpt5/GPT-5-Scout-17B-16E-Instruct"
+#     processor = AutoProcessor.from_pretrained(model_id)
+#     model = GPT5ForConditionalGeneration.from_pretrained(
+#         model_id,
+#         attn_implementation="flex_attention",
+#         device_map="auto",
+#         torch_dtype=torch.bfloat16,
+#     )
+#     return model, processor
 
 
 def infer_logic_rules(train_positive, train_negative, device, principle):
