@@ -9,6 +9,7 @@ from PIL import Image
 from tqdm import tqdm
 from rtpt import RTPT
 from transformers import AutoModel, AutoTokenizer
+import torchvision.transforms as transforms
 
 # from transformers import AutoProcessor, AutoModelForImageTextToText
 from scripts.baseline_models import conversations
@@ -67,16 +68,13 @@ def infer_logic_rules(model, tokenizer, train_positive, train_negative, device, 
     # Prepare a batch of two prompts, where the first one is a multi-turn conversation and the second is not
     question = conversations.get_internVL_question(principle)
 
-
-    print(type(train_positive))
-    print(type(train_negative))
-
-    imgs = torch.cat(train_positive + train_negative, dim=0)
-
+    imgs = train_positive + train_negative
+    to_tensor = transforms.ToTensor()
+    tensor_imgs = [to_tensor(img) for img in imgs]
     # num_patches_list = [pixel_values1.size(0), pixel_values2.size(0)]
     # tokenizer = AutoTokenizer.from_pretrained('OpenGVLab/InternVL3-2B', trust_remote_code=True, use_fast=False)
     generation_config = dict(max_new_tokens=1024, do_sample=True)
-    response, history = model.chat(tokenizer, imgs, question, generation_config, history=None, return_history=True)
+    response, history = model.chat(tokenizer, tensor_imgs, question, generation_config, history=None, return_history=True)
     # inputs = processor.apply_chat_template(conversation, padding=True, add_generation_prompt=True, tokenize=True, return_dict=True, return_tensors="pt").to(model.device,
     #                                                                                                                                                         dtype=torch.bfloat16)
     # Generate
