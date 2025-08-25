@@ -151,6 +151,12 @@ def infer_logic_rules(model, tokenizer, train_positive, train_negative, device, 
 
     imgs = train_positive + train_negative
     pixel_values = [load_image(img) for img in imgs]
+    if len(pixel_values) == 0:
+        raise ValueError("No pixel values to concatenate. Check your image loading and preprocessing.")
+    for idx, pv in enumerate(pixel_values):
+        if pv is None or pv.numel() == 0:
+            print(f"Warning: Image at index {idx} produced empty tensor.")
+
 
     concat_pixel_values = torch.cat(pixel_values, dim=0).to(device=device, dtype=torch.bfloat16)
     num_patches_list = [pixel_value.size(0) for pixel_value in pixel_values]
