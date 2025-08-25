@@ -8,26 +8,19 @@ from scripts import config
 from PIL import Image
 from tqdm import tqdm
 from rtpt import RTPT
-
 from transformers import AutoProcessor, AutoModelForImageTextToText
-
 from scripts.baseline_models import conversations
-
 from scripts.utils import data_utils
-
 
 def init_wandb(batch_size, principle):
     wandb.init(project=f"ELVIS-InternVL-{principle}", config={"batch_size": batch_size})
-
 
 def load_intern_model(device):
     torch.backends.cuda.enable_flash_sdp(False)  # Disable Flash SDP
     torch.backends.cuda.enable_mem_efficient_sdp(False)  # Disable Memory Efficient SDP
     torch.backends.cuda.enable_math_sdp(True)  # Fallback to standard math-based SDP
-
     torch_device = "cuda"
     model_checkpoint = "OpenGVLab/InternVL3-2B-hf"
-
     processor = AutoProcessor.from_pretrained(model_checkpoint)
     model = AutoModelForImageTextToText.from_pretrained(model_checkpoint, device_map=torch_device, torch_dtype=torch.bfloat16)
     return model.to(device), processor
