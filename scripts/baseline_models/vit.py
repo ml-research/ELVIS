@@ -89,7 +89,7 @@ class ViTClassifier(nn.Module):
 
 
 # Training Function
-def train_vit(model, train_loader, device, checkpoint_path, epochs):
+def train_vit(model, train_loader, device, epochs):
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.AdamW(model.parameters(), lr=0.001, weight_decay=5e-5, betas=(0.9, 0.999))  # Faster convergence
     scaler = torch.cuda.amp.GradScaler()  # Ensure AMP is enabled
@@ -183,7 +183,7 @@ def run_vit(data_path, principle, batch_size, device, img_num, epochs, task_num)
     checkpoint_path = output_dir / f"{model_name}_{img_num}checkpoint.pth"
     device = torch.device(device)
     model = ViTClassifier(model_name).to(device, memory_format=torch.channels_last)
-    model.load_checkpoint(checkpoint_path)
+
 
     print(f"Training and Evaluating ViT Model on Gestalt ({principle}) Patterns...")
     results = {}
@@ -206,9 +206,10 @@ def run_vit(data_path, principle, batch_size, device, img_num, epochs, task_num)
 
     for pattern_folder in tqdm(pattern_folders):
         rtpt.step()
+        model.load_checkpoint(checkpoint_path)
         train_loader, num_train_images = get_dataloader(pattern_folder, batch_size, img_num)
         wandb.log({f"{principle}/num_train_images": num_train_images})
-        train_vit(model, train_loader, device, checkpoint_path, epochs)
+        train_vit(model, train_loader, device, epochs)
         torch.cuda.empty_cache()
         test_folder = Path(data_path) / "test" / pattern_folder.stem
         if test_folder.exists():
@@ -251,7 +252,7 @@ def run_vit(data_path, principle, batch_size, device, img_num, epochs, task_num)
         json.dump(results, json_file, indent=4)
 
     print("Training and evaluation complete. Results saved to evaluation_results.json.")
-    model.save_checkpoint(checkpoint_path)
+    # model.save_checkpoint(checkpoint_path)
     wandb.finish()
 
 

@@ -127,8 +127,9 @@ python -m scripts.evaluate_models --batch_size 1 --principle closure  --img_num 
 python -m scripts.evaluate_models --batch_size 1 --principle symmetry --img_num 3 --model llava  --device_id 4
 python -m scripts.evaluate_models --batch_size 100 --principle continuity --img_num 3 --model llava --device_id 7
 
-# train deepseek
-python -m scripts.evaluate_models --batch_size 1 --principle proximity --model deepseek --device_id 2
+# train gpt5
+python -m scripts.evaluate_models --batch_size 1 --principle proximity --model gpt5 --device_id 2
+python -m scripts.evaluate_models --batch_size 1 --principle similarity --img_num 3 --model gpt5 --task_num 3 --device_id 2
 
 
 ##### Analysis Results
