@@ -159,7 +159,7 @@ def infer_logic_rules(model, tokenizer, train_positive, train_negative, device, 
     response, history = model.chat(tokenizer, concat_pixel_values, question, generation_config,
                                    num_patches_list=num_patches_list,
                                    history=None, return_history=True)
-    print(f"Logic Rules: {response}")
+    # print(f"Logic Rules: {response}")
     return response
 
 
