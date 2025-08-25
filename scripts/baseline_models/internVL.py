@@ -195,10 +195,9 @@ def evaluate_llm(model, tokenizer, test_images, logic_rules, device, principle):
         # output = model.generate(**inputs, max_new_tokens=25)
         # answer = processor.batch_decode(output, skip_special_tokens=True)
         # answer = processor.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)
-        answer = response[0].split("assistant")[-1]
-        print(f"Answer: {answer}")
+        print(f"Answer: {response}")
         # print(f"Prediction : {prediction_label}\n\n")
-        predicted_label = 1 if "positive" in answer.lower() else 0
+        predicted_label = 1 if "positive" in response.lower() else 0
         all_labels.append(label)
         all_predictions.append(predicted_label)
 
