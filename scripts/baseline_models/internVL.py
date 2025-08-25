@@ -221,6 +221,9 @@ def run_internVL(data_path, principle, batch_size, device, img_num, epochs, task
     model = load_intern_model(device)
     tokenizer = AutoTokenizer.from_pretrained('OpenGVLab/InternVL3-2B', trust_remote_code=True, use_fast=False)
 
+    for pattern_folder in pattern_folders:
+        print(f"Processing pattern folder: {pattern_folder.name}")
+
     for pattern_folder in tqdm(pattern_folders):
         print(f"Evaluating pattern: {pattern_folder.name}")
         train_positive = load_images(pattern_folder / "positive", img_num)
