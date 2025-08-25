@@ -85,8 +85,8 @@ def get_internVL_question(principle):
     question = (f"You are an AI reasoning about visual patterns based on Gestalt principles.\nPrinciple: {principle}\n\n"
                 f"We have a set of images labeled Positive and a set labeled Negative.\n"
                 f"You will see each image one by one.\n"
-                f"Describe each image, note any pattern features, and keep track of insights.\n"
-                f"After seeing all images, we will derive the logic that differentiates Positive from Negative. "
+                f"Observe each image, note any pattern features, and keep track of insights.\n"
+                f"After seeing all images, we will derive the logic that differentiates Positive from Negative. Please only answer with the logic/rule that distinguishes them."
                 f"Positive Images: Image 1: <image>, Image 2: <image>, Image 3: <image>. "
                 f"Negative Images: Image 1: <image>, Image 2: <image>, Image 3: <image>. ")
     return question

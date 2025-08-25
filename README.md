@@ -106,7 +106,7 @@ python -m scripts.evaluate_models --model llama --batch_size 2 --principle proxi
 python -m scripts.evaluate_models --batch_size 2 --principle proximity --img_num 3 --model internVL --device_id 7
 python -m scripts.evaluate_models --batch_size 2 --principle proximity --img_num 3 --model internVL --device_id 7
 python -m scripts.evaluate_models --batch_size 2 --principle proximity --img_num 3 --model internVL --device_id 7
-python -m scripts.evaluate_models --batch_size 2 --principle symmetry --img_num 3 --model internVL --task_num 5 --device_id 5
+python -m scripts.evaluate_models --batch_size 2 --principle symmetry --img_num 3 --model internVL --task_num 5 --device_id 0
 python -m scripts.evaluate_models --batch_size 2 --principle continuity --img_num 3 --model internVL --device_id 7
 
 #### train vit

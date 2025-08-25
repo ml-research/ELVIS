@@ -172,9 +172,9 @@ def infer_logic_rules(model, tokenizer, train_positive, train_negative, device, 
     # answer = processor.batch_decode(output, skip_special_tokens=True)
     # answer = processor.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)
     print(f"Logic Rules: {response}")
-    answer = response[0].split("assistant")[-1]
-    # print(f"Answer: {answer}")
-    return answer
+
+
+    return response
 
 
 def evaluate_llm(model, tokenizer, test_images, logic_rules, device, principle):
