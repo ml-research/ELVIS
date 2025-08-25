@@ -151,10 +151,6 @@ def infer_logic_rules(model, tokenizer, train_positive, train_negative, device, 
 
     imgs = train_positive + train_negative
     pixel_values = [load_image(img) for img in imgs]
-    for v in pixel_values:
-        print("v shape", v.shape)
-
-
     concat_pixel_values = torch.cat(pixel_values, dim=0).to(device=device, dtype=torch.bfloat16)
 
     num_patches_list = [pixel_value.size(0) for pixel_value in pixel_values]
@@ -172,8 +168,6 @@ def infer_logic_rules(model, tokenizer, train_positive, train_negative, device, 
     # answer = processor.batch_decode(output, skip_special_tokens=True)
     # answer = processor.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)
     print(f"Logic Rules: {response}")
-
-
     return response
 
 
@@ -185,16 +179,8 @@ def evaluate_llm(model, tokenizer, test_images, logic_rules, device, principle):
     torch.cuda.empty_cache()
     for image, label in test_images:
         question = conversations.internVL_eval_question(logic_rules)
-        img = [load_image(image).to(device=device, dtype=torch.bfloat16)]
+        img = load_image(image).to(device=device, dtype=torch.bfloat16)
         response = model.chat(tokenizer, img, question, generation_config)
-
-        # inputs = processor.apply_chat_template(conversation, padding=True, add_generation_prompt=True, tokenize=True, return_dict=True, return_tensors="pt").to(model.device,
-        #                                                                                                                                                         dtype=torch.bfloat16)
-        # Generate
-        # print(inputs)
-        # output = model.generate(**inputs, max_new_tokens=25)
-        # answer = processor.batch_decode(output, skip_special_tokens=True)
-        # answer = processor.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)
         print(f"Answer: {response}")
         # print(f"Prediction : {prediction_label}\n\n")
         predicted_label = 1 if "positive" in response.lower() else 0
