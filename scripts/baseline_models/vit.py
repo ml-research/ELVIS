@@ -72,8 +72,8 @@ class ViTClassifier(nn.Module):
     def save_checkpoint(self, filepath):
         torch.save(self.state_dict(), filepath)
 
-    def load_checkpoint(self, filepath):
-        if Path(filepath).exists():
+    def load_checkpoint(self, filepath=None):
+        if filepath is not None and Path(filepath).exists():
             self.load_state_dict(torch.load(filepath))
             print(f"Checkpoint loaded from {filepath}")
         else:
@@ -206,7 +206,7 @@ def run_vit(data_path, principle, batch_size, device, img_num, epochs, task_num)
 
     for pattern_folder in tqdm(pattern_folders):
         rtpt.step()
-        model.load_checkpoint(checkpoint_path)
+        model.load_checkpoint()
         train_loader, num_train_images = get_dataloader(pattern_folder, batch_size, img_num)
         wandb.log({f"{principle}/num_train_images": num_train_images})
         train_vit(model, train_loader, device, epochs)

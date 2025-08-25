@@ -27,4 +27,5 @@ bitsandbytes
 ace_tools
 ace-tools-open
 seaborn
+openai
 
