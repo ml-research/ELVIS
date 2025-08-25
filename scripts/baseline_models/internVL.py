@@ -6,6 +6,8 @@ import wandb
 from pathlib import Path
 from scripts import config
 from PIL import Image
+from tqdm import tqdm
+from rtpt import RTPT
 
 from transformers import AutoProcessor, AutoModelForImageTextToText
 
@@ -60,7 +62,7 @@ def infer_logic_rules(model, processor, train_positive, train_negative, device, 
     # Prepare a batch of two prompts, where the first one is a multi-turn conversation and the second is not
     conversation = conversations.internVL_conversation(train_positive, train_negative, principle)
     inputs = processor.apply_chat_template(conversation, padding=True, add_generation_prompt=True, tokenize=True, return_dict=True, return_tensors="pt").to(model.device,
-                                                                                                                                                        dtype=torch.bfloat16)
+                                                                                                                                                            dtype=torch.bfloat16)
     # Generate
     # print(inputs)
     output = model.generate(**inputs, max_new_tokens=25)
@@ -112,7 +114,7 @@ def evaluate_llm(model, processor, test_images, logic_rules, device, principle):
     return accuracy, f1_score, precision, recall
 
 
-def run_internVL(data_path, principle, batch_size, device, img_num, epochs):
+def run_internVL(data_path, principle, batch_size, device, img_num, epochs, task_num):
     init_wandb(batch_size, principle)
 
     model, processor = load_intern_model(device)
@@ -122,13 +124,19 @@ def run_internVL(data_path, principle, batch_size, device, img_num, epochs):
     if not pattern_folders:
         print("No pattern folders found in", principle_path)
         return
-
     total_accuracy, total_f1 = [], []
     results = {}
     total_precision_scores = []
     total_recall_scores = []
 
-    for pattern_folder in pattern_folders:
+    if task_num != "full":
+        task_num = int(task_num)
+        pattern_folders = pattern_folders[:task_num]
+
+    rtpt = RTPT(name_initials='JIS', experiment_name='Elvis-vit', max_iterations=len(pattern_folders))
+    rtpt.start()
+
+    for pattern_folder in tqdm(pattern_folders):
         train_positive = load_images(pattern_folder / "positive", img_num)
         train_negative = load_images(pattern_folder / "negative", img_num)
         test_positive = load_images((principle_path / "test" / pattern_folder.name) / "positive", img_num)
@@ -169,4 +177,3 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     device = f"cuda:{args.device_id}" if args.device_id is not None and torch.cuda.is_available() else "cpu"
-

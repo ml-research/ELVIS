@@ -102,9 +102,14 @@ python -m scripts.main --remote --principle continuity
 
 ##### train llama
 python -m scripts.evaluate_models --model llama --batch_size 2 --principle proximity --img_num 3 --task_num 5 --device_id 6
+##### train internVL
+python -m scripts.evaluate_models --batch_size 2 --principle proximity --img_num 3 --model internVL --device_id 7
+python -m scripts.evaluate_models --batch_size 2 --principle proximity --img_num 3 --model internVL --device_id 7
+python -m scripts.evaluate_models --batch_size 2 --principle proximity --img_num 3 --model internVL --device_id 7
+python -m scripts.evaluate_models --batch_size 2 --principle symmetry --img_num 3 --model internVL --task_num 5 --device_id 5
+python -m scripts.evaluate_models --batch_size 2 --principle continuity --img_num 3 --model internVL --device_id 7
 
 #### train vit
-
 python -m scripts.evaluate_models --batch_size 100 --principle proximity --img_num 3 --model vit --device_id 7
 python -m scripts.evaluate_models --batch_size 4 --principle proximity --img_num 100 --model vit --device_id 7
 
@@ -117,8 +122,8 @@ python -m scripts.evaluate_models --batch_size 4 --principle closure --img_num 1
 python -m scripts.evaluate_models --batch_size 100 --principle symmetry --img_num 3 --model vit --device_id 6
 python -m scripts.evaluate_models --batch_size 4 --principle symmetry --img_num 100 --model vit --device_id 4
 
-python -m scripts.evaluate_models --batch_size 100 --principle continuity --img_num 3 --model vit --device_id 5
-python -m scripts.evaluate_models --batch_size 4 --principle continuity --img_num 100 --model vit --device_id 5
+python -m scripts.evaluate_models --batch_size 100 --principle continuity --img_num 3 --model vit --device_id 6
+python -m scripts.evaluate_models --batch_size 4 --principle continuity --img_num 100 --model vit --device_id 7
 
 # train Llava
 python -m scripts.evaluate_models --batch_size 1 --principle proximity --img_num 3 --model llava --device_id 0
