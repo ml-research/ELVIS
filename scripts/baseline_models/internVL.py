@@ -185,7 +185,7 @@ def evaluate_llm(model, tokenizer, test_images, logic_rules, device, principle):
     torch.cuda.empty_cache()
     for image, label in test_images:
         question = conversations.internVL_eval_question(logic_rules)
-        img = load_image(image).to(device=device, dtype=torch.bfloat16)
+        img = [load_image(image).to(device=device, dtype=torch.bfloat16)]
         response = model.chat(tokenizer, img, question, generation_config)
 
         # inputs = processor.apply_chat_template(conversation, padding=True, add_generation_prompt=True, tokenize=True, return_dict=True, return_tensors="pt").to(model.device,
