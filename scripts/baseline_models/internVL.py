@@ -151,22 +151,14 @@ def infer_logic_rules(model, tokenizer, train_positive, train_negative, device, 
 
     imgs = train_positive + train_negative
     pixel_values = [load_image(img) for img in imgs]
+    for v in pixel_values:
+        print("shape of pixel values", v.shape)
     concat_pixel_values = torch.cat(pixel_values, dim=0).to(device=device, dtype=torch.bfloat16)
-
     num_patches_list = [pixel_value.size(0) for pixel_value in pixel_values]
-
     generation_config = dict(max_new_tokens=1024, do_sample=True)
     response, history = model.chat(tokenizer, concat_pixel_values, question, generation_config,
                                    num_patches_list=num_patches_list,
                                    history=None, return_history=True)
-
-    # inputs = processor.apply_chat_template(conversation, padding=True, add_generation_prompt=True, tokenize=True, return_dict=True, return_tensors="pt").to(model.device,
-    #                                                                                                                                                         dtype=torch.bfloat16)
-    # Generate
-    # print(inputs)
-    # output = model.generate(**inputs, max_new_tokens=25)
-    # answer = processor.batch_decode(output, skip_special_tokens=True)
-    # answer = processor.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)
     print(f"Logic Rules: {response}")
     return response
 
