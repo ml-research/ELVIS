@@ -151,8 +151,7 @@ def infer_logic_rules(model, tokenizer, train_positive, train_negative, device, 
 
     imgs = train_positive + train_negative
     pixel_values = [load_image(img) for img in imgs]
-    for v in pixel_values:
-        print("shape of pixel values", v.shape)
+
     concat_pixel_values = torch.cat(pixel_values, dim=0).to(device=device, dtype=torch.bfloat16)
     num_patches_list = [pixel_value.size(0) for pixel_value in pixel_values]
     generation_config = dict(max_new_tokens=1024, do_sample=True)
@@ -227,7 +226,8 @@ def run_internVL(data_path, principle, batch_size, device, img_num, epochs, task
         train_negative = load_images(pattern_folder / "negative", img_num)
         test_positive = load_images((principle_path / "test" / pattern_folder.name) / "positive", img_num)
         test_negative = load_images((principle_path / "test" / pattern_folder.name) / "negative", img_num)
-
+        for v in train_positive:
+            print(f"shape of pixel values: {type(v)}")
         logic_rules = infer_logic_rules(model, tokenizer, train_positive, train_negative, device, principle)
 
         test_images = [(img, 1) for img in test_positive] + [(img, 0) for img in test_negative]
