@@ -151,11 +151,6 @@ def infer_logic_rules(model, tokenizer, train_positive, train_negative, device, 
 
     imgs = train_positive + train_negative
     pixel_values = [load_image(img) for img in imgs]
-    if len(pixel_values) == 0:
-        raise ValueError("No pixel values to concatenate. Check your image loading and preprocessing.")
-    for idx, pv in enumerate(pixel_values):
-        if pv is None or pv.numel() == 0:
-            print(f"Warning: Image at index {idx} produced empty tensor.")
 
 
     concat_pixel_values = torch.cat(pixel_values, dim=0).to(device=device, dtype=torch.bfloat16)
@@ -227,7 +222,7 @@ def run_internVL(data_path, principle, batch_size, device, img_num, epochs, task
     tokenizer = AutoTokenizer.from_pretrained('OpenGVLab/InternVL3-2B', trust_remote_code=True, use_fast=False)
 
     for pattern_folder in tqdm(pattern_folders):
-
+        print(f"Evaluating pattern: {pattern_folder.name}")
         train_positive = load_images(pattern_folder / "positive", img_num)
         train_negative = load_images(pattern_folder / "negative", img_num)
         test_positive = load_images((principle_path / "test" / pattern_folder.name) / "positive", img_num)
