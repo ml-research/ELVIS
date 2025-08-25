@@ -80,6 +80,18 @@ def gpt_eval_conversation(image, logic_rules):
     ]
     return conversation
 
+
+def get_internVL_question(principle):
+    question = (f"You are an AI reasoning about visual patterns based on Gestalt principles.\nPrinciple: {principle}\n\n"
+                f"We have a set of images labeled Positive and a set labeled Negative.\n"
+                f"You will see each image one by one.\n"
+                f"Describe each image, note any pattern features, and keep track of insights.\n"
+                f"After seeing all images, we will derive the logic that differentiates Positive from Negative. "
+                f"Positive Images: Image 1: <image>, Image 2: <image>, Image 3: <image>. "
+                f"Negative Images: Image 1: <image>, Image 2: <image>, Image 3: <image>. ")
+    return question
+
+
 def internVL_conversation(train_positive, train_negative, principle):
     conversation = [
         {
@@ -142,6 +154,8 @@ def internVL_conversation(train_positive, train_negative, principle):
 
     ]
     return conversation
+
+
 def llava_conversation(train_positive, train_negative, principle):
     conversation = [
         {
@@ -205,6 +219,11 @@ def llava_conversation(train_positive, train_negative, principle):
     ]
     return conversation
 
+
+def internVL_eval_question(logic_rules):
+    return f"Using the following reasoning rules: {logic_rules}. Classify this image as Positive or Negative. Only answer with positive or negative. <image>\n"
+
+
 def internVL_eval_conversation(image, logic_rules):
     conversation = [
         {
@@ -219,6 +238,7 @@ def internVL_eval_conversation(image, logic_rules):
         }
     ]
     return conversation
+
 
 def llava_eval_conversation(image, logic_rules):
     conversation = [
