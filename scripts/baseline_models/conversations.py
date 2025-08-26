@@ -37,7 +37,7 @@ def gpt_eval_conversation(image, logic_rules):
             "role": "user",
             "content": [
                 {"type": "input_image", "image_url": f"data:image/jpeg;base64,{image}"},
-                {"type": "text",
+                {"type": "input_text",
                  "text": f"Using the following reasoning rules: {logic_rules}. "
                          f"Classify this image as Positive or Negative."
                          f"Only answer with positive or negative."},
