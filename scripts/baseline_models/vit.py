@@ -29,9 +29,9 @@ NUM_CLASSES = 2  # Positive and Negative
 ACCUMULATION_STEPS = 1  # Reduce accumulation steps for faster updates  # Gradient accumulation steps
 
 
-def init_wandb(batch_size, epochs):
+def init_wandb(batch_size, epochs, principle, img_num):
     # Initialize Weights & Biases (WandB)
-    wandb.init(project="ViT-Gestalt-Patterns", config={
+    wandb.init(project=f"ViT-Gestalt-{principle}_{img_num}", config={
         "batch_size": batch_size,
         "image_size": IMAGE_SIZE,
         "num_classes": NUM_CLASSES,
@@ -176,7 +176,7 @@ def evaluate_vit(model, test_loader, device, principle, pattern_name):
 
 
 def run_vit(data_path, principle, batch_size, device, img_num, epochs, task_num):
-    init_wandb(batch_size, epochs)
+    init_wandb(batch_size, epochs, principle, img_num)
     model_name = "vit_base_patch16_224"
     output_dir = Path(f"/elvis_result/vit/{principle}")
     os.makedirs(output_dir, exist_ok=True)
