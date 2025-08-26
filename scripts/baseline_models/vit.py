@@ -67,6 +67,7 @@ def get_dataloader(data_dir, batch_size, img_num, num_workers=2, pin_memory=True
                       pin_memory=pin_memory, prefetch_factor=prefetch_factor,
                       persistent_workers=(num_workers > 0)), len(subset_dataset)
 
+
 # Load Pretrained ViT Model
 class ViTClassifier(nn.Module):
     def save_checkpoint(self, filepath):
@@ -175,7 +176,7 @@ def evaluate_vit(model, test_loader, device, principle, pattern_name):
     return accuracy, f1_score, precision, recall
 
 
-def run_vit(data_path, principle, batch_size, device, img_num, epochs, task_num):
+def run_vit(data_path, principle, batch_size, device, img_num, epochs, start_num, task_num):
     init_wandb(batch_size, epochs, principle, img_num)
     model_name = "vit_base_patch16_224"
     output_dir = Path(f"/elvis_result/vit/{principle}")
@@ -183,7 +184,6 @@ def run_vit(data_path, principle, batch_size, device, img_num, epochs, task_num)
     checkpoint_path = output_dir / f"{model_name}_{img_num}checkpoint.pth"
     device = torch.device(device)
     model = ViTClassifier(model_name).to(device, memory_format=torch.channels_last)
-
 
     print(f"Training and Evaluating ViT Model on Gestalt ({principle}) Patterns...")
     results = {}
@@ -199,7 +199,7 @@ def run_vit(data_path, principle, batch_size, device, img_num, epochs, task_num)
 
     if task_num != "full":
         task_num = int(task_num)
-        pattern_folders = pattern_folders[:task_num]
+        pattern_folders = pattern_folders[start_num:start_num + task_num]
 
     rtpt = RTPT(name_initials='JIS', experiment_name='Elvis-vit', max_iterations=len(pattern_folders))
     rtpt.start()
@@ -269,4 +269,3 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     device = f"cuda:{args.device_id}" if args.device_id is not None and torch.cuda.is_available() else "cpu"
-    run_vit(config.raw_patterns, "proximity", 2, device)

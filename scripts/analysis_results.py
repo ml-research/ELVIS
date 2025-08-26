@@ -14,13 +14,16 @@ from pathlib import Path
 import re
 
 
-def draw_line_chart(x, y, xlabel, ylabel, title, save_path=None):
+def draw_line_chart(x, y, xlabel, ylabel, title, save_path=None, msg=""):
     plt.figure(figsize=(12, 6))
     plt.plot(x, y, marker='o', linestyle='-')
     plt.title(title, fontsize=16, fontweight='bold')
     plt.xlabel(xlabel, fontsize=14)
     plt.ylabel(ylabel, fontsize=14)
     plt.grid(True)
+    if msg:
+        plt.text(0.05, 0.8, msg, fontsize=12, ha='left', va='center', transform=plt.gca().transAxes,
+                 bbox=dict(facecolor='white', alpha=0.8, edgecolor='gray'))
     if save_path:
         plt.savefig(save_path, format="pdf", bbox_inches="tight")
     plt.show()
@@ -644,23 +647,11 @@ def analysis_model_category_performance(categories, name):
     draw_category_subfigures(model_results, name, save_path=config.figure_path / f"model_category_accuracy_{name}.pdf")
 
 
-
-
-
 def analysis_average_performance(json_path, principle, model_name, img_num):
     # load the JSON data
     with open(json_path, 'r') as f:
         data = json.load(f)
     per_task_data = data[principle]
-
-    # draw the performance as a line chart
-    x = list(range(1, len(per_task_data) + 1))
-    y = [v['accuracy'] for v in per_task_data.values()]
-    x_label = "Task Index"
-    y_label = "Accuracy"
-    title = f"{model_name} Accuracy for each task in {principle}"
-    save_path = config.figure_path / f"{principle}_acc_{model_name}_{img_num}.pdf"
-    draw_line_chart(x, y, x_label, y_label, title, save_path)
 
     avg_acc = np.mean([v['accuracy'] for v in per_task_data.values()])
     avg_f1 = np.mean([v['f1_score'] for v in per_task_data.values()])
@@ -672,13 +663,21 @@ def analysis_average_performance(json_path, principle, model_name, img_num):
     std_precision = np.std([v['precision'] for v in per_task_data.values()])
     std_recall = np.std([v['recall'] for v in per_task_data.values()])
 
-    print(f"Number of tasks: {len(per_task_data)}")
-    print(f"Average Performance for {principle}:")
-    print(f"Accuracy: {avg_acc:.3f} ± {std_acc:.3f}")
-    print(f"F1 Score: {avg_f1:.3f} ± {std_f1:.3f}")
-    print(f"Precision: {avg_precision:.3f} ± {std_precision:.3f}")
-    print(f"Recall: {avg_recall:.3f} ± {std_recall:.3f}")
-    print(f"\n\n")
+    msg = (f"{principle}\n"
+           f"#task: {len(per_task_data)}\n"
+           f"#Img: {img_num}\n"
+           f"Acc: {avg_acc:.2f} ± {std_acc:.2f}\n"
+           f"F1: {avg_f1:.2f} ± {std_f1:.2f}\n"
+           f"Prec: {avg_precision:.2f} ± {std_precision:.2f}\n"
+           f"Recall: {avg_recall:.2f} ± {std_recall:.2f}")
+    # draw the performance as a line chart
+    x = list(range(1, len(per_task_data) + 1))
+    y = [v['accuracy'] for v in per_task_data.values()]
+    x_label = "Task Index"
+    y_label = "Accuracy"
+    title = f"{model_name}_{img_num} Accuracy for each task in {principle}"
+    save_path = config.figure_path / f"{principle}_acc_{model_name}_{img_num}.pdf"
+    draw_line_chart(x, y, x_label, y_label, title, save_path, msg)
 
 
 def analysis_per_category(json_path, principle, category_name=None):

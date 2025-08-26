@@ -19,9 +19,9 @@ baseline_models = {
 }
 
 
-def evaluate_model(model, principle, batch_size, data_path, device, img_num, epochs, task_num):
+def evaluate_model(model, principle, batch_size, data_path, device, img_num, epochs, start_num, task_num):
     print(f"{principle} Evaluating on {device}...")
-    model(data_path, principle, batch_size, device=device, img_num=img_num, epochs=epochs, task_num=task_num)
+    model(data_path, principle, batch_size, device=device, img_num=img_num, epochs=epochs, start_num=start_num, task_num=task_num)
 
 
 if __name__ == "__main__":
@@ -33,6 +33,7 @@ if __name__ == "__main__":
     parser.add_argument("--epochs", type=int, default=10)
     parser.add_argument("--img_num", type=int, default=5)
     parser.add_argument("--task_num", type=str, default="full")
+    parser.add_argument("--start_num", type=int, default=0)
     parser.add_argument("--batch_size", type=int)
     args = parser.parse_args()
     # Determine device based on device_id flag
@@ -46,6 +47,6 @@ if __name__ == "__main__":
 
     print(f"Starting model evaluations with data from {data_path}...")
     model = baseline_models[args.model]
-    evaluate_model(model, args.principle, args.batch_size, data_path, device, args.img_num, args.epochs, args.task_num)
+    evaluate_model(model, args.principle, args.batch_size, data_path, device, args.img_num, args.epochs, args.start_num, args.task_num)
 
     print("All model evaluations completed.")
