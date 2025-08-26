@@ -247,7 +247,7 @@ def run_vit(data_path, principle, batch_size, device, img_num, epochs, start_num
     # Save results to JSON file
     output_dir = f"/elvis_result/{principle}"
     os.makedirs(output_dir, exist_ok=True)
-    results_path = Path(output_dir) / f"{model_name}_{img_num}_eval_res_{timestamp}_img_num_{img_num}.json"
+    results_path = Path(output_dir) / f"{model_name}_{img_num}_eval_res_{timestamp}_img_num_{img_num}_start_{start_num}_task_num_{task_num}.json"
     with open(results_path, "w") as json_file:
         json.dump(results, json_file, indent=4)
 
