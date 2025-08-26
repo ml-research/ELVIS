@@ -5,61 +5,27 @@ def gpt_conversation(train_positive, train_negative, principle):
         {
             "role": "user",
             "content": [
-                {"type": "image", "image": train_positive[0]},
-                {"type": "text", "text": f"You are an AI reasoning about visual patterns based on Gestalt principles.\n"
-                                         f"Principle: {principle}\n\n"
-                                         f"We have a set of images labeled Positive and a set labeled Negative.\n"
-                                         f"You will see each image one by one.\n"
-                                         f"Describe each image, note any pattern features, and keep track of insights.\n"
-                                         f"After seeing all images, we will derive the logic that differentiates Positive from Negative. "
-                                         f"The first positive image."},
-            ],
-        },
-        {
-            "role": "user",
-            "content": [
-                {"type": "image", "image": train_positive[1]},
-                {"type": "text", "text": f"The second positive image."},
-            ],
-        },
-        {
-            "role": "user",
-            "content": [
-                {"type": "image", "image": train_positive[2]},
-                {"type": "text", "text": f"The third positive image."},
-            ],
-        },
-        {
-            "role": "user",
-            "content": [
-                {"type": "image", "image": train_negative[0]},
-                {"type": "text", "text": f"The first negative image."},
-            ],
-        },
-        {
-            "role": "user",
-            "content": [
-                {"type": "image", "image": train_negative[1]},
-                {"type": "text", "text": f"The second negative image."},
-            ],
-        },
-        {
-            "role": "user",
-            "content": [
-                {"type": "image", "image": train_negative[2]},
-                {"type": "text", "text": f"The third negative image."},
-            ],
-        },
-        {
-            "role": "user",
-            "content": [
-                {"type": "text", "text": "Now we have seen all the Positive and Negative examples. "
-                                         "Please state the logic/rule that distinguishes them. "
-                                         "Focus on the Gestalt principle of "
-                                         f"{principle}."},
-            ],
-        },
+                # Provide example images
+                {"type": "input_text", "text": "Here are three Positive examples:"},
+                {"type": "input_image", "image_url": f"data:image/jpeg;base64,{train_positive[0]}"},
+                {"type": "input_image", "image_url": f"data:image/jpeg;base64,{train_positive[1]}"},
+                {"type": "input_image", "image_url": f"data:image/jpeg;base64,{train_positive[2]}"},
 
+                {"type": "input_text", "text": "Here are three Negative examples:"},
+                {"type": "input_image", "image_url": f"data:image/jpeg;base64,{train_negative[0]}"},
+                {"type": "input_image", "image_url": f"data:image/jpeg;base64,{train_negative[1]}"},
+                {"type": "input_image", "image_url": f"data:image/jpeg;base64,{train_negative[2]}"},
+
+                # Task instruction
+                {"type": "input_text", "text": (
+                    f"You are an AI reasoning about visual patterns using Gestalt principles.\n\n"
+                    f"Principle under consideration: {principle}.\n\n"
+                    "Based on the Positive and Negative examples, infer the logic rules "
+                    "that distinguishes them.\n\n"
+                    "Output ONLY the rules."
+                )},
+            ],
+        }
     ]
 
     return conversation
