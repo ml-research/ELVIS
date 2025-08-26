@@ -16,8 +16,6 @@ from scripts.baseline_models import conversations
 from scripts.utils import data_utils
 from datetime import datetime
 
-
-
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
 
@@ -133,7 +131,7 @@ def evaluate_llm(model, processor, test_images, logic_rules, device, principle):
     return accuracy, f1_score, precision, recall
 
 
-def run_llava(data_path, principle, batch_size, device, img_num, epochs, task_num):
+def run_llava(data_path, principle, batch_size, device, img_num, epochs, start_num, task_num):
     init_wandb(batch_size, principle)
 
     model, processor = load_llava_model(device)
@@ -151,11 +149,10 @@ def run_llava(data_path, principle, batch_size, device, img_num, epochs, task_nu
 
     if task_num != "full":
         task_num = int(task_num)
-        pattern_folders = pattern_folders[:task_num]
+        pattern_folders = pattern_folders[start_num:start_num + task_num]
 
     rtpt = RTPT(name_initials='JIS', experiment_name=f'Elvis-Llava-{principle}', max_iterations=len(pattern_folders))
     rtpt.start()
-
 
     for pattern_folder in pattern_folders:
         train_positive = load_images(pattern_folder / "positive", img_num)
