@@ -15,7 +15,6 @@ from openai import OpenAI
 import base64
 from io import BytesIO
 
-
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
 
@@ -30,10 +29,13 @@ def init_wandb(batch_size):
 def load_images(image_dir, num_samples=5):
     image_paths = sorted(Path(image_dir).glob("*.png"))[:num_samples]
     return [Image.open(img_path).convert("RGB").resize((224, 224)) for img_path in image_paths]
+
+
 def image_to_base64(img):
     buffered = BytesIO()
     img.save(buffered, format="PNG")
     return base64.b64encode(buffered.getvalue()).decode("utf-8")
+
 
 # def load_gpt5_model(device):
 #     model_id = "openai-gpt5/GPT-5-Scout-17B-16E-Instruct"
@@ -121,8 +123,8 @@ def run_gpt5(data_path, principle, batch_size, device, img_num, epochs, start_nu
 
         train_positive = [image_to_base64(img) for img in train_positive]
         train_negative = [image_to_base64(img) for img in train_negative]
-        test_positive = [(image_to_base64(img), label) for img, label in test_positive]
-        test_negative = [(image_to_base64(img), label) for img, label in test_negative]
+        test_positive = [image_to_base64(img) for img in test_positive]
+        test_negative = [image_to_base64(img) for img in test_negative]
 
         logic_rules = infer_logic_rules(client, train_positive, train_negative, device, principle)
         test_images = [(img, 1) for img in test_positive] + [(img, 0) for img in test_negative]
