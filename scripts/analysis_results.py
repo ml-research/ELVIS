@@ -13,6 +13,13 @@ import seaborn as sns
 from pathlib import Path
 import re
 
+model_dict = {
+    "vit3": {"model": "vit", "img_num": 3},
+    "vit100": {"model": "vit", "img_num": 100},
+    "internVL": {"model": "internVL", "img_num": 3},
+
+}
+
 
 def draw_line_chart(x, y, xlabel, ylabel, title, save_path=None, msg=""):
     plt.figure(figsize=(12, 6))
@@ -533,9 +540,44 @@ def analysis_result(principles, data):
 #         plt.savefig(save_path, format="pdf", bbox_inches="tight")
 #     plt.show()
 
-def draw_category_subfigures(results, name, save_path=None):
+
+def draw_grouped_categories(results, name,x_label, save_path=None):
     models = list(results.keys())
     categories = list(next(iter(results.values())).keys())
+    n_models = len(models)
+    n_categories = len(categories)
+
+    # Prepare data for grouped bar plot
+    bar_width = 0.15
+    x = np.arange(n_categories)
+    palette = sns.color_palette("Set2", n_colors=n_models)
+
+    plt.figure(figsize=(max(8, n_categories * 1.5), 6))
+    for i, model in enumerate(models):
+        values = [results[model].get(cat, np.nan) for cat in categories]
+        plt.bar(x + i * bar_width, values, width=bar_width, color=palette[i], label=model)
+        # Add value labels
+        for j, v in enumerate(values):
+            plt.text(x[j] + i * bar_width, v + 2, f"{v:.1f}", ha='center', va='bottom', fontsize=8)
+
+    plt.xticks(x + bar_width * (n_models - 1) / 2, categories, fontsize=10, rotation=30, ha='right')
+    plt.ylabel('Accuracy', fontsize=12)
+    plt.xlabel(f"{x_label}", fontsize=12)
+    plt.ylim(0, 100)
+    plt.title(f'{name}', fontsize=14, fontweight='bold')
+    plt.legend(title="Model", fontsize=10)
+    plt.axhline(50, color='gray', linestyle='--', linewidth=1)
+    plt.tight_layout()
+    if save_path:
+        plt.savefig(save_path, format="pdf", bbox_inches="tight")
+    plt.show()
+
+
+def draw_category_subfigures(results, name, save_path=None):
+    models = list(results.keys())
+
+    categories = list(next(iter(results.values())).keys())
+    # categories = sort_categories(categories)
     n_models = len(models)
     n_cols = min(4, n_models)
     n_rows = int(np.ceil(n_models / n_cols))
@@ -684,34 +726,37 @@ def analysis_average_performance(json_path, principle, model_name, img_num):
     draw_line_chart(x, y, x_label, y_label, title, save_path, msg)
 
 
-def analysis_per_category(json_path, principle, category_name=None):
-    # load the JSON data
-    with open(json_path, 'r') as f:
-        data = json.load(f)
-    per_task_data = data[principle]
+def analysis_per_category(args, category_names):
+    all_results = {}
+    for model_name, model_info in model_dict.items():
+        model_results = {}
+        for category_name in category_names:
+            json_path = get_results_path(args, args.remote, args.principle, model_info["model"], model_info["img_num"])
+            per_task_data = get_per_task_data(json_path, args.principle)
 
-    category_acc = [v["accuracy"] for k, v in per_task_data.items() if category_name in k]
-    category_f1 = [v["f1_score"] for k, v in per_task_data.items() if category_name in k]
-    category_precision = [v["precision"] for k, v in per_task_data.items() if category_name in k]
-    category_recall = [v["recall"] for k, v in per_task_data.items() if category_name in k]
+            category_acc = [v["accuracy"] for k, v in per_task_data.items() if category_name in k]
+            category_f1 = [v["f1_score"] for k, v in per_task_data.items() if category_name in k]
+            category_precision = [v["precision"] for k, v in per_task_data.items() if category_name in k]
+            category_recall = [v["recall"] for k, v in per_task_data.items() if category_name in k]
 
-    avg_acc = np.mean(category_acc)
-    avg_f1 = np.mean(category_f1)
-    avg_precision = np.mean(category_precision)
-    avg_recall = np.mean(category_recall)
+            avg_acc = np.mean(category_acc)
+            avg_f1 = np.mean(category_f1)
+            avg_precision = np.mean(category_precision)
+            avg_recall = np.mean(category_recall)
 
-    std_acc = np.std(category_acc)
-    std_f1 = np.std(category_f1)
-    std_precision = np.std(category_precision)
-    std_recall = np.std(category_recall)
-
-    print(f"Number of tasks in category '{category_name}': {len(category_acc)}")
-
-    print(f"\tAccuracy: {avg_acc:.3f} ± {std_acc:.3f}")
-    print(f"\tF1 Score: {avg_f1:.3f} ± {std_f1:.3f}")
-    print(f"\tPrecision: {avg_precision:.3f} ± {std_precision:.3f}")
-    print(f"\tRecall: {avg_recall:.3f} ± {std_recall:.3f}")
-    print(f"\n")
+            std_acc = np.std(category_acc)
+            std_f1 = np.std(category_f1)
+            std_precision = np.std(category_precision)
+            std_recall = np.std(category_recall)
+            model_results[category_name] = avg_acc
+            print(f"Number of tasks in category '{category_name}': {len(category_acc)}")
+            print(f"\tAccuracy: {avg_acc:.3f} ± {std_acc:.3f}")
+            print(f"\tF1 Score: {avg_f1:.3f} ± {std_f1:.3f}")
+            print(f"\tPrecision: {avg_precision:.3f} ± {std_precision:.3f}")
+            print(f"\tRecall: {avg_recall:.3f} ± {std_recall:.3f}")
+            print(f"\n")
+        all_results[model_name] = model_results
+    draw_category_subfigures(all_results, f"{args.principle}_{category_name}", save_path=config.figure_path / f"{args.principle}_{category_name}_category_accuracy.pdf")
 
 
 def parse_task_name(task_name):
@@ -788,44 +833,41 @@ def get_per_task_data(json_path, principle):
     # load the JSON data
     with open(json_path, 'r') as f:
         data = json.load(f)
-    per_task_data = data[principle]
-    return per_task_data
+    if principle in data:
+        return data[principle]
+    else:
+        if "average" in data:
+            data.pop("average", None)
+        return data
 
 
-# def analysis_grp_num(json_path, principle):
-#     per_task_data = get_per_task_data(json_path, principle)
-#     group_size_analysis = {}
-#     for task_name, task_res in per_task_data.items():
-#         task_info = parse_task_name(task_name)
-#         if task_info["group_num"] not in group_size_analysis:
-#             group_size_analysis[task_info["group_num"]] = []
-#         group_size_analysis[task_info["group_num"]].append(per_task_data[task_name]["accuracy"])
-#     grp_size_avg_acc = {k: np.mean(v) for k, v in group_size_analysis.items()}
-#     grp_size_std_acc = {k: np.std(v) for k, v in group_size_analysis.items()}
-#     print(f"Group Size Analysis:")
-#     for grp_size, avg_acc in grp_size_avg_acc.items():
-#         std_acc = grp_size_std_acc[grp_size]
-#         print(f"\tGroup Size {grp_size}: Avg Accuracy = {avg_acc:.3f} ± {std_acc:.3f}")
-#
+def analysis_ablation_performance(args, principle, prop):
+    json_paths = {}
+    model_results = {}
+    for model_name, model_info in model_dict.items():
+        json_paths[model_name] = get_results_path(args, args.remote, args.principle, model_info["model"], model_info["img_num"])
+        per_task_data = get_per_task_data(json_paths[model_name], principle)
+        group_size_analysis = {}
+        for task_name, task_res in per_task_data.items():
+            task_info = parse_task_name(task_name)
+            if prop not in task_info:
+                continue
+            if task_info[prop] not in group_size_analysis:
+                group_size_analysis[task_info[prop]] = []
+            group_size_analysis[task_info[prop]].append(per_task_data[task_name]["accuracy"])
+        logic_avg_acc = {k: np.mean(v) for k, v in group_size_analysis.items()}
+        grp_size_std_acc = {k: np.std(v) for k, v in group_size_analysis.items()}
+        for name, avg_acc in logic_avg_acc.items():
+            std_acc = grp_size_std_acc[name]
+            print(f"\t{prop} {name}: Avg Accuracy = {avg_acc:.3f} ± {std_acc:.3f}")
+        model_results[model_name] = logic_avg_acc
 
-def analysis_ablation_performance(json_path, principle, prop):
-    per_task_data = get_per_task_data(json_path, principle)
-    group_size_analysis = {}
-    for task_name, task_res in per_task_data.items():
-        task_info = parse_task_name(task_name)
-        if prop not in task_info:
-            continue
-        if task_info[prop] not in group_size_analysis:
-            group_size_analysis[task_info[prop]] = []
-        group_size_analysis[task_info[prop]].append(per_task_data[task_name]["accuracy"])
-    logic_avg_acc = {k: np.mean(v) for k, v in group_size_analysis.items()}
-    grp_size_std_acc = {k: np.std(v) for k, v in group_size_analysis.items()}
-    for name, avg_acc in logic_avg_acc.items():
-        std_acc = grp_size_std_acc[name]
-        print(f"\t{prop} {name}: Avg Accuracy = {avg_acc:.3f} ± {std_acc:.3f}")
+    draw_grouped_categories(model_results, f"{principle}", "#Group",
+                            save_path=config.figure_path / f"{principle}_{prop}_ablation_accuracy.pdf")
 
 
-def get_results_path(remote=False, principle=None, model_name=None, img_num=None):
+
+def get_results_path(args, remote=False, principle=None, model_name=None, img_num=None):
     if remote:
         results_path = Path("/elvis_result/")
     else:
@@ -856,7 +898,7 @@ def get_results_path(remote=False, principle=None, model_name=None, img_num=None
     return json_path
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description="Evaluate baseline models with CUDA support.")
     parser.add_argument("--model", type=str, required=True, help="Specify the principle to filter data.")
     parser.add_argument("--principle", type=str, required=True)
@@ -865,50 +907,38 @@ if __name__ == "__main__":
     parser.add_argument("--img_num", type=int)
     args = parser.parse_args()
 
-    json_path = get_results_path(args.remote, args.principle, args.model, args.img_num)
+    json_path = get_results_path(args, args.remote, args.principle, args.model, args.img_num)
 
     if args.mode == "principle":
         analysis_average_performance(json_path, args.principle, args.model, args.img_num)
     elif args.mode == "category":
         if args.principle == "proximity":
-            analysis_per_category(json_path, args.principle, "red_triangle")
-            analysis_per_category(json_path, args.principle, "grid")
-            analysis_per_category(json_path, args.principle, "fixed_props")
-            analysis_per_category(json_path, args.principle, "circle_features")
+            category_names = ["red_triangle", "grid", "fixed_props", "circle_features"]
+            analysis_per_category(args, category_names)
         elif args.principle == "similarity":
-            analysis_per_category(json_path, args.principle, "fixed_number")
-            analysis_per_category(json_path, args.principle, "pacman")
-            analysis_per_category(json_path, args.principle, "palette")
+            category_names = ["fixed_number", "pacman", "palette"]
+            analysis_per_category(args, category_names)
         elif args.principle == "closure":
-            analysis_per_category(json_path, args.principle, "big_triangle")
-            analysis_per_category(json_path, args.principle, "big_square")
-            analysis_per_category(json_path, args.principle, "big_circle")
-            analysis_per_category(json_path, args.principle, "feature_triangle")
-            analysis_per_category(json_path, args.principle, "feature_square")
-            analysis_per_category(json_path, args.principle, "feature_circle")
+            category_names = ["big_triangle", "big_square", "big_circle",
+                              "feature_triangle", "feature_square", "feature_circle"]
+            analysis_per_category(args, category_names)
         elif args.principle == "symmetry":
-            analysis_per_category(json_path, args.principle, "solar_system")
-            analysis_per_category(json_path, args.principle, "symmetry_circle")
-            analysis_per_category(json_path, args.principle, "symmetry_pattern")
+            category_names = ["solar_system", "symmetry_circle", "symmetry_pattern"]
+            analysis_per_category(args, category_names)
         elif args.principle == "continuity":
-            analysis_per_category(json_path, args.principle, "one_split_n")
-            analysis_per_category(json_path, args.principle, "with_intersected_n_splines")
-            analysis_per_category(json_path, args.principle, "non_intersected_n_splines")
-            analysis_per_category(json_path, args.principle, "continuity_overlap_splines")
+            category_names = ["one_split_n", "with_intersected_n_splines", "non_intersected_n_splines", "continuity_overlap_splines"]
+            analysis_per_category(args, category_names)
         else:
             raise ValueError(f"Unsupported principle for category analysis: {args.principle}")
     elif args.mode == "group_num":
-        analysis_ablation_performance(json_path, args.principle, "group_num")
-    elif args.mode == "grp_size":
-        analysis_ablation_performance(json_path, args.principle, "group_size")
+        analysis_ablation_performance(args, args.principle, "group_num")
+    elif args.mode == "group_size":
+        analysis_ablation_performance(args, args.principle, "group_size")
     elif args.mode == "rule_type":
-        analysis_ablation_performance(json_path, args.principle, "rule_type")
+        analysis_ablation_performance(args, args.principle, "rule_type")
     else:
         raise ValueError(f"Unsupported mode: {args.mode}")
-    # analysis_model_category_performance(['shape', 'color', 'count', "size"], "prop")
-    # analysis_model_category_performance(["_s", "_m", "_l"], "size")
-    # analysis_model_category_performance(["exist", "all"], "exist")
-    # analysis_model_category_performance(["_1", "_2", "_3", "_4", "_5"], "group_num")
-    # analysis_model_category_performance(["exist", "all"], "exist")
-    # print_category_accuracy(data)
-    # analysis_result(principles, data)
+
+
+if __name__ == "__main__":
+    main()

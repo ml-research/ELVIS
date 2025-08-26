@@ -82,7 +82,7 @@ def evaluate_gpt5(client, test_images, logic_rules, device, principle):
     return accuracy, f1_score, precision, recall
 
 
-def run_gpt5(data_path, principle, batch_size, device, img_num, epochs, task_num):
+def run_gpt5(data_path, principle, batch_size, device, img_num, epochs, start_num, task_num):
     init_wandb(batch_size)
     # model, processor = load_gpt5_model(device)
     principle_path = Path(data_path)
@@ -96,7 +96,12 @@ def run_gpt5(data_path, principle, batch_size, device, img_num, epochs, task_num
     results = {}
     total_precision_scores = []
     total_recall_scores = []
-    rtpt = RTPT(name_initials='JS', experiment_name=f'Elvis-gpt5-{principle}', max_iterations=len(pattern_folders))
+
+    if task_num != "full":
+        task_num = int(task_num)
+        pattern_folders = pattern_folders[start_num:start_num + task_num]
+
+    rtpt = RTPT(name_initials='JIS', experiment_name=f'Elvis-gpt5-{principle}', max_iterations=len(pattern_folders))
     rtpt.start()
     for pattern_folder in pattern_folders:
         rtpt.step()
@@ -106,7 +111,6 @@ def run_gpt5(data_path, principle, batch_size, device, img_num, epochs, task_num
         test_negative = load_images((principle_path / "test" / pattern_folder.name) / "negative", img_num)
         logic_rules = infer_logic_rules(client, train_positive, train_negative, device, principle)
         test_images = [(img, 1) for img in test_positive] + [(img, 0) for img in test_negative]
-        print("len test images", len(test_images))
         accuracy, f1, precision, recall = evaluate_gpt5(client, test_images, logic_rules, device, principle)
         results[pattern_folder.name] = {"accuracy": accuracy,
                                         "f1_score": f1,
@@ -120,8 +124,6 @@ def run_gpt5(data_path, principle, batch_size, device, img_num, epochs, task_num
         total_recall_scores.append(recall)
     avg_accuracy = sum(total_accuracy) / len(total_accuracy) if total_accuracy else 0
     avg_f1 = sum(total_f1) / len(total_f1) if total_f1 else 0
-    results["average"] = {"accuracy": avg_accuracy,
-                          "f1_score": avg_f1}
     output_dir = f"/elvis_result/{principle}"
     os.makedirs(output_dir, exist_ok=True)
     results_path = Path(output_dir) / f"gpt5_{principle}_eval_res_img_num_{img_num}_{timestamp}.json"

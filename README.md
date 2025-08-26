@@ -128,13 +128,13 @@ python -m scripts.evaluate_models --batch_size 4 --principle continuity --img_nu
 # train Llava
 python -m scripts.evaluate_models --batch_size 1 --principle proximity --img_num 3 --model llava --device_id 7
 python -m scripts.evaluate_models --batch_size 1 --principle similarity --img_num 3 --model llava --device_id 2
-python -m scripts.evaluate_models --batch_size 1 --principle closure  --img_num 3 --model llava --device_id 3
-python -m scripts.evaluate_models --batch_size 1 --principle symmetry --img_num 3 --model llava  --device_id 4
-python -m scripts.evaluate_models --batch_size 1 --principle continuity --img_num 3 --model llava --device_id 7
+python -m scripts.evaluate_models --batch_size 1 --principle closure  --img_num 3 --model llava --device_id 6
+python -m scripts.evaluate_models --batch_size 1 --principle symmetry --img_num 3 --model llava  --device_id 6
+python -m scripts.evaluate_models --batch_size 1 --principle continuity --img_num 3 --model llava --device_id 5
 
 # train gpt5
 python -m scripts.evaluate_models --batch_size 1 --principle proximity --model gpt5 --device_id 2
-python -m scripts.evaluate_models --batch_size 1 --principle similarity --img_num 3 --model gpt5 --task_num 3 --device_id 2
+python -m scripts.evaluate_models --batch_size 1 --principle similarity --img_num 3 --model gpt5 --start_num 0 --task_num 3 --device_id 4
 
 
 ##### Analysis Results
