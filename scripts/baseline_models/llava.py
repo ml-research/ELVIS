@@ -6,16 +6,23 @@ import wandb
 from pathlib import Path
 from scripts import config
 from PIL import Image
+from rtpt import RTPT
+import os
 
 from transformers import AutoProcessor, LlavaOnevisionForConditionalGeneration
 
 from scripts.baseline_models import conversations
 
 from scripts.utils import data_utils
+from datetime import datetime
 
 
-def init_wandb(batch_size):
-    wandb.init(project="LLM-Gestalt-Patterns", config={"batch_size": batch_size})
+
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+
+def init_wandb(batch_size, principle):
+    wandb.init(project=f"Llava-Gestalt-{principle}", config={"batch_size": batch_size})
 
 
 def load_llava_model(device):
@@ -126,8 +133,8 @@ def evaluate_llm(model, processor, test_images, logic_rules, device, principle):
     return accuracy, f1_score, precision, recall
 
 
-def run_llava(data_path, principle, batch_size, device, img_num, epochs):
-    init_wandb(batch_size)
+def run_llava(data_path, principle, batch_size, device, img_num, epochs, task_num):
+    init_wandb(batch_size, principle)
 
     model, processor = load_llava_model(device)
     principle_path = Path(data_path)
@@ -142,6 +149,14 @@ def run_llava(data_path, principle, batch_size, device, img_num, epochs):
     total_precision_scores = []
     total_recall_scores = []
 
+    if task_num != "full":
+        task_num = int(task_num)
+        pattern_folders = pattern_folders[:task_num]
+
+    rtpt = RTPT(name_initials='JIS', experiment_name=f'Elvis-Llava-{principle}', max_iterations=len(pattern_folders))
+    rtpt.start()
+
+
     for pattern_folder in pattern_folders:
         train_positive = load_images(pattern_folder / "positive", img_num)
         train_negative = load_images(pattern_folder / "negative", img_num)
@@ -151,7 +166,6 @@ def run_llava(data_path, principle, batch_size, device, img_num, epochs):
         logic_rules = infer_logic_rules(model, processor, train_positive, train_negative, device, principle)
 
         test_images = [(img, 1) for img in test_positive] + [(img, 0) for img in test_negative]
-        print("len test images", len(test_images))
         accuracy, f1, precision, recall = evaluate_llm(model, processor, test_images, logic_rules, device, principle)
 
         results[pattern_folder.name] = {"accuracy": accuracy, "f1_score": f1, "logic_rules": logic_rules,
@@ -166,8 +180,10 @@ def run_llava(data_path, principle, batch_size, device, img_num, epochs):
     avg_accuracy = sum(total_accuracy) / len(total_accuracy) if total_accuracy else 0
     avg_f1 = sum(total_f1) / len(total_f1) if total_f1 else 0
 
-    results["average"] = {"accuracy": avg_accuracy, "f1_score": avg_f1}
-    results_path = Path(data_path) / f"llava_{principle}.json"
+    # results["average"] = {"accuracy": avg_accuracy, "f1_score": avg_f1}
+    output_dir = f"/elvis_result/{principle}"
+    os.makedirs(output_dir, exist_ok=True)
+    results_path = Path(output_dir) / f"llava_eval_res_{timestamp}_img_num_{img_num}.json"
     with open(results_path, "w") as json_file:
         json.dump(results, json_file, indent=4)
 

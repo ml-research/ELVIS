@@ -4,6 +4,7 @@ from scripts import config
 from scripts.baseline_models import vit
 from scripts.baseline_models import gpt5
 from scripts.baseline_models import llama
+from scripts.baseline_models import llava
 from scripts.baseline_models import internVL
 import torch
 import os
@@ -13,9 +14,8 @@ baseline_models = {
     "vit": vit.run_vit,
     "gpt5": gpt5.run_gpt5,
     "internVL": internVL.run_internVL,
-    # {"name": "Llava", "module": llava.run_llava},
-    # {"name": "deepseek", "module": deepseek.run_deepseek},
-    "llama": llama.run_llama
+    "llava": llava.run_llava,
+    # "llama": llama.run_llama
 }
 
 
