@@ -107,7 +107,7 @@ def evaluate_llm(model, processor, test_images, logic_rules, device, principle):
         generate_ids = model.generate(**inputs, max_new_tokens=1024)
         prediction = processor.decode(generate_ids[0], skip_special_tokens=True, clean_up_tokenization_spaces=False)
         prediction_label = prediction.split(".assistant")[-1]
-        print(f"Prediction : {prediction_label}\n\n")
+        print(f"Prediction : {prediction_label}\n")
         predicted_label = 1 if "positive" in prediction_label.lower() else 0
         all_labels.append(label)
         all_predictions.append(predicted_label)
@@ -157,6 +157,7 @@ def run_llava(data_path, principle, batch_size, device, img_num, epochs, start_n
     rtpt.start()
 
     for pattern_folder in pattern_folders:
+        rtpt.step()
         train_positive = load_images(pattern_folder / "positive", img_num)
         train_negative = load_images(pattern_folder / "negative", img_num)
         test_positive = load_images((principle_path / "test" / pattern_folder.name) / "positive", img_num)
