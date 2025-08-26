@@ -57,6 +57,7 @@ def infer_logic_rules(client, train_positive, train_negative, device, principle)
         input=conversations.gpt_conversation(train_positive, train_negative, principle),
     )
     text = response.output_text
+    print("Inferred Logic Rules:", text)
     return text
 
 
