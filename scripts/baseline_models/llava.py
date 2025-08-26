@@ -137,7 +137,8 @@ def run_llava(data_path, principle, batch_size, device, img_num, epochs, start_n
     model, processor = load_llava_model(device)
     principle_path = Path(data_path)
 
-    pattern_folders = sorted((principle_path / "train").iterdir())
+    pattern_folders = sorted([p for p in (principle_path / "train").iterdir() if p.is_dir()], key=lambda x: x.stem)
+    # pattern_folders = sorted((principle_path / "train").iterdir())
     if not pattern_folders:
         print("No pattern folders found in", principle_path)
         return
