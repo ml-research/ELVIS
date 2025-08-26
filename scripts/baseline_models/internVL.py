@@ -12,11 +12,15 @@ from transformers import AutoModel, AutoTokenizer
 import torchvision.transforms as transforms
 import torchvision.transforms as T
 from torchvision.transforms.functional import InterpolationMode
+import os
 
 # from transformers import AutoProcessor, AutoModelForImageTextToText
 from scripts.baseline_models import conversations
 from scripts.utils import data_utils, file_utils
 
+from datetime import datetime
+
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
 def init_wandb(batch_size, principle):
     wandb.init(project=f"ELVIS-InternVL-{principle}", config={"batch_size": batch_size})
@@ -249,7 +253,10 @@ def run_internVL(data_path, principle, batch_size, device, img_num, epochs, task
     avg_f1 = sum(total_f1) / len(total_f1) if total_f1 else 0
 
     results["average"] = {"accuracy": avg_accuracy, "f1_score": avg_f1}
-    results_path = Path(data_path) / f"llava_{principle}.json"
+
+    output_dir = f"/elvis_result/{principle}"
+    os.makedirs(output_dir, exist_ok=True)
+    results_path = Path(output_dir) / f"internVL_eval_res_{timestamp}_img_num_{img_num}.json"
     with open(results_path, "w") as json_file:
         json.dump(results, json_file, indent=4)
 
