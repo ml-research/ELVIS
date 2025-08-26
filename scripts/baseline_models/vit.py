@@ -208,7 +208,7 @@ def run_vit(data_path, principle, batch_size, device, img_num, epochs, task_num)
         rtpt.step()
         model.load_checkpoint()
         train_loader, num_train_images = get_dataloader(pattern_folder, batch_size, img_num)
-        wandb.log({f"{principle}/num_train_images": num_train_images})
+        # wandb.log({f"{principle}/num_train_images": num_train_images})
         train_vit(model, train_loader, device, epochs)
         torch.cuda.empty_cache()
         test_folder = Path(data_path) / "test" / pattern_folder.stem
@@ -233,13 +233,13 @@ def run_vit(data_path, principle, batch_size, device, img_num, epochs, task_num)
     avg_accuracy = sum(total_accuracy) / len(total_accuracy) if total_accuracy else 0
     avg_precision = sum(total_precision_scores) / len(total_precision_scores) if total_precision_scores else 0
     avg_recall = sum(total_recall_scores) / len(total_recall_scores) if total_recall_scores else 0
-
-    wandb.log({
-        f"average_f1_scores_{principle}": avg_f1_scores,
-        f"average_test_accuracy_{principle}": avg_accuracy,
-        f"average_precision_{principle}": avg_precision,
-        f"average_recall_{principle}": avg_recall
-    })
+    #
+    # wandb.log({
+    #     f"average_f1_scores_{principle}": avg_f1_scores,
+    #     f"average_test_accuracy_{principle}": avg_accuracy,
+    #     f"average_precision_{principle}": avg_precision,
+    #     f"average_recall_{principle}": avg_recall
+    # })
 
     print(
         f"Average Metrics for {principle}:\n  - Accuracy: {avg_accuracy:.2f}%\n  - F1 Score: {avg_f1_scores:.4f}\n  - Precision: {avg_precision:.4f}\n  - Recall: {avg_recall:.4f}")
