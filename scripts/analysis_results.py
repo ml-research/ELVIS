@@ -651,7 +651,11 @@ def analysis_average_performance(json_path, principle, model_name, img_num):
     # load the JSON data
     with open(json_path, 'r') as f:
         data = json.load(f)
-    per_task_data = data[principle]
+    if model_name == "vit":
+        per_task_data = data[principle]
+    else:
+        per_task_data = data
+        per_task_data.pop("average", None)  # Remove 'average' if it exists
 
     avg_acc = np.mean([v['accuracy'] for v in per_task_data.values()])
     avg_f1 = np.mean([v['f1_score'] for v in per_task_data.values()])
@@ -833,6 +837,11 @@ def get_results_path(remote=False, principle=None, model_name=None, img_num=None
     if model_name == "vit":
         all_json_files = list(prin_path.glob(f"{model_name}_*.json"))
         all_json_files = [f for f in all_json_files if f"img_num_{img_num}" in f.name]
+
+    elif model_name == "internVL":
+        all_json_files = list(prin_path.glob(f"{model_name}_*.json"))
+        # all_json_files = [f for f in all_json_files if f"img_num_{img_num}" in f.name]
+
     elif model_name == "llava":
         all_json_files = list(prin_path.glob(f"{model_name}.json"))
     else:

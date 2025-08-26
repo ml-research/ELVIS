@@ -85,7 +85,7 @@ scripts = root / 'scripts'
 if not os.path.exists(scripts):
     os.mkdir(scripts)
 
-result_path = root / 'results'
+result_path = root / 'baseline_results'
 figure_path = result_path / 'figures'
 os.makedirs(figure_path, exist_ok=True)
 

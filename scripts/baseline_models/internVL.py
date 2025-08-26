@@ -252,7 +252,7 @@ def run_internVL(data_path, principle, batch_size, device, img_num, epochs, task
     avg_accuracy = sum(total_accuracy) / len(total_accuracy) if total_accuracy else 0
     avg_f1 = sum(total_f1) / len(total_f1) if total_f1 else 0
 
-    results["average"] = {"accuracy": avg_accuracy, "f1_score": avg_f1}
+    # results["average"] = {"accuracy": avg_accuracy, "f1_score": avg_f1}
 
     output_dir = f"/elvis_result/{principle}"
     os.makedirs(output_dir, exist_ok=True)
