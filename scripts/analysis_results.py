@@ -14,6 +14,18 @@ from pathlib import Path
 import re
 
 
+def draw_line_chart(x, y, xlabel, ylabel, title, save_path=None):
+    plt.figure(figsize=(12, 6))
+    plt.plot(x, y, marker='o', linestyle='-')
+    plt.title(title, fontsize=16, fontweight='bold')
+    plt.xlabel(xlabel, fontsize=14)
+    plt.ylabel(ylabel, fontsize=14)
+    plt.grid(True)
+    if save_path:
+        plt.savefig(save_path, format="pdf", bbox_inches="tight")
+    plt.show()
+
+
 def analysis_llava(principle, model_name):
     path = config.results / principle
     json_path = path / f"{model_name}_evaluation_results.json"
@@ -632,11 +644,24 @@ def analysis_model_category_performance(categories, name):
     draw_category_subfigures(model_results, name, save_path=config.figure_path / f"model_category_accuracy_{name}.pdf")
 
 
-def analysis_average_performance(json_path, principle):
+
+
+
+def analysis_average_performance(json_path, principle, model_name, img_num):
     # load the JSON data
     with open(json_path, 'r') as f:
         data = json.load(f)
     per_task_data = data[principle]
+
+    # draw the performance as a line chart
+    x = list(range(1, len(per_task_data) + 1))
+    y = [v['accuracy'] for v in per_task_data.values()]
+    x_label = "Task Index"
+    y_label = "Accuracy"
+    title = f"{model_name} Accuracy for each task in {principle}"
+    save_path = config.figure_path / f"{principle}_acc_{model_name}_{img_num}.pdf"
+    draw_line_chart(x, y, x_label, y_label, title, save_path)
+
     avg_acc = np.mean([v['accuracy'] for v in per_task_data.values()])
     avg_f1 = np.mean([v['f1_score'] for v in per_task_data.values()])
     avg_precision = np.mean([v['precision'] for v in per_task_data.values()])
@@ -833,10 +858,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     json_path = get_results_path(args.remote, args.principle, args.model, args.img_num)
-    # show average performance of all models
 
     if args.mode == "principle":
-        analysis_average_performance(json_path, args.principle)
+        analysis_average_performance(json_path, args.principle, args.model, args.img_num)
     elif args.mode == "category":
         if args.principle == "proximity":
             analysis_per_category(json_path, args.principle, "red_triangle")
