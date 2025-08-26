@@ -161,8 +161,8 @@ def run_llava(data_path, principle, batch_size, device, img_num, epochs, start_n
         test_positive = load_images((principle_path / "test" / pattern_folder.name) / "positive", img_num)
         test_negative = load_images((principle_path / "test" / pattern_folder.name) / "negative", img_num)
 
-        print(type(train_positive))
-        print(type(train_positive[0]))
+        # print(type(train_positive))
+        # print(type(train_positive[0]))
         logic_rules = infer_logic_rules(model, processor, train_positive, train_negative, device, principle)
 
         test_images = [(img, 1) for img in test_positive] + [(img, 0) for img in test_negative]
