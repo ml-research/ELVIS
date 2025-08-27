@@ -247,7 +247,7 @@ def split_model():
 
     return device_map
 
-def run_internVL_X(data_path, principle, batch_size, device, img_num, epochs, task_num):
+def run_internVL_X(data_path, principle, batch_size, device, img_num, epochs,  start_num, task_num):
     init_wandb(batch_size, principle)
 
     principle_path = Path(data_path)
@@ -261,9 +261,10 @@ def run_internVL_X(data_path, principle, batch_size, device, img_num, epochs, ta
     total_precision_scores = []
     total_recall_scores = []
 
+
     if task_num != "full":
         task_num = int(task_num)
-        pattern_folders = pattern_folders[:task_num]
+        pattern_folders = pattern_folders[start_num:start_num + task_num]
 
     rtpt = RTPT(name_initials='JIS', experiment_name=f'Elvis-InternVL3-78B-{principle}', max_iterations=len(pattern_folders))
     rtpt.start()
