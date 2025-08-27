@@ -221,6 +221,32 @@ def evaluate_llm(model, tokenizer, test_images, logic_rules, device, principle):
         f"({principle}) Test Accuracy: {accuracy:.2f}% | F1 Score: {f1_score:.4f} | Precision: {precision:.4f} | Recall: {recall:.4f}")
 
     return accuracy, f1_score, precision, recall
+def split_model():
+    device_map = {}
+    world_size = torch.cuda.device_count()
+    config = AutoConfig.from_pretrained("OpenGVLab/InternVL3-78B", trust_remote_code=True)
+    num_layers = config.llm_config.num_hidden_layers
+    # Since the first GPU will be used for ViT, treat it as half a GPU.
+    num_layers_per_gpu = math.ceil(num_layers / (world_size - 0.5))
+    num_layers_per_gpu = [num_layers_per_gpu] * world_size
+    num_layers_per_gpu[0] = math.ceil(num_layers_per_gpu[0] * 0.5)
+    layer_cnt = 0
+    for i, num_layer in enumerate(num_layers_per_gpu):
+        for j in range(num_layer):
+            device_map[f'language_model.model.layers.{layer_cnt}'] = i
+            layer_cnt += 1
+    device_map['vision_model'] = 0
+    device_map['mlp1'] = 0
+    device_map['language_model.model.tok_embeddings'] = 0
+    device_map['language_model.model.embed_tokens'] = 0
+    device_map['language_model.output'] = 0
+    device_map['language_model.model.norm'] = 0
+    device_map['language_model.model.rotary_emb'] = 0
+    device_map['language_model.lm_head'] = 0
+    device_map[f'language_model.model.layers.{num_layers - 1}'] = 0
+
+    return device_map
+
 
 def build_device_map(model_id: str):
     cfg = AutoConfig.from_pretrained(model_id, trust_remote_code=True)
@@ -262,46 +288,70 @@ def build_device_map(model_id: str):
     dmap["mlp1"] = 0
 
     return dmap
-def split_model():
-    device_map = {}
-    world_size = torch.cuda.device_count()
-    config = AutoConfig.from_pretrained("OpenGVLab/InternVL3-78B", trust_remote_code=True)
-    num_layers = config.llm_config.num_hidden_layers
-    # Since the first GPU will be used for ViT, treat it as half a GPU.
-    num_layers_per_gpu = math.ceil(num_layers / (world_size - 0.5))
-    num_layers_per_gpu = [num_layers_per_gpu] * world_size
-    num_layers_per_gpu[0] = math.ceil(num_layers_per_gpu[0] * 0.5)
-    layer_cnt = 0
-    for i, num_layer in enumerate(num_layers_per_gpu):
-        for j in range(num_layer):
-            device_map[f'language_model.model.layers.{layer_cnt}'] = i
-            layer_cnt += 1
-    device_map['vision_model'] = 0
-    device_map['mlp1'] = 0
-    device_map['language_model.model.tok_embeddings'] = 0
-    device_map['language_model.model.embed_tokens'] = 0
-    device_map['language_model.output'] = 0
-    device_map['language_model.model.norm'] = 0
-    device_map['language_model.model.rotary_emb'] = 0
-    device_map['language_model.lm_head'] = 0
-    device_map[f'language_model.model.layers.{num_layers - 1}'] = 0
 
-    return device_map
+def build_device_map_3gpus(model_id: str):
+    cfg = AutoConfig.from_pretrained(model_id, trust_remote_code=True)
+    L = cfg.llm_config.num_hidden_layers
+    g = torch.cuda.device_count()
+    assert g >= 3, "need at least three GPUs"
 
-def run_internVL_X(data_path, principle, batch_size, device, img_num, epochs,  start_num, task_num):
+    # plan for exactly 3 logical ids: 0 1 2
+    # tiny share on 0 since it hosts vision
+    tiny = max(1, L // 24)          # ~4 percent
+    mid = max(1, (L - tiny) // 2)
+    rest = L - tiny - mid
+
+    plan = [0] * tiny + [1] * mid + [2] * rest
+
+    dmap = {f"language_model.model.layers.{i}": dev for i, dev in enumerate(plan)}
+
+    # shared parts off 0
+    dmap["language_model.model.tok_embeddings"] = 2
+    dmap["language_model.model.embed_tokens"] = 2
+    dmap["language_model.lm_head"] = 2
+    dmap["language_model.model.norm"] = 2
+    dmap["language_model.output"] = 2
+    dmap["language_model.model.rotary_emb"] = 1
+
+    # last block with head
+    dmap[f"language_model.model.layers.{L - 1}"] = 2
+
+    # vision on 0
+    dmap["vision_model"] = 0
+    dmap["mlp1"] = 0
+
+    return dmap
+def load_internX_model(device_map=None, dtype=DTYPE):
+    tok = AutoTokenizer.from_pretrained(MODEL_ID, trust_remote_code=True, use_fast=False)
+    model = AutoModelForCausalLM.from_pretrained(
+        MODEL_ID,
+        trust_remote_code=True,
+        torch_dtype=dtype,
+        device_map=device_map,
+        low_cpu_mem_usage=True
+    ).eval()
+    torch.set_grad_enabled(False)
+    torch.backends.cuda.matmul.allow_tf32 = True
+    model.config.use_cache = False
+    return model, tok
+
+def run_internVL_X(data_path, principle, batch_size, device, img_num, epochs, start_num, task_num):
+    os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
+    # ensure only GPUs 0 1 2 are visible if you want to pin these ids
+    # os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2"
+
     init_wandb(batch_size, principle)
 
     principle_path = Path(data_path)
     pattern_folders = sorted(file_utils.list_folders(str(principle_path / "train")))
-    # pattern_folders = sorted((principle_path / "train").iterdir())
     if not pattern_folders:
         print("No pattern folders found in", principle_path)
         return
+
     total_accuracy, total_f1 = [], []
     results = {}
     total_precision_scores = []
     total_recall_scores = []
-
 
     if task_num != "full":
         task_num = int(task_num)
@@ -309,12 +359,9 @@ def run_internVL_X(data_path, principle, batch_size, device, img_num, epochs,  s
 
     rtpt = RTPT(name_initials='JIS', experiment_name=f'Elvis-InternVL3-78B-{principle}', max_iterations=len(pattern_folders))
     rtpt.start()
-    model = load_internX_model(device)
-    # model = load_intern_model(device)
-    tokenizer = AutoTokenizer.from_pretrained('OpenGVLab/InternVL3-78B', trust_remote_code=True, use_fast=False)
 
-    # for pattern_folder in pattern_folders:
-    #     print(f"Processing pattern folder: {pattern_folder.name}")
+    device_map = build_device_map_3gpus(MODEL_ID)
+    model, tokenizer = load_internX_model(device_map=device_map, dtype=DTYPE)
 
     for pattern_folder in tqdm(pattern_folders):
         print(f"Evaluating pattern: {pattern_folder.name}")
@@ -322,23 +369,30 @@ def run_internVL_X(data_path, principle, batch_size, device, img_num, epochs,  s
         train_negative = load_images(pattern_folder / "negative", img_num)
         test_positive = load_images((principle_path / "test" / pattern_folder.name) / "positive", img_num)
         test_negative = load_images((principle_path / "test" / pattern_folder.name) / "negative", img_num)
+
         logic_rules = infer_logic_rules(model, tokenizer, train_positive, train_negative, device, principle)
 
         test_images = [(img, 1) for img in test_positive] + [(img, 0) for img in test_negative]
         print("len test images", len(test_images))
         accuracy, f1, precision, recall = evaluate_llm(model, tokenizer, test_images, logic_rules, device, principle)
 
-        results[pattern_folder.name] = {"accuracy": accuracy, "f1_score": f1, "logic_rules": logic_rules,
-                                        "precision": precision, "recall": recall}
+        results[pattern_folder.name] = {
+            "accuracy": accuracy,
+            "f1_score": f1,
+            "logic_rules": logic_rules,
+            "precision": precision,
+            "recall": recall
+        }
         total_accuracy.append(accuracy)
         total_f1.append(f1)
         total_precision_scores.append(precision)
         total_recall_scores.append(recall)
 
+        torch.cuda.ipc_collect()
+        torch.cuda.empty_cache()
+
     avg_accuracy = sum(total_accuracy) / len(total_accuracy) if total_accuracy else 0
     avg_f1 = sum(total_f1) / len(total_f1) if total_f1 else 0
-
-    # results["average"] = {"accuracy": avg_accuracy, "f1_score": avg_f1}
 
     output_dir = f"/elvis_result/{principle}"
     os.makedirs(output_dir, exist_ok=True)
@@ -346,10 +400,72 @@ def run_internVL_X(data_path, principle, batch_size, device, img_num, epochs,  s
     with open(results_path, "w") as json_file:
         json.dump(results, json_file, indent=4)
 
-    print("Evaluation complete. Results saved to evaluation_results.json.")
+    print("Evaluation complete.")
     print(f"Overall Average Accuracy: {avg_accuracy:.2f}% | Average F1 Score: {avg_f1:.4f}")
     wandb.finish()
     return avg_accuracy, avg_f1
+# def run_internVL_X(data_path, principle, batch_size, device, img_num, epochs,  start_num, task_num):
+#     init_wandb(batch_size, principle)
+#
+#     principle_path = Path(data_path)
+#     pattern_folders = sorted(file_utils.list_folders(str(principle_path / "train")))
+#     # pattern_folders = sorted((principle_path / "train").iterdir())
+#     if not pattern_folders:
+#         print("No pattern folders found in", principle_path)
+#         return
+#     total_accuracy, total_f1 = [], []
+#     results = {}
+#     total_precision_scores = []
+#     total_recall_scores = []
+#
+#
+#     if task_num != "full":
+#         task_num = int(task_num)
+#         pattern_folders = pattern_folders[start_num:start_num + task_num]
+#
+#     rtpt = RTPT(name_initials='JIS', experiment_name=f'Elvis-InternVL3-78B-{principle}', max_iterations=len(pattern_folders))
+#     rtpt.start()
+#     model = load_internX_model(device)
+#     # model = load_intern_model(device)
+#     tokenizer = AutoTokenizer.from_pretrained('OpenGVLab/InternVL3-78B', trust_remote_code=True, use_fast=False)
+#
+#     # for pattern_folder in pattern_folders:
+#     #     print(f"Processing pattern folder: {pattern_folder.name}")
+#
+#     for pattern_folder in tqdm(pattern_folders):
+#         print(f"Evaluating pattern: {pattern_folder.name}")
+#         train_positive = load_images(pattern_folder / "positive", img_num)
+#         train_negative = load_images(pattern_folder / "negative", img_num)
+#         test_positive = load_images((principle_path / "test" / pattern_folder.name) / "positive", img_num)
+#         test_negative = load_images((principle_path / "test" / pattern_folder.name) / "negative", img_num)
+#         logic_rules = infer_logic_rules(model, tokenizer, train_positive, train_negative, device, principle)
+#
+#         test_images = [(img, 1) for img in test_positive] + [(img, 0) for img in test_negative]
+#         print("len test images", len(test_images))
+#         accuracy, f1, precision, recall = evaluate_llm(model, tokenizer, test_images, logic_rules, device, principle)
+#
+#         results[pattern_folder.name] = {"accuracy": accuracy, "f1_score": f1, "logic_rules": logic_rules,
+#                                         "precision": precision, "recall": recall}
+#         total_accuracy.append(accuracy)
+#         total_f1.append(f1)
+#         total_precision_scores.append(precision)
+#         total_recall_scores.append(recall)
+#
+#     avg_accuracy = sum(total_accuracy) / len(total_accuracy) if total_accuracy else 0
+#     avg_f1 = sum(total_f1) / len(total_f1) if total_f1 else 0
+#
+#     # results["average"] = {"accuracy": avg_accuracy, "f1_score": avg_f1}
+#
+#     output_dir = f"/elvis_result/{principle}"
+#     os.makedirs(output_dir, exist_ok=True)
+#     results_path = Path(output_dir) / f"internVL_X_eval_res_{timestamp}_img_num_{img_num}.json"
+#     with open(results_path, "w") as json_file:
+#         json.dump(results, json_file, indent=4)
+#
+#     print("Evaluation complete. Results saved to evaluation_results.json.")
+#     print(f"Overall Average Accuracy: {avg_accuracy:.2f}% | Average F1 Score: {avg_f1:.4f}")
+#     wandb.finish()
+#     return avg_accuracy, avg_f1
 
 
 def run_internVL(data_path, principle, batch_size, device, img_num, epochs, task_num):
