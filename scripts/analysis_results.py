@@ -14,11 +14,14 @@ from pathlib import Path
 import re
 
 model_dict = {
-    "vit3": {"model": "vit", "img_num": 3},
-    "vit100": {"model": "vit", "img_num": 100},
-    "internVL": {"model": "internVL", "img_num": 3},
+    "vit_base_patch16_224/3": {"model": "vit", "img_num": 3},
+    "vit_base_patch16_224/100": {"model": "vit", "img_num": 100},
+    "llava-onevision-qwen2-7b-si-hf/3": {"model": "llava", "img_num": 3},
+    "InternVL3-2B/3": {"model": "internVL", "img_num": 3},
 
 }
+
+principles = ["proximity", "similarity", "closure", "symmetry", "continuity"]
 
 
 def draw_line_chart(x, y, xlabel, ylabel, title, save_path=None, msg=""):
@@ -175,49 +178,44 @@ def analysis_llava(principle, model_name):
 
 def draw_f1_heat_map(csv_files, model_names, gestalt_principles):
     # Function to categorize tasks
-
-    # Define task categories
-    path = config.results
-
-    df_list = []
-    category_f1_scores = {"vit_3": pd.Series(dtype=float),
-                          "vit_100": pd.Series(dtype=float),
-                          "llava": pd.Series(dtype=float),
-                          "NEUMANN": pd.Series(dtype=float)}
+    category_acc_scores = {
+        "vit_base_patch16_224/3": pd.Series(dtype=float),
+        "vit_base_patch16_224/100": pd.Series(dtype=float),
+        "InternVL3-2B/3": pd.Series(dtype=float),
+        # "llava-onevision-qwen2-7b-si-hf/3": pd.Series(dtype=float)
+    }
 
     for principle, principle_csv_files in csv_files.items():
         tmp_df = pd.read_csv(principle_csv_files[0], index_col=0)  # Load CSV and set first column as index (model names)
         for file in principle_csv_files:
             df = pd.read_csv(file, index_col=0)  # Load CSV and set first column as index (model names)
-
             def categorize_task(task_name):
                 for category in categories:
                     if category in task_name:
                         return category
-
             if "vit_3" in file.name:
-                model_name = "vit_3"
+                model_name = "vit_base_patch16_224/3"
             elif "vit_100" in file.name:
-                model_name = "vit_100"
+                model_name = "vit_base_patch16_224/100"
             elif "llava" in file.name:
-                model_name = "llava"
+                model_name = "llava-onevision-qwen2-7b-si-hf/3"
+            elif "internVL" in file.name:
+                model_name = "InternVL3-2B/3"
             else:
-                model_name = "NEUMANN"
-                df = df.reindex(tmp_df.index, fill_value=0)
+                raise ValueError("Unknown model in file name:", file.name)
+            # df = df.reindex(tmp_df.index, fill_value=0)
             categories = config.categories[principle]
             df["Category"] = df.index.map(categorize_task)
             category_avg_f1 = df.groupby("Category")["F1 Score"].mean()
-            category_f1_scores[model_name] = pd.concat(
-                [category_f1_scores[model_name], category_avg_f1])  # Store results
+            category_acc_scores[model_name] = pd.concat(
+                [category_acc_scores[model_name], category_avg_f1])  # Store results
     # Convert dictionary to DataFrame for heatmap
-    heatmap_data = pd.DataFrame(category_f1_scores)
+    heatmap_data = pd.DataFrame(category_acc_scores)
 
     # Adjust figure size dynamically based on the number of columns
     plt.figure(figsize=(max(15, len(heatmap_data.columns) * 1.5), 4))  # Auto-scale width
     ax = sns.heatmap(heatmap_data.T, cmap="coolwarm", annot=True, fmt=".2f", linewidths=0.8,
                      cbar_kws={'label': 'F1 Score'})
-    # sns.heatmap(heatmap_data.T, cmap="coolwarm", annot=True, fmt=".2f", linewidths=0.8, cbar_kws={'label': 'F1 Score'})
-    # Add second level of labels (Gestalt principles)
     ax2 = ax.twiny()  # Create a secondary x-axis
 
     counts = 0
@@ -228,20 +226,11 @@ def draw_f1_heat_map(csv_files, model_names, gestalt_principles):
         principle_names.append(principle)
         principle_pos.append(counts + len(categories) / 2)
         if principle == "continuity": continue
-        # **Add vertical separators for Gestalt principles**
-        column_positions = counts  # Start at the first column
-        col_names = list(heatmap_data.columns)
-
         # Draw vertical lines between sections
         pos = int(counts + len(categories))
         ax.axvline(pos, color='black', linestyle='dashed', linewidth=1.5)
-
-        # **Label each Gestalt principle in the center of its area**
-
-        # plt.xticks(pos, list(gestalt_principles.keys()), fontsize=12, rotation=30)
         counts += len(categories)
     # Increase the font size of x ticks below the chart
-    # Increase the font size of x-ticks below the chart
     ax.set_xticklabels(ax.get_xticklabels(), fontsize=16, rotation=30, ha="right")
 
     ax2.set_xticks(principle_pos)
@@ -257,15 +246,15 @@ def draw_f1_heat_map(csv_files, model_names, gestalt_principles):
     plt.subplots_adjust(left=0.15, right=0.95, top=0.9, bottom=0.2)  # Reduce right margin
 
     # Save the heatmap
-    heat_map_filename = path / f"f1_heat_map.pdf"
+    heat_map_filename = config.figure_path / f"f1_heat_map.pdf"
     plt.savefig(heat_map_filename, format="pdf", bbox_inches="tight")  # Ensures no extra space
 
     print(f"Heatmap saved to: {heat_map_filename}")
 
 
-def json_to_csv(json_data, principle, csv_file_path):
+def json_to_csv(json_data, csv_file_path):
     # Convert JSON to DataFrame
-    df = pd.DataFrame(json_data[principle]).T
+    df = pd.DataFrame(json_data).T
     df["accuracy"] /= 100  # Convert accuracy to percentage
     # Calculate performance statistics
     # mean_accuracy = df["accuracy"].mean()
@@ -295,7 +284,7 @@ def json_to_csv_NEUMANN(json_data, principle, csv_file_path):
     return df, f1_score
 
 
-def json_to_csv_llava(json_data, principle, csv_file_path):
+def json_to_csv_llava(json_data, csv_file_path):
     f1_score = torch.tensor([v["f1_score"] for k, v in json_data.items()])
     # Convert JSON to DataFrame
     # Remove the "logic_rules" field from each entry
@@ -419,34 +408,38 @@ def draw_bar_chart(df, f1_score, model_name, path, principle):
                                     dataframe=formatted_performance_table)
 
 
-def analysis_models(principles, model_names):
+def analysis_models(args):
     csv_files = {}
+    save_path = config.figure_path / f"all_category_all_principles_heat_map.pdf"
     for principle in principles:
         csv_files[principle] = []
-        path = config.results / principle
-
-        for model_name in model_names:
-            json_path = path / f"{model_name}.json"
-            data = json.load(open(json_path, "r"))
-            csv_file_name = path / f"{model_name}_f1_scores.csv"
-            if not os.path.exists(csv_file_name):
-                if model_name == "llava":
-                    df, f1_score = json_to_csv_llava(data, principle, csv_file_name)
+        # path = config.results / principle
+        for model_name, model_info in model_dict.items():
+            json_path = get_results_path(args.remote, principle, model_info["model"], model_info["img_num"])
+            per_task_data = get_per_task_data(json_path, principle)
+            # replace the soloar with solar if exists in the keys of the per_task_data
+            per_task_data = {re.sub(r"soloar", "solar", k): v for k, v in per_task_data.items()}
+            # replace intersected_n_splines in the keys with with_intersected_n_splines of the per_task_data if intersected_n_splines in the keys but non_intersected_n_splines not in the keys
+            # per_task_data = {re.sub(r"intersected_n_splines", "with_intersected_n_splines", k): v for k, v in per_task_data.items()}
+            new_per_task_data = {}
+            for k, v in per_task_data.items():
+                if "non_intersected_n_splines" in k:
+                    new_per_task_data[k] = v
+                elif "intersected_n_splines" in k:
+                    new_key = k.replace("intersected_n_splines", "with_intersected_n_splines")
+                    new_per_task_data[new_key] = v
                 else:
-                    df, f1_score = json_to_csv(data, principle, csv_file_name)
-                draw_bar_chart(df, f1_score, model_name, path, principle)
+                    new_per_task_data[k] = v
+            per_task_data = new_per_task_data
+            csv_file_name = config.result_path / principle / f"{model_info['model']}_{model_info['img_num']}.csv"
+            if model_name == "llava":
+                df, f1_score = json_to_csv_llava(per_task_data, csv_file_name)
+            else:
+                df, f1_score = json_to_csv(per_task_data, csv_file_name)
+
+
             csv_files[principle].append(csv_file_name)
-
-        json_path = config.results / "experiment_results_NEUMANN.json"
-        data = json.load(open(json_path, "r"))
-        csv_file_name = path / f"NEUMANN_f1_scores.csv"
-        if not os.path.exists(csv_file_name):
-            df, f1_score = json_to_csv_NEUMANN(data, principle, csv_file_name)
-            # draw_bar_chart(df, f1_score, "NEUMANN", path, principle)
-        csv_files[principle].append(csv_file_name)
-
-    model_names.append("NEUMANN")
-    draw_f1_heat_map(csv_files, model_names, config.categories)
+    draw_f1_heat_map(csv_files, list(model_dict.keys()), config.categories)
 
 
 def get_category_accuracy(task_results, categories=None):
@@ -541,32 +534,35 @@ def analysis_result(principles, data):
 #     plt.show()
 
 
-def draw_grouped_categories(results, name,x_label, save_path=None):
+def draw_grouped_categories(results, name, x_label, save_path=None):
     models = list(results.keys())
     categories = list(next(iter(results.values())).keys())
     n_models = len(models)
     n_categories = len(categories)
 
-    # Prepare data for grouped bar plot
     bar_width = 0.15
     x = np.arange(n_categories)
     palette = sns.color_palette("Set2", n_colors=n_models)
 
-    plt.figure(figsize=(max(8, n_categories * 1.5), 6))
+    plt.figure(figsize=(6, 6))
+    ax = plt.gca()
     for i, model in enumerate(models):
         values = [results[model].get(cat, np.nan) for cat in categories]
-        plt.bar(x + i * bar_width, values, width=bar_width, color=palette[i], label=model)
-        # Add value labels
+        ax.bar(x + i * bar_width, values, width=bar_width, color=palette[i], label=model)
         for j, v in enumerate(values):
-            plt.text(x[j] + i * bar_width, v + 2, f"{v:.1f}", ha='center', va='bottom', fontsize=8)
+            ax.text(x[j] + i * bar_width, v + 2, f"{v:.1f}", ha='center', va='bottom', fontsize=8)
 
-    plt.xticks(x + bar_width * (n_models - 1) / 2, categories, fontsize=10, rotation=30, ha='right')
-    plt.ylabel('Accuracy', fontsize=12)
-    plt.xlabel(f"{x_label}", fontsize=12)
-    plt.ylim(0, 100)
-    plt.title(f'{name}', fontsize=14, fontweight='bold')
-    plt.legend(title="Model", fontsize=10)
-    plt.axhline(50, color='gray', linestyle='--', linewidth=1)
+    ax.set_xticks(x + bar_width * (n_models - 1) / 2)
+    ax.set_xticklabels(categories, fontsize=10, rotation=30, ha='right')
+    ax.set_ylabel('Accuracy', fontsize=12)
+    ax.set_xlabel(f"{x_label}", fontsize=12)
+    ax.set_ylim(0, 100)
+    ax.set_title(f'{name}', fontsize=14, fontweight='bold')
+    ax.legend(title="Model", fontsize=10)
+    ax.axhline(50, color='gray', linestyle='--', linewidth=1)
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+
     plt.tight_layout()
     if save_path:
         plt.savefig(save_path, format="pdf", bbox_inches="tight")
@@ -731,7 +727,7 @@ def analysis_per_category(args, category_names):
     for model_name, model_info in model_dict.items():
         model_results = {}
         for category_name in category_names:
-            json_path = get_results_path(args, args.remote, args.principle, model_info["model"], model_info["img_num"])
+            json_path = get_results_path(args.remote, args.principle, model_info["model"], model_info["img_num"])
             per_task_data = get_per_task_data(json_path, args.principle)
 
             category_acc = [v["accuracy"] for k, v in per_task_data.items() if category_name in k]
@@ -841,39 +837,203 @@ def get_per_task_data(json_path, principle):
         return data
 
 
-def analysis_ablation_performance(args, principle, prop):
-    json_paths = {}
-    model_results = {}
-    for model_name, model_info in model_dict.items():
-        json_paths[model_name] = get_results_path(args, args.remote, args.principle, model_info["model"], model_info["img_num"])
-        per_task_data = get_per_task_data(json_paths[model_name], principle)
-        group_size_analysis = {}
-        for task_name, task_res in per_task_data.items():
-            task_info = parse_task_name(task_name)
-            if prop not in task_info:
-                continue
-            if task_info[prop] not in group_size_analysis:
-                group_size_analysis[task_info[prop]] = []
-            group_size_analysis[task_info[prop]].append(per_task_data[task_name]["accuracy"])
-        logic_avg_acc = {k: np.mean(v) for k, v in group_size_analysis.items()}
-        grp_size_std_acc = {k: np.std(v) for k, v in group_size_analysis.items()}
-        for name, avg_acc in logic_avg_acc.items():
-            std_acc = grp_size_std_acc[name]
-            print(f"\t{prop} {name}: Avg Accuracy = {avg_acc:.3f} ± {std_acc:.3f}")
-        model_results[model_name] = logic_avg_acc
+# def analysis_ablation_performance(args, prop):
+#     json_paths = {}
+#     model_results = {}
+#     all_principles = ["proximity", "similarity", "closure", "symmetry", "continuity"]
+#     for principle in all_principles:
+#         for model_name, model_info in model_dict.items():
+#             json_paths[model_name] = get_results_path(args, args.remote, args.principle, model_info["model"], model_info["img_num"])
+#             per_task_data = get_per_task_data(json_paths[model_name], principle)
+#             group_size_analysis = {}
+#             for task_name, task_res in per_task_data.items():
+#                 task_info = parse_task_name(task_name)
+#                 if prop not in task_info:
+#                     continue
+#                 if task_info[prop] not in group_size_analysis:
+#                     group_size_analysis[task_info[prop]] = []
+#                 group_size_analysis[task_info[prop]].append(per_task_data[task_name]["accuracy"])
+#             logic_avg_acc = {k: np.mean(v) for k, v in group_size_analysis.items()}
+#             grp_size_std_acc = {k: np.std(v) for k, v in group_size_analysis.items()}
+#             for name, avg_acc in logic_avg_acc.items():
+#                 std_acc = grp_size_std_acc[name]
+#                 print(f"\t{prop} {name}: Avg Accuracy = {avg_acc:.3f} ± {std_acc:.3f}")
+#             model_results[model_name] = logic_avg_acc
+#
+#     draw_grouped_categories(model_results, f"{principle}", "#Group",
+#                             save_path=config.figure_path / f"{principle}_{prop}_ablation_accuracy.pdf")
+#
 
-    draw_grouped_categories(model_results, f"{principle}", "#Group",
-                            save_path=config.figure_path / f"{principle}_{prop}_ablation_accuracy.pdf")
+# def analysis_ablation_performance(args):
+#
+#     import matplotlib.pyplot as plt
+#     import numpy as np
+#     import seaborn as sns
+#
+#     props = ["group_num", "group_size", "rule_type"]
+#     all_principles = ["proximity", "similarity", "closure", "symmetry", "continuity"]
+#     model_names = list(model_dict.keys())
+#     results = {}
+#     principle_categories = {}
+#
+#     # Collect results for each principle and property value
+#     for principle in all_principles:
+#         results[principle] = {}
+#         categories = set()
+#         for model_name, model_info in model_dict.items():
+#             json_path = get_results_path(args.remote, principle, model_info["model"], model_info["img_num"])
+#             per_task_data = get_per_task_data(json_path, principle)
+#             group_analysis = {}
+#             for task_name, task_res in per_task_data.items():
+#                 task_info = parse_task_name(task_name)
+#                 if prop not in task_info:
+#                     continue
+#                 value = task_info[prop]
+#                 categories.add(value)
+#                 if value not in group_analysis:
+#                     group_analysis[value] = []
+#                 group_analysis[value].append(task_res["accuracy"])
+#             avg_acc = {k: np.mean(v) for k, v in group_analysis.items()}
+#             results[principle][model_name] = avg_acc
+#         principle_categories[principle] = sorted(list(categories))
+#
+#     n_principles = len(all_principles)
+#     n_models = len(model_names)
+#     fig, axes = plt.subplots(1, n_principles, figsize=(25, 5), sharey=True)
+#     palette = sns.color_palette("Set2", n_colors=n_models)
+#
+#     bar_width = 0.10  # Keep bar width
+#     group_gap = 0.05  # Small gap between groups
+#
+#     for idx, principle in enumerate(all_principles):
+#         ax = axes[idx]
+#         categories = principle_categories[principle]
+#         x = np.arange(len(categories))
+#         n = n_models
+#         # Calculate total width of each group (bars + gap)
+#         group_width = n * bar_width + group_gap
+#         for i, model_name in enumerate(model_names):
+#             values = [results[principle][model_name].get(cat, np.nan) for cat in categories]
+#             # Position bars tightly within each group
+#             ax.bar(x * group_width + i * bar_width, values, width=bar_width, color=palette[i], label=model_name)
+#             for j, v in enumerate(values):
+#                 ax.text(x[j] * group_width + i * bar_width, v + 2, f"{v:.1f}", rotation=60, ha='center', va='bottom', fontsize=8)
+#         # Center xticks under each group
+#         ax.set_xticks(x * group_width + (n * bar_width) / 2 - bar_width / 2)
+#         ax.set_xticklabels(categories, fontsize=25, rotation=30, ha='right')
+#         ax.set_xlabel(prop, fontsize=30)
+#         ax.set_title(principle, fontsize=30, fontweight='bold')
+#         ax.set_ylim(0, 70)
+#         # ax.set_yticks(fontsize=25)
+#         ax.set_ylabel('Accuracy', fontsize=30)
+#         ax.axhline(50, color='gray', linestyle='--', linewidth=1)
+#         ax.spines['top'].set_visible(False)
+#         ax.spines['right'].set_visible(False)
+#         # if idx == 0:
+#         #     ax.legend(title="Model", fontsize=9, loc='best')
+#     plt.tight_layout()
+#     save_path = config.figure_path / f"ablation_{prop}_all_principles_subfigures.pdf"
+#     plt.savefig(save_path, format="pdf", bbox_inches="tight")
+#     plt.close()
+#     print(f"Grouped ablation bar chart (split by principle) saved to: {save_path}")
+
+def analysis_ablation_performance(args):
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import seaborn as sns
+    import matplotlib
+
+    matplotlib.rcParams.update({
+        # "font.size": 24,  # Increase base font size
+        "font.family": "sans-serif",
+        "font.sans-serif": ["DejaVu Sans", "Arial"],
+        # "axes.titlesize": 32,
+        # "axes.labelsize": 28,
+        # "xtick.labelsize": 22,
+        "ytick.labelsize": 30,
+        # "legend.fontsize": 24,
+        # "figure.titlesize": 32
+    })
+
+    props = ["group_num", "group_size"]
+    all_principles = ["proximity", "similarity", "closure", "symmetry", "continuity"]
+    model_names = list(model_dict.keys())
+
+    n_props = len(props)
+    n_principles = len(all_principles)
+    n_models = len(model_names)
+
+    fig, axes = plt.subplots(n_props, n_principles, figsize=(5 * n_principles, 5 * n_props), sharey='row')
+    palette = sns.color_palette("Set2", n_colors=n_models)
+    bar_width = 0.10
+    group_gap = 0.05
+
+    for row_idx, prop in enumerate(props):
+        results = {}
+        principle_categories = {}
+        # Collect results for each principle and property value
+        for principle in all_principles:
+            results[principle] = {}
+            categories = set()
+            for model_name, model_info in model_dict.items():
+                json_path = get_results_path(args.remote, principle, model_info["model"], model_info["img_num"])
+                per_task_data = get_per_task_data(json_path, principle)
+                group_analysis = {}
+                for task_name, task_res in per_task_data.items():
+                    task_info = parse_task_name(task_name)
+                    if prop not in task_info:
+                        continue
+                    value = task_info[prop]
+                    categories.add(value)
+                    if value not in group_analysis:
+                        group_analysis[value] = []
+                    group_analysis[value].append(task_res["accuracy"])
+                avg_acc = {k: np.mean(v) for k, v in group_analysis.items()}
+                results[principle][model_name] = avg_acc
+            if "s" in list(categories) and "m" in list(categories) and "l" in list(categories):
+                principle_categories[principle] = ["s", "m", "l", "xl"]
+            else:
+                principle_categories[principle] = sorted(list(categories))
+        for col_idx, principle in enumerate(all_principles):
+            ax = axes[row_idx, col_idx] if n_props > 1 else axes[col_idx]
+            categories = principle_categories[principle]
+            x = np.arange(len(categories))
+            n = n_models
+            group_width = n * bar_width + group_gap
+            for i, model_name in enumerate(model_names):
+                values = [results[principle][model_name].get(cat, np.nan) for cat in categories]
+                ax.bar(x * group_width + i * bar_width, values, width=bar_width, color=palette[i], label=model_name)
+                for j, v in enumerate(values):
+                    ax.text(x[j] * group_width + i * bar_width, v + 2, f"{v:.1f}", rotation=60, ha='center', va='bottom', fontsize=10)
+            ax.set_xticks(x * group_width + (n * bar_width) / 2 - bar_width / 2)
+            ax.set_xticklabels(categories, fontsize=30, ha='right')
+            ax.set_xlabel(prop, fontsize=25)
+            if row_idx == 0:
+                ax.set_title(principle, fontsize=35, fontweight='bold')
+            ax.set_ylim(0, 70)
+            if col_idx == 0:
+                ax.set_ylabel('Accuracy', fontsize=25)
+            ax.axhline(50, color='gray', linestyle='--', linewidth=1)
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+            if row_idx == 0 and col_idx == 0:
+                handles, labels = ax.get_legend_handles_labels()
+                # ax.legend(title="Model", fontsize=12, loc='best')
+    fig.legend(handles, labels, loc="lower center", bbox_to_anchor=(0.5, -0.02), ncol=len(labels), fontsize=30)
+    plt.tight_layout(rect=[0, 0.08, 1, 1])  # leave space for legend at bottom
+    save_path = config.figure_path / f"ablation_all_props_all_principles_matrix.pdf"
+    plt.savefig(save_path, format="pdf", bbox_inches="tight")
+    plt.close()
+    print(f"Matrix of grouped ablation bar charts saved to: {save_path}")
 
 
-
-def get_results_path(args, remote=False, principle=None, model_name=None, img_num=None):
+def get_results_path(remote=False, principle=None, model_name=None, img_num=None):
     if remote:
         results_path = Path("/elvis_result/")
     else:
         results_path = config.result_path
 
-    prin_path = results_path / args.principle
+    prin_path = results_path / principle
 
     # get all the json file start with vit_
     if model_name == "vit":
@@ -885,7 +1045,7 @@ def get_results_path(args, remote=False, principle=None, model_name=None, img_nu
         # all_json_files = [f for f in all_json_files if f"img_num_{img_num}" in f.name]
 
     elif model_name == "llava":
-        all_json_files = list(prin_path.glob(f"{model_name}.json"))
+        all_json_files = list(prin_path.glob(f"{model_name}_*.json"))
     else:
         raise ValueError(f"Unsupported model name: {model_name}")
 
@@ -907,35 +1067,36 @@ def main():
     parser.add_argument("--img_num", type=int)
     args = parser.parse_args()
 
-    json_path = get_results_path(args, args.remote, args.principle, args.model, args.img_num)
+    json_path = get_results_path(args.remote, args.principle, args.model, args.img_num)
 
     if args.mode == "principle":
         analysis_average_performance(json_path, args.principle, args.model, args.img_num)
     elif args.mode == "category":
-        if args.principle == "proximity":
-            category_names = ["red_triangle", "grid", "fixed_props", "circle_features"]
-            analysis_per_category(args, category_names)
-        elif args.principle == "similarity":
-            category_names = ["fixed_number", "pacman", "palette"]
-            analysis_per_category(args, category_names)
-        elif args.principle == "closure":
-            category_names = ["big_triangle", "big_square", "big_circle",
-                              "feature_triangle", "feature_square", "feature_circle"]
-            analysis_per_category(args, category_names)
-        elif args.principle == "symmetry":
-            category_names = ["solar_system", "symmetry_circle", "symmetry_pattern"]
-            analysis_per_category(args, category_names)
-        elif args.principle == "continuity":
-            category_names = ["one_split_n", "with_intersected_n_splines", "non_intersected_n_splines", "continuity_overlap_splines"]
-            analysis_per_category(args, category_names)
-        else:
-            raise ValueError(f"Unsupported principle for category analysis: {args.principle}")
-    elif args.mode == "group_num":
-        analysis_ablation_performance(args, args.principle, "group_num")
-    elif args.mode == "group_size":
-        analysis_ablation_performance(args, args.principle, "group_size")
-    elif args.mode == "rule_type":
-        analysis_ablation_performance(args, args.principle, "rule_type")
+        analysis_models(args)
+        # if args.principle == "proximity":
+        #     category_names = ["red_triangle", "grid", "fixed_props", "circle_features"]
+        #     analysis_per_category(args, category_names)
+        # elif args.principle == "similarity":
+        #     category_names = ["fixed_number", "pacman", "palette"]
+        #     analysis_per_category(args, category_names)
+        # elif args.principle == "closure":
+        #     category_names = ["big_triangle", "big_square", "big_circle",
+        #                       "feature_triangle", "feature_square", "feature_circle"]
+        #     analysis_per_category(args, category_names)
+        # elif args.principle == "symmetry":
+        #     category_names = ["solar_system", "symmetry_circle", "symmetry_pattern"]
+        #     analysis_per_category(args, category_names)
+        # elif args.principle == "continuity":
+        #     category_names = ["one_split_n", "with_intersected_n_splines", "non_intersected_n_splines", "continuity_overlap_splines"]
+        #     analysis_per_category(args, category_names)
+        # else:
+        #     raise ValueError(f"Unsupported principle for category analysis: {args.principle}")
+    elif args.mode == "ablation":
+        analysis_ablation_performance(args)
+    # elif args.mode == "group_size":
+    #     analysis_ablation_performance(args, args.principle, "group_size")
+    # elif args.mode == "rule_type":
+    #     analysis_ablation_performance(args, args.principle, "rule_type")
     else:
         raise ValueError(f"Unsupported mode: {args.mode}")
 

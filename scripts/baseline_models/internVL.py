@@ -8,11 +8,15 @@ from scripts import config
 from PIL import Image
 from tqdm import tqdm
 from rtpt import RTPT
-from transformers import AutoModel, AutoTokenizer
+from transformers import AutoModel, AutoTokenizer, AutoConfig
 import torchvision.transforms as transforms
 import torchvision.transforms as T
+import math
 from torchvision.transforms.functional import InterpolationMode
 import os
+
+
+
 
 # from transformers import AutoProcessor, AutoModelForImageTextToText
 from scripts.baseline_models import conversations
@@ -21,6 +25,7 @@ from scripts.utils import data_utils, file_utils
 from datetime import datetime
 
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
 
 def init_wandb(batch_size, principle):
     wandb.init(project=f"ELVIS-InternVL-{principle}", config={"batch_size": batch_size})
@@ -41,6 +46,22 @@ def load_intern_model(device):
     # model = AutoModel.from_pretrained("OpenGVLab/InternVL3-2B", trust_remote_code=True, torch_dtype="auto"),
     # processor = AutoProcessor.from_pretrained(model_checkpoint)
     # model = AutoModelForImageTextToText.from_pretrained(model_checkpoint, device_map=torch_device, torch_dtype=torch.bfloat16)
+    return model.to(device)
+
+def load_internX_model(device):
+    torch.backends.cuda.enable_flash_sdp(False)  # Disable Flash SDP
+    torch.backends.cuda.enable_mem_efficient_sdp(False)  # Disable Memory Efficient SDP
+    torch.backends.cuda.enable_math_sdp(True)  # Fallback to standard math-based SDP
+    torch_device = "cuda"
+    # model_checkpoint = "OpenGVLab/InternVL3-2B-hf"
+    path = "OpenGVLab/InternVL3-78B"
+    device_map = split_model()
+    model = AutoModel.from_pretrained(
+        path,
+        torch_dtype=torch.bfloat16,
+        low_cpu_mem_usage=True,
+        trust_remote_code=True,
+        evice_map=device_map).eval().cuda()
     return model.to(device)
 
 
@@ -156,7 +177,6 @@ def infer_logic_rules(model, tokenizer, train_positive, train_negative, device, 
     imgs = train_positive + train_negative
     pixel_values = [load_image(img) for img in imgs]
 
-
     concat_pixel_values = torch.cat(pixel_values, dim=0).to(device=device, dtype=torch.bfloat16)
     num_patches_list = [pixel_value.size(0) for pixel_value in pixel_values]
     generation_config = dict(max_new_tokens=1024, do_sample=True)
@@ -201,12 +221,100 @@ def evaluate_llm(model, tokenizer, test_images, logic_rules, device, principle):
 
     return accuracy, f1_score, precision, recall
 
+def split_model():
+    device_map = {}
+    world_size = torch.cuda.device_count()
+    config = AutoConfig.from_pretrained("OpenGVLab/InternVL3-78B", trust_remote_code=True)
+    num_layers = config.llm_config.num_hidden_layers
+    # Since the first GPU will be used for ViT, treat it as half a GPU.
+    num_layers_per_gpu = math.ceil(num_layers / (world_size - 0.5))
+    num_layers_per_gpu = [num_layers_per_gpu] * world_size
+    num_layers_per_gpu[0] = math.ceil(num_layers_per_gpu[0] * 0.5)
+    layer_cnt = 0
+    for i, num_layer in enumerate(num_layers_per_gpu):
+        for j in range(num_layer):
+            device_map[f'language_model.model.layers.{layer_cnt}'] = i
+            layer_cnt += 1
+    device_map['vision_model'] = 0
+    device_map['mlp1'] = 0
+    device_map['language_model.model.tok_embeddings'] = 0
+    device_map['language_model.model.embed_tokens'] = 0
+    device_map['language_model.output'] = 0
+    device_map['language_model.model.norm'] = 0
+    device_map['language_model.model.rotary_emb'] = 0
+    device_map['language_model.lm_head'] = 0
+    device_map[f'language_model.model.layers.{num_layers - 1}'] = 0
+
+    return device_map
+
+def run_internVL_X(data_path, principle, batch_size, device, img_num, epochs, task_num):
+    init_wandb(batch_size, principle)
+
+    principle_path = Path(data_path)
+    pattern_folders = sorted(file_utils.list_folders(str(principle_path / "train")))
+    # pattern_folders = sorted((principle_path / "train").iterdir())
+    if not pattern_folders:
+        print("No pattern folders found in", principle_path)
+        return
+    total_accuracy, total_f1 = [], []
+    results = {}
+    total_precision_scores = []
+    total_recall_scores = []
+
+    if task_num != "full":
+        task_num = int(task_num)
+        pattern_folders = pattern_folders[:task_num]
+
+    rtpt = RTPT(name_initials='JIS', experiment_name=f'Elvis-InternVL3-78B-{principle}', max_iterations=len(pattern_folders))
+    rtpt.start()
+    model = load_internX_model(device)
+    # model = load_intern_model(device)
+    tokenizer = AutoTokenizer.from_pretrained('OpenGVLab/InternVL3-78B', trust_remote_code=True, use_fast=False)
+
+    # for pattern_folder in pattern_folders:
+    #     print(f"Processing pattern folder: {pattern_folder.name}")
+
+    for pattern_folder in tqdm(pattern_folders):
+        print(f"Evaluating pattern: {pattern_folder.name}")
+        train_positive = load_images(pattern_folder / "positive", img_num)
+        train_negative = load_images(pattern_folder / "negative", img_num)
+        test_positive = load_images((principle_path / "test" / pattern_folder.name) / "positive", img_num)
+        test_negative = load_images((principle_path / "test" / pattern_folder.name) / "negative", img_num)
+        logic_rules = infer_logic_rules(model, tokenizer, train_positive, train_negative, device, principle)
+
+        test_images = [(img, 1) for img in test_positive] + [(img, 0) for img in test_negative]
+        print("len test images", len(test_images))
+        accuracy, f1, precision, recall = evaluate_llm(model, tokenizer, test_images, logic_rules, device, principle)
+
+        results[pattern_folder.name] = {"accuracy": accuracy, "f1_score": f1, "logic_rules": logic_rules,
+                                        "precision": precision, "recall": recall}
+        total_accuracy.append(accuracy)
+        total_f1.append(f1)
+        total_precision_scores.append(precision)
+        total_recall_scores.append(recall)
+
+    avg_accuracy = sum(total_accuracy) / len(total_accuracy) if total_accuracy else 0
+    avg_f1 = sum(total_f1) / len(total_f1) if total_f1 else 0
+
+    # results["average"] = {"accuracy": avg_accuracy, "f1_score": avg_f1}
+
+    output_dir = f"/elvis_result/{principle}"
+    os.makedirs(output_dir, exist_ok=True)
+    results_path = Path(output_dir) / f"internVL_X_eval_res_{timestamp}_img_num_{img_num}.json"
+    with open(results_path, "w") as json_file:
+        json.dump(results, json_file, indent=4)
+
+    print("Evaluation complete. Results saved to evaluation_results.json.")
+    print(f"Overall Average Accuracy: {avg_accuracy:.2f}% | Average F1 Score: {avg_f1:.4f}")
+    wandb.finish()
+    return avg_accuracy, avg_f1
+
 
 def run_internVL(data_path, principle, batch_size, device, img_num, epochs, task_num):
     init_wandb(batch_size, principle)
 
     principle_path = Path(data_path)
-    pattern_folders = sorted(file_utils.list_folders(str(principle_path/ "train")))
+    pattern_folders = sorted(file_utils.list_folders(str(principle_path / "train")))
     # pattern_folders = sorted((principle_path / "train").iterdir())
     if not pattern_folders:
         print("No pattern folders found in", principle_path)

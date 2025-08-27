@@ -91,10 +91,10 @@ os.makedirs(figure_path, exist_ok=True)
 
 # -------------- categories -----------------------
 categories = {
-    "proximity": ["red_triangle", "grid", "fixed_props", "big_small", "circle_features"],
+    "proximity": ["red_triangle", "grid", "fixed_props", "circle_features"],
     "similarity": ["fixed_number", "pacman", "palette"],
     "closure": ["big_triangle", "big_square", "big_circle", "feature_triangle", "feature_square", "feature_circle"],
-    "symmetry": ["soloar_sys", "symmetry_circle"],
-    "continuity": ["one_split_n", "two_splines", "a_splines", "u_splines", "x_splines"]
+    "symmetry": ["solar_sys", "symmetry_circle", "symmetry_pattern"],
+    "continuity": ["one_split_n", "with_intersected_n_splines", "non_intersected_n_splines", "feature_continuity_overlap_splines"]
 
 }
