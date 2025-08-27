@@ -223,42 +223,45 @@ def evaluate_llm(model, tokenizer, test_images, logic_rules, device, principle):
     return accuracy, f1_score, precision, recall
 
 def build_device_map(model_id: str):
-    world_size = torch.cuda.device_count()
-    if world_size < 2:
-        raise RuntimeError("Need at least 2 GPUs to shard 78B comfortably.")
-    else:
-        print(f"Building device map for {world_size} GPUs...")
     cfg = AutoConfig.from_pretrained(model_id, trust_remote_code=True)
-    num_layers = cfg.llm_config.num_hidden_layers
+    L = cfg.llm_config.num_hidden_layers
+    g = torch.cuda.device_count()
+    assert g >= 2, "need at least two GPUs"
 
-    # allocate roughly equal layers, but treat GPU 0 as half capacity
-    quota = math.ceil(num_layers / (world_size - 0.5))
-    per_gpu = [quota] * world_size
-    per_gpu[0] = math.ceil(per_gpu[0] * 0.5)
+    # quota for nonzero GPUs, GPU 0 gets only a tiny share
+    per = math.floor(L / (g + 1))         # even split baseline
+    tiny = max(1, math.floor(per * 0.25)) # give GPU 0 a quarter of that
+
+    plan = [0] * tiny                      # a few early layers on GPU 0
+    rest = L - len(plan)
+    chunk = math.ceil(rest / (g - 1))
+
+    for dev in range(1, g):
+        for _ in range(chunk):
+            if len(plan) >= L: break
+            plan.append(dev)
 
     dmap = {}
-    layer_idx = 0
-    for i, take in enumerate(per_gpu):
-        for _ in range(take):
-            if layer_idx >= num_layers:
-                break
-            dmap[f"language_model.model.layers.{layer_idx}"] = i
-            layer_idx += 1
+    for idx, dev in enumerate(plan):
+        dmap[f"language_model.model.layers.{idx}"] = dev
 
-    # keep shared parts on GPU 0 with the vision tower
+    # heavy shared parts away from GPU 0
+    last_dev = g - 1
+    dmap["language_model.model.tok_embeddings"] = last_dev
+    dmap["language_model.model.embed_tokens"] = last_dev
+    dmap["language_model.lm_head"] = last_dev
+    dmap["language_model.model.norm"] = last_dev
+    dmap["language_model.output"] = last_dev
+    dmap["language_model.model.rotary_emb"] = 1
+
+    # put the last decoder block with the head
+    dmap[f"language_model.model.layers.{L - 1}"] = last_dev
+
+    # vision on GPU 0
     dmap["vision_model"] = 0
-    dmap["mlp1"] = 0  # projector or glue module name used by InternVL3
-    dmap["language_model.model.tok_embeddings"] = 0
-    dmap["language_model.model.embed_tokens"] = 0
-    dmap["language_model.output"] = 0
-    dmap["language_model.model.norm"] = 0
-    dmap["language_model.model.rotary_emb"] = 0
-    dmap["language_model.lm_head"] = 0
+    dmap["mlp1"] = 0
 
-    # ensure the final layer and lm head end up on the same device
-    dmap[f"language_model.model.layers.{num_layers - 1}"] = 0
     return dmap
-
 def split_model():
     device_map = {}
     world_size = torch.cuda.device_count()
