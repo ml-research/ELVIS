@@ -55,7 +55,7 @@ def load_internX_model(device):
     torch_device = "cuda"
     # model_checkpoint = "OpenGVLab/InternVL3-2B-hf"
     path = "OpenGVLab/InternVL3-78B"
-    device_map = split_model()
+    # device_map = split_model()
     device_map = build_device_map(path)
     model = AutoModel.from_pretrained(
         path,
@@ -226,7 +226,8 @@ def build_device_map(model_id: str):
     world_size = torch.cuda.device_count()
     if world_size < 2:
         raise RuntimeError("Need at least 2 GPUs to shard 78B comfortably.")
-
+    else:
+        print(f"Building device map for {world_size} GPUs...")
     cfg = AutoConfig.from_pretrained(model_id, trust_remote_code=True)
     num_layers = cfg.llm_config.num_hidden_layers
 
