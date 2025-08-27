@@ -372,6 +372,7 @@ def run_internVL_X(data_path, principle, batch_size, device, img_num, epochs, st
     model, tokenizer = load_internX_model(device_map=device_map, dtype=DTYPE)
 
     for pattern_folder in tqdm(pattern_folders):
+        rtpt.step()
         print(f"Evaluating pattern: {pattern_folder.name}")
         train_positive = load_images(pattern_folder / "positive", img_num)
         train_negative = load_images(pattern_folder / "negative", img_num)
