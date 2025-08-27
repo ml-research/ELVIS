@@ -110,7 +110,7 @@ python -m scripts.evaluate_models --batch_size 1 --principle symmetry --img_num 
 python -m scripts.evaluate_models --batch_size 1 --principle continuity --img_num 3 --model internVL --device_id 1
 
 ##### train internVL 78B
-python -m scripts.evaluate_models --batch_size 1 --principle proximity --img_num 3 --model internVL_X --device_id 0
+CUDA_VISIBLE_DEVICES=0,1,2 python -m scripts.evaluate_models --batch_size 1 --principle proximity --img_num 3 --model internVL_X --device_id 0
 python -m scripts.evaluate_models --batch_size 1 --principle similarity --img_num 3 --model internVL --device_id 2
 python -m scripts.evaluate_models --batch_size 1 --principle closure --img_num 3 --model internVL --device_id 7
 python -m scripts.evaluate_models --batch_size 1 --principle symmetry --img_num 3 --model internVL --device_id 7

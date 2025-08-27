@@ -56,6 +56,7 @@ def load_internX_model(device):
     # model_checkpoint = "OpenGVLab/InternVL3-2B-hf"
     path = "OpenGVLab/InternVL3-78B"
     device_map = split_model()
+    device_map = build_device_map(path)
     model = AutoModel.from_pretrained(
         path,
         torch_dtype=torch.bfloat16,
@@ -220,6 +221,42 @@ def evaluate_llm(model, tokenizer, test_images, logic_rules, device, principle):
         f"({principle}) Test Accuracy: {accuracy:.2f}% | F1 Score: {f1_score:.4f} | Precision: {precision:.4f} | Recall: {recall:.4f}")
 
     return accuracy, f1_score, precision, recall
+
+def build_device_map(model_id: str):
+    world_size = torch.cuda.device_count()
+    if world_size < 2:
+        raise RuntimeError("Need at least 2 GPUs to shard 78B comfortably.")
+
+    cfg = AutoConfig.from_pretrained(model_id, trust_remote_code=True)
+    num_layers = cfg.llm_config.num_hidden_layers
+
+    # allocate roughly equal layers, but treat GPU 0 as half capacity
+    quota = math.ceil(num_layers / (world_size - 0.5))
+    per_gpu = [quota] * world_size
+    per_gpu[0] = math.ceil(per_gpu[0] * 0.5)
+
+    dmap = {}
+    layer_idx = 0
+    for i, take in enumerate(per_gpu):
+        for _ in range(take):
+            if layer_idx >= num_layers:
+                break
+            dmap[f"language_model.model.layers.{layer_idx}"] = i
+            layer_idx += 1
+
+    # keep shared parts on GPU 0 with the vision tower
+    dmap["vision_model"] = 0
+    dmap["mlp1"] = 0  # projector or glue module name used by InternVL3
+    dmap["language_model.model.tok_embeddings"] = 0
+    dmap["language_model.model.embed_tokens"] = 0
+    dmap["language_model.output"] = 0
+    dmap["language_model.model.norm"] = 0
+    dmap["language_model.model.rotary_emb"] = 0
+    dmap["language_model.lm_head"] = 0
+
+    # ensure the final layer and lm head end up on the same device
+    dmap[f"language_model.model.layers.{num_layers - 1}"] = 0
+    return dmap
 
 def split_model():
     device_map = {}
