@@ -61,7 +61,7 @@ def load_internX_model(device):
         torch_dtype=torch.bfloat16,
         low_cpu_mem_usage=True,
         trust_remote_code=True,
-        evice_map=device_map).eval().cuda()
+        device_map=device_map).eval().cuda()
     return model.to(device)
 
 
