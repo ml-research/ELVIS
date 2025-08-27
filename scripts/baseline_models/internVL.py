@@ -8,15 +8,12 @@ from scripts import config
 from PIL import Image
 from tqdm import tqdm
 from rtpt import RTPT
-from transformers import AutoModel, AutoTokenizer, AutoConfig
+from transformers import AutoModel, AutoTokenizer, AutoConfig, AutoModelForCausalLM
 import torchvision.transforms as transforms
 import torchvision.transforms as T
 import math
 from torchvision.transforms.functional import InterpolationMode
 import os
-
-
-
 
 # from transformers import AutoProcessor, AutoModelForImageTextToText
 from scripts.baseline_models import conversations
@@ -48,22 +45,23 @@ def load_intern_model(device):
     # model = AutoModelForImageTextToText.from_pretrained(model_checkpoint, device_map=torch_device, torch_dtype=torch.bfloat16)
     return model.to(device)
 
-def load_internX_model(device):
-    torch.backends.cuda.enable_flash_sdp(False)  # Disable Flash SDP
-    torch.backends.cuda.enable_mem_efficient_sdp(False)  # Disable Memory Efficient SDP
-    torch.backends.cuda.enable_math_sdp(True)  # Fallback to standard math-based SDP
-    torch_device = "cuda"
-    # model_checkpoint = "OpenGVLab/InternVL3-2B-hf"
-    path = "OpenGVLab/InternVL3-78B"
-    # device_map = split_model()
-    device_map = build_device_map(path)
-    model = AutoModel.from_pretrained(
-        path,
-        torch_dtype=torch.bfloat16,
-        low_cpu_mem_usage=True,
-        trust_remote_code=True,
-        device_map=device_map).eval().cuda()
-    return model.to(device)
+
+# def load_internX_model(device):
+#     torch.backends.cuda.enable_flash_sdp(False)  # Disable Flash SDP
+#     torch.backends.cuda.enable_mem_efficient_sdp(False)  # Disable Memory Efficient SDP
+#     torch.backends.cuda.enable_math_sdp(True)  # Fallback to standard math-based SDP
+#     torch_device = "cuda"
+#     # model_checkpoint = "OpenGVLab/InternVL3-2B-hf"
+#     path = "OpenGVLab/InternVL3-78B"
+#     # device_map = split_model()
+#     device_map = build_device_map(path)
+#     model = AutoModel.from_pretrained(
+#         path,
+#         torch_dtype=torch.bfloat16,
+#         low_cpu_mem_usage=True,
+#         trust_remote_code=True,
+#         device_map=device_map).eval().cuda()
+#     return model.to(device)
 
 
 def load_images(image_dir, num_samples=5):
@@ -221,6 +219,8 @@ def evaluate_llm(model, tokenizer, test_images, logic_rules, device, principle):
         f"({principle}) Test Accuracy: {accuracy:.2f}% | F1 Score: {f1_score:.4f} | Precision: {precision:.4f} | Recall: {recall:.4f}")
 
     return accuracy, f1_score, precision, recall
+
+
 def split_model():
     device_map = {}
     world_size = torch.cuda.device_count()
@@ -255,10 +255,10 @@ def build_device_map(model_id: str):
     assert g >= 2, "need at least two GPUs"
 
     # quota for nonzero GPUs, GPU 0 gets only a tiny share
-    per = math.floor(L / (g + 1))         # even split baseline
-    tiny = max(1, math.floor(per * 0.25)) # give GPU 0 a quarter of that
+    per = math.floor(L / (g + 1))  # even split baseline
+    tiny = max(1, math.floor(per * 0.25))  # give GPU 0 a quarter of that
 
-    plan = [0] * tiny                      # a few early layers on GPU 0
+    plan = [0] * tiny  # a few early layers on GPU 0
     rest = L - len(plan)
     chunk = math.ceil(rest / (g - 1))
 
@@ -289,6 +289,7 @@ def build_device_map(model_id: str):
 
     return dmap
 
+
 def build_device_map_3gpus(model_id: str):
     cfg = AutoConfig.from_pretrained(model_id, trust_remote_code=True)
     L = cfg.llm_config.num_hidden_layers
@@ -297,7 +298,7 @@ def build_device_map_3gpus(model_id: str):
 
     # plan for exactly 3 logical ids: 0 1 2
     # tiny share on 0 since it hosts vision
-    tiny = max(1, L // 24)          # ~4 percent
+    tiny = max(1, L // 24)  # ~4 percent
     mid = max(1, (L - tiny) // 2)
     rest = L - tiny - mid
 
@@ -321,6 +322,12 @@ def build_device_map_3gpus(model_id: str):
     dmap["mlp1"] = 0
 
     return dmap
+
+
+DTYPE = torch.bfloat16  # or torch.float16
+MODEL_ID = "OpenGVLab/InternVL3-78B"
+
+
 def load_internX_model(device_map=None, dtype=DTYPE):
     tok = AutoTokenizer.from_pretrained(MODEL_ID, trust_remote_code=True, use_fast=False)
     model = AutoModelForCausalLM.from_pretrained(
@@ -334,6 +341,7 @@ def load_internX_model(device_map=None, dtype=DTYPE):
     torch.backends.cuda.matmul.allow_tf32 = True
     model.config.use_cache = False
     return model, tok
+
 
 def run_internVL_X(data_path, principle, batch_size, device, img_num, epochs, start_num, task_num):
     os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
@@ -360,7 +368,7 @@ def run_internVL_X(data_path, principle, batch_size, device, img_num, epochs, st
     rtpt = RTPT(name_initials='JIS', experiment_name=f'Elvis-InternVL3-78B-{principle}', max_iterations=len(pattern_folders))
     rtpt.start()
 
-    device_map = build_device_map_3gpus(MODEL_ID)
+    device_map = build_device_map_3gpus('OpenGVLab/InternVL3-78B')
     model, tokenizer = load_internX_model(device_map=device_map, dtype=DTYPE)
 
     for pattern_folder in tqdm(pattern_folders):
@@ -404,6 +412,8 @@ def run_internVL_X(data_path, principle, batch_size, device, img_num, epochs, st
     print(f"Overall Average Accuracy: {avg_accuracy:.2f}% | Average F1 Score: {avg_f1:.4f}")
     wandb.finish()
     return avg_accuracy, avg_f1
+
+
 # def run_internVL_X(data_path, principle, batch_size, device, img_num, epochs,  start_num, task_num):
 #     init_wandb(batch_size, principle)
 #
