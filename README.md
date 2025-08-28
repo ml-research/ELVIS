@@ -97,6 +97,7 @@ python -m scripts.main --remote --principle closure
 python -m scripts.main --remote --principle proximity
 python -m scripts.main --remote --principle symmetry
 python -m scripts.main --remote --principle continuity
+python -m scripts.main --remote --principle all
 ``` 
 
 
