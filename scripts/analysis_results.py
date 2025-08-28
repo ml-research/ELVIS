@@ -5,13 +5,14 @@ from scripts import config
 import ace_tools_open as tools
 import json
 import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
 import scipy.stats as stats
 import torch
-import seaborn as sns
 from pathlib import Path
 import re
+import matplotlib.pyplot as plt
+import numpy as np
+import seaborn as sns
+import matplotlib
 
 model_dict = {
     "vit_base_patch16_224/3": {"model": "vit", "img_num": 3},
@@ -941,6 +942,72 @@ def get_per_task_data(json_path, principle):
 #     plt.savefig(save_path, format="pdf", bbox_inches="tight")
 #     plt.close()
 #     print(f"Grouped ablation bar chart (split by principle) saved to: {save_path}")
+def analysis_obj_ablation_performance(args):
+    matplotlib.rcParams.update({"font.family": "sans-serif", "font.sans-serif": ["DejaVu Sans", "Arial"], "ytick.labelsize": 30})
+    props = ["color", "shape", "size", "count"]
+    all_principles = ["proximity", "similarity", "closure", "symmetry", "continuity"]
+    model_names = list(model_dict.keys())
+    n_props = len(props)
+    n_principles = len(all_principles)
+    n_models = len(model_names)
+    fig, axes = plt.subplots(n_props, n_principles, figsize=(5 * n_principles, 5 * n_props), sharey='row')
+    palette = sns.color_palette("Set2", n_colors=n_models)
+    bar_width = 0.10
+    group_gap = 0.05
+    for row_idx, prop in enumerate(props):
+        results = {}
+        principle_categories = {}
+        # Collect results for each principle and property value
+        for principle in all_principles:
+            results[principle] = {}
+            categories = set()
+            for model_name, model_info in model_dict.items():
+                json_path = get_results_path(args.remote, principle, model_info["model"], model_info["img_num"])
+                per_task_data = get_per_task_data(json_path, principle)
+                group_analysis = {}
+                for task_name, task_res in per_task_data.items():
+                    task_info = parse_task_name(task_name)
+                    if prop not in task_info:
+                        continue
+                    value = task_info[prop]
+                    categories.add(value)
+                    if value not in group_analysis:
+                        group_analysis[value] = []
+                    group_analysis[value].append(task_res["accuracy"])
+                avg_acc = {k: np.mean(v) for k, v in group_analysis.items()}
+                results[principle][model_name] = avg_acc
+            principle_categories[principle] = sorted(list(categories))
+        for col_idx, principle in enumerate(all_principles):
+            ax = axes[row_idx, col_idx] if n_props > 1 else axes[col_idx]
+            categories = principle_categories[principle]
+            x = np.arange(len(categories))
+            n = n_models
+            group_width = n * bar_width + group_gap
+            for i, model_name in enumerate(model_names):
+                values = [results[principle][model_name].get(cat, np.nan) for cat in categories]
+                ax.bar(x * group_width + i * bar_width, values, width=bar_width, color=palette[i], label=model_name)
+                for j, v in enumerate(values):
+                    ax.text(x[j] * group_width + i * bar_width, v + 2, f"{v:.1f}", rotation=60, ha='center', va='bottom', fontsize=10)
+            ax.set_xticks(x * group_width + (n * bar_width) / 2 - bar_width / 2)
+            ax.set_xticklabels(categories, fontsize=30, ha='right')
+            ax.set_xlabel(prop, fontsize=25)
+            if row_idx == 0:
+                ax.set_title(principle, fontsize=35, fontweight='bold')
+            ax.set_ylim(0, 70)
+            if col_idx == 0:
+                ax.set_ylabel('Accuracy', fontsize=25)
+            ax.axhline(50, color='gray', linestyle='--', linewidth=1)
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+            if row_idx == 0 and col_idx == 0:
+                handles, labels = ax.get_legend_handles_labels()
+                # ax.legend(title="Model", fontsize=12, loc='best')
+    fig.legend(handles, labels, loc="lower center", bbox_to_anchor=(0.5, -0.02), ncol=len(labels), fontsize=30)
+    plt.tight_layout(rect=[0, 0.08, 1, 1])  # leave space for legend at bottom
+    save_path = config.figure_path / f"ablation_all_props_all_principles_matrix.pdf"
+    plt.savefig(save_path, format="pdf", bbox_inches="tight")
+    plt.close()
+
 
 def analysis_ablation_performance(args):
     import matplotlib.pyplot as plt
@@ -1045,16 +1112,15 @@ def get_results_path(remote=False, principle=None, model_name=None, img_num=None
         all_json_files = list(prin_path.glob(f"{model_name}_*.json"))
         all_json_files = [f for f in all_json_files if f"img_num_{img_num}" in f.name]
 
-    elif model_name == "internVL3_2B":
+    else:
         all_json_files = list(prin_path.glob(f"{model_name}_*.json"))
         # all_json_files = [f for f in all_json_files if f"img_num_{img_num}" in f.name]
-
-    elif model_name == "llava":
-        all_json_files = list(prin_path.glob(f"{model_name}_*.json"))
-    elif model_name == "internVL3_78B":
-        all_json_files = list(prin_path.glob(f"{model_name}_*.json"))
-    else:
-        raise ValueError(f"Unsupported model name: {model_name}")
+    # elif model_name == "llava":
+    #     all_json_files = list(prin_path.glob(f"{model_name}_*.json"))
+    # elif "internVL3_78B" in model_name:
+    #     all_json_files = list(prin_path.glob(f"{model_name}_*.json"))
+    # else:
+    #     raise ValueError(f"Unsupported model name: {model_name}")
 
     # get the latest json file with the latest timestamp
     if all_json_files:
@@ -1080,30 +1146,10 @@ def main():
         analysis_average_performance(json_path, args.principle, args.model, args.img_num)
     elif args.mode == "category":
         analysis_models(args)
-        # if args.principle == "proximity":
-        #     category_names = ["red_triangle", "grid", "fixed_props", "circle_features"]
-        #     analysis_per_category(args, category_names)
-        # elif args.principle == "similarity":
-        #     category_names = ["fixed_number", "pacman", "palette"]
-        #     analysis_per_category(args, category_names)
-        # elif args.principle == "closure":
-        #     category_names = ["big_triangle", "big_square", "big_circle",
-        #                       "feature_triangle", "feature_square", "feature_circle"]
-        #     analysis_per_category(args, category_names)
-        # elif args.principle == "symmetry":
-        #     category_names = ["solar_system", "symmetry_circle", "symmetry_pattern"]
-        #     analysis_per_category(args, category_names)
-        # elif args.principle == "continuity":
-        #     category_names = ["one_split_n", "with_intersected_n_splines", "non_intersected_n_splines", "continuity_overlap_splines"]
-        #     analysis_per_category(args, category_names)
-        # else:
-        #     raise ValueError(f"Unsupported principle for category analysis: {args.principle}")
     elif args.mode == "ablation":
         analysis_ablation_performance(args)
-    # elif args.mode == "group_size":
-    #     analysis_ablation_performance(args, args.principle, "group_size")
-    # elif args.mode == "rule_type":
-    #     analysis_ablation_performance(args, args.principle, "rule_type")
+    elif args.mode == "obj_ablation":
+        analysis_obj_ablation_performance(args)
     else:
         raise ValueError(f"Unsupported mode: {args.mode}")
 
