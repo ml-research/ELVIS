@@ -182,6 +182,7 @@ def draw_f1_heat_map(csv_files, model_names, gestalt_principles):
         "vit_base_patch16_224/3": pd.Series(dtype=float),
         "vit_base_patch16_224/100": pd.Series(dtype=float),
         "InternVL3-2B/3": pd.Series(dtype=float),
+        "llava-onevision-qwen2-7b-si-hf/3": pd.Series(dtype=float),
         # "llava-onevision-qwen2-7b-si-hf/3": pd.Series(dtype=float)
     }
 
@@ -189,10 +190,12 @@ def draw_f1_heat_map(csv_files, model_names, gestalt_principles):
         tmp_df = pd.read_csv(principle_csv_files[0], index_col=0)  # Load CSV and set first column as index (model names)
         for file in principle_csv_files:
             df = pd.read_csv(file, index_col=0)  # Load CSV and set first column as index (model names)
+
             def categorize_task(task_name):
                 for category in categories:
                     if category in task_name:
                         return category
+
             if "vit_3" in file.name:
                 model_name = "vit_base_patch16_224/3"
             elif "vit_100" in file.name:
@@ -207,8 +210,7 @@ def draw_f1_heat_map(csv_files, model_names, gestalt_principles):
             categories = config.categories[principle]
             df["Category"] = df.index.map(categorize_task)
             category_avg_f1 = df.groupby("Category")["F1 Score"].mean()
-            category_acc_scores[model_name] = pd.concat(
-                [category_acc_scores[model_name], category_avg_f1])  # Store results
+            category_acc_scores[model_name] = pd.concat([category_acc_scores[model_name], category_avg_f1])  # Store results
     # Convert dictionary to DataFrame for heatmap
     heatmap_data = pd.DataFrame(category_acc_scores)
 
@@ -436,7 +438,6 @@ def analysis_models(args):
                 df, f1_score = json_to_csv_llava(per_task_data, csv_file_name)
             else:
                 df, f1_score = json_to_csv(per_task_data, csv_file_name)
-
 
             csv_files[principle].append(csv_file_name)
     draw_f1_heat_map(csv_files, list(model_dict.keys()), config.categories)
