@@ -31,7 +31,7 @@ def main(args):
         "objs_per_img": [],
     }
 
-    data_folder = config.get_raw_patterns_path(args.remote) / f"res_{config.img_width}_pin_{config.prin_in_neg}"/ args.principle / "train"
+    data_folder = config.get_raw_patterns_path(args.remote) / f"res_{args.img_width}_pin_{config.prin_in_neg}"/ args.principle / "train"
     all_task_folders = get_all_task_folders(data_folder)
     # iterate through all folders in the data folder
     for task_folder in all_task_folders:
@@ -78,6 +78,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Evaluate baseline models with CUDA support.")
     parser.add_argument("--remote", action="store_true")
     parser.add_argument("--principle", type=str, default="symmetry")
+    parser.add_argument("--img_width", type=int, default=224)
     parser.add_argument("--labelOn", action="store_true", help="Show labels on the generated images.")
     args = parser.parse_args()
 

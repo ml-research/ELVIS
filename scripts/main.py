@@ -28,9 +28,9 @@ from scripts.object_detector import object_patterns
 
 # from scripts.mixed_patterns import mixed_patterns
 
-def gen_image_matplotlib(objs):
+def gen_image_matplotlib(img_width, objs):
     import math
-    img_size = config.img_width
+    img_size = img_width
     dpi = 100
     fig, ax = plt.subplots(figsize=(img_size / dpi, img_size / dpi), dpi=dpi)
     ax.set_xlim(0, img_size)
@@ -239,14 +239,14 @@ def gen_image_matplotlib(objs):
     return img
 
 
-def save_patterns(pattern_data, pattern, save_path, num_samples, is_positive):
+def save_patterns(args, pattern_data, pattern, save_path, num_samples, is_positive):
     imgs = []
     for example_i in range(num_samples):
         img_path = save_path / f"{example_i:05d}.png"
         data_path = save_path / f"{example_i:05d}.json"
         objs, logics = pattern["module"](is_positive)
         # encode symbolic object tensors
-        image = visual_utils.gen_image_cv2_full(objs)
+        image = visual_utils.gen_image_cv2_full(args, objs)
         # image = visual_utils.add_label_on_img(image, logics)
         pattern_data["logic_rules"] = logics["rule"]
         file_utils.save_img(img_path, data_path, pattern_data, objs, image)
@@ -277,7 +277,7 @@ def save_task_overview_image(pos_imgs, neg_imgs, save_path, img_size, margin=8, 
 
 
 def save_principle_patterns(args, principle_name, pattern_dicts):
-    resolution_folder = config.get_raw_patterns_path(args.remote) / f"res_{config.img_width}_pin_{config.prin_in_neg}"
+    resolution_folder = config.get_raw_patterns_path(args.remote) / f"res_{args.img_size}_pin_{config.prin_in_neg}"
     os.makedirs(resolution_folder, exist_ok=True)
     principle_path = resolution_folder / principle_name
     os.makedirs(principle_path, exist_ok=True)
@@ -310,7 +310,7 @@ def save_principle_patterns(args, principle_name, pattern_dicts):
             "non_overlap": non_overlap,
             "prop_size": prop_size,
             "prop_count": prop_count,
-            "resolution": config.img_width
+            "resolution": args.img_size
         }
         # print(f"{pattern_counter}/{len(pattern_dicts)} Generating {principle_name} pattern {pattern_name}...")
         train_path = principle_path / "train" / pattern_name
@@ -321,13 +321,13 @@ def save_principle_patterns(args, principle_name, pattern_dicts):
         os.makedirs(test_path, exist_ok=True)
         os.makedirs(test_path / "positive", exist_ok=True)
         os.makedirs(test_path / "negative", exist_ok=True)
-        train_pos_imgs = save_patterns(pattern_data, pattern, train_path / "positive", num_samples=num_samp, is_positive=True)
-        train_neg_imgs = save_patterns(pattern_data, pattern, train_path / "negative", num_samples=num_samp, is_positive=False)
-        test_pos_imgs = save_patterns(pattern_data, pattern, test_path / "positive", num_samples=num_samp, is_positive=True)
-        test_neg_imgs = save_patterns(pattern_data, pattern, test_path / "negative", num_samples=num_samp, is_positive=False)
+        train_pos_imgs = save_patterns(args, pattern_data, pattern, train_path / "positive", num_samples=num_samp, is_positive=True)
+        train_neg_imgs = save_patterns(args, pattern_data, pattern, train_path / "negative", num_samples=num_samp, is_positive=False)
+        test_pos_imgs = save_patterns(args, pattern_data, pattern, test_path / "positive", num_samples=num_samp, is_positive=True)
+        test_neg_imgs = save_patterns(args, pattern_data, pattern, test_path / "negative", num_samples=num_samp, is_positive=False)
         # Save overview images
-        save_task_overview_image(train_pos_imgs, train_neg_imgs, principle_path / "train" / f"{pattern_name}.png", config.img_width)
-        save_task_overview_image(test_pos_imgs, test_neg_imgs, principle_path / "test" / f"{pattern_name}.png", config.img_width)
+        save_task_overview_image(train_pos_imgs, train_neg_imgs, principle_path / "train" / f"{pattern_name}.png", args.img_size)
+        save_task_overview_image(test_pos_imgs, test_neg_imgs, principle_path / "test" / f"{pattern_name}.png", args.img_size)
         pattern_counter += 1
     print(f"{principle_name} pattern generation complete.")
 
@@ -354,6 +354,7 @@ if __name__ == "__main__":
     parser.add_argument("--remote", action="store_true")
     parser.add_argument("--lite", action="store_true")
     parser.add_argument("--principle", type=str)
+    parser.add_argument("--img_size", type=int, default=224, choices=[224, 448, 1024])
     parser.add_argument("--labelOn", action="store_true", help="Show labels on the generated images.")
     args = parser.parse_args()
 

@@ -55,13 +55,13 @@ def van(array, file_name=None):
         visual_np_array(array[0].squeeze(), file_name)
 
 
-def add_label_on_img(image, pattern_data):
+def add_label_on_img(args, image, pattern_data):
     is_positive = pattern_data.get("is_positive", True)
     fixed_props = pattern_data.get("fixed_props", [])
     irrel_props = pattern_data.get("irrel_params", [])
     cf_params = pattern_data.get("cf_params", [])
 
-    scale_factor = config.img_width / 1024
+    scale_factor = args.img_size / 1024
     font = cv2.FONT_HERSHEY_SIMPLEX
     font_scale = scale_factor
     thickness = max(1, int(2 * scale_factor))
@@ -99,8 +99,8 @@ def add_label_on_img(image, pattern_data):
     return image
 
 
-def gen_image_cv2_full(objs):
-    img_size = config.img_width
+def gen_image_cv2_full(args, objs):
+    img_size = args.img_size
     image = np.zeros((img_size, img_size, 3), dtype=np.uint8)
     bg_color = tuple(int(255 * c) if isinstance(c, float) else int(c) for c in config.bg_color[:3])
     image[:] = bg_color
