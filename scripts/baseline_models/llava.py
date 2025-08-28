@@ -185,7 +185,7 @@ def run_llava(data_path, img_size, principle, batch_size, device, img_num, epoch
     # results["average"] = {"accuracy": avg_accuracy, "f1_score": avg_f1}
     output_dir = f"/elvis_result/{principle}"
     os.makedirs(output_dir, exist_ok=True)
-    results_path = Path(output_dir) / f"llava_eval_res_{timestamp}_img_num_{img_num}.json"
+    results_path = Path(output_dir) / f"llava_eval_res_{img_size}_{timestamp}_img_num_{img_num}.json"
     with open(results_path, "w") as json_file:
         json.dump(results, json_file, indent=4)
 

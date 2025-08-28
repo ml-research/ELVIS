@@ -33,7 +33,7 @@ if __name__ == "__main__":
     parser.add_argument("--remote", action="store_true")
     parser.add_argument("--epochs", type=int, default=10)
     parser.add_argument("--img_num", type=int, default=5)
-    parser.add_argument("--img_size", type=int, default=224, choices=[224, 1024])
+    parser.add_argument("--img_size", type=int, default=224, choices=[224, 448, 1024])
     parser.add_argument("--task_num", type=str, default="full")
     parser.add_argument("--start_num", type=int, default=0)
     parser.add_argument("--batch_size", type=int)

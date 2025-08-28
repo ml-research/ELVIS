@@ -91,7 +91,7 @@ def evaluate_gpt5(client, test_images, logic_rules, device, principle):
     return accuracy, f1_score, precision, recall
 
 
-def run_gpt5(data_path, principle, batch_size, device, img_num, epochs, start_num, task_num):
+def run_gpt5(data_path,img_size, principle, batch_size, device, img_num, epochs, start_num, task_num):
     init_wandb(batch_size)
     # model, processor = load_gpt5_model(device)
     principle_path = Path(data_path)
@@ -144,7 +144,7 @@ def run_gpt5(data_path, principle, batch_size, device, img_num, epochs, start_nu
     avg_f1 = sum(total_f1) / len(total_f1) if total_f1 else 0
     output_dir = f"/elvis_result/{principle}"
     os.makedirs(output_dir, exist_ok=True)
-    results_path = Path(output_dir) / f"gpt5_{principle}_eval_res_img_num_{img_num}_{timestamp}.json"
+    results_path = Path(output_dir) / f"gpt5_{principle}_eval_res_{img_size}_img_num_{img_num}_{timestamp}.json"
     with open(results_path, "w") as json_file:
         json.dump(results, json_file, indent=4)
     print("Evaluation complete. Results saved to evaluation_results.json.")
