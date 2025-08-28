@@ -402,7 +402,7 @@ def run_internVL_X(data_path, img_size, principle, batch_size, device, img_num, 
 
     output_dir = f"/elvis_result/{principle}"
     os.makedirs(output_dir, exist_ok=True)
-    results_path = Path(output_dir) / f"internVL_X_eval_res_{img_size}_{timestamp}_img_num_{img_num}.json"
+    results_path = Path(output_dir) / f"internVL3_78B_eval_res_{img_size}_{timestamp}_img_num_{img_num}.json"
     with open(results_path, "w") as json_file:
         json.dump(results, json_file, indent=4)
 
@@ -528,7 +528,7 @@ def run_internVL(data_path, img_size, principle, batch_size, device, img_num, ep
 
     output_dir = f"/elvis_result/{principle}"
     os.makedirs(output_dir, exist_ok=True)
-    results_path = Path(output_dir) / f"internVL_eval_res_{timestamp}_img_num_{img_num}.json"
+    results_path = Path(output_dir) / f"internVL3_2B_eval_res_{img_size}_{timestamp}_img_num_{img_num}.json"
     with open(results_path, "w") as json_file:
         json.dump(results, json_file, indent=4)
 

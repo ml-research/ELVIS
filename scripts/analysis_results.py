@@ -17,7 +17,8 @@ model_dict = {
     "vit_base_patch16_224/3": {"model": "vit", "img_num": 3},
     "vit_base_patch16_224/100": {"model": "vit", "img_num": 100},
     "llava-onevision-qwen2-7b-si-hf/3": {"model": "llava", "img_num": 3},
-    "InternVL3-2B/3": {"model": "internVL", "img_num": 3},
+    "InternVL3-2B/3": {"model": "internVL3_2B", "img_num": 3},
+    "InternVL3-78B/3": {"model": "internVL3_78B", "img_num": 3},
 
 }
 
@@ -181,8 +182,9 @@ def draw_f1_heat_map(csv_files, model_names, gestalt_principles):
     category_acc_scores = {
         "vit_base_patch16_224/3": pd.Series(dtype=float),
         "vit_base_patch16_224/100": pd.Series(dtype=float),
-        "InternVL3-2B/3": pd.Series(dtype=float),
         "llava-onevision-qwen2-7b-si-hf/3": pd.Series(dtype=float),
+        "InternVL3-2B/3": pd.Series(dtype=float),
+        "InternVL3-78B/3": pd.Series(dtype=float),
         # "llava-onevision-qwen2-7b-si-hf/3": pd.Series(dtype=float)
     }
 
@@ -202,7 +204,9 @@ def draw_f1_heat_map(csv_files, model_names, gestalt_principles):
                 model_name = "vit_base_patch16_224/100"
             elif "llava" in file.name:
                 model_name = "llava-onevision-qwen2-7b-si-hf/3"
-            elif "internVL" in file.name:
+            elif "internVL3_78B" in file.name:
+                model_name = "InternVL3-78B/3"
+            elif "internVL3_2B" in file.name:
                 model_name = "InternVL3-2B/3"
             else:
                 raise ValueError("Unknown model in file name:", file.name)
@@ -1041,11 +1045,13 @@ def get_results_path(remote=False, principle=None, model_name=None, img_num=None
         all_json_files = list(prin_path.glob(f"{model_name}_*.json"))
         all_json_files = [f for f in all_json_files if f"img_num_{img_num}" in f.name]
 
-    elif model_name == "internVL":
+    elif model_name == "internVL3_2B":
         all_json_files = list(prin_path.glob(f"{model_name}_*.json"))
         # all_json_files = [f for f in all_json_files if f"img_num_{img_num}" in f.name]
 
     elif model_name == "llava":
+        all_json_files = list(prin_path.glob(f"{model_name}_*.json"))
+    elif model_name == "internVL3_78B":
         all_json_files = list(prin_path.glob(f"{model_name}_*.json"))
     else:
         raise ValueError(f"Unsupported model name: {model_name}")
