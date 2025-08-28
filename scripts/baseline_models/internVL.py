@@ -64,9 +64,9 @@ def load_intern_model(device):
 #     return model.to(device)
 
 
-def load_images(image_dir, num_samples=5):
+def load_images(image_dir, img_size, num_samples=5):
     image_paths = sorted(Path(image_dir).glob("*.png"))[:num_samples]
-    return [Image.open(img_path).convert("RGB").resize((224, 224)) for img_path in image_paths]
+    return [Image.open(img_path).convert("RGB").resize((img_size, img_size)) for img_path in image_paths]
 
 
 def generate_reasoning_prompt(principle):
@@ -343,13 +343,11 @@ def load_internX_model(device_map=None, dtype=DTYPE):
     return model, tok
 
 
-def run_internVL_X(data_path, principle, batch_size, device, img_num, epochs, start_num, task_num):
+def run_internVL_X(data_path, img_size, principle, batch_size, device, img_num, epochs, start_num, task_num):
     os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
     # ensure only GPUs 0 1 2 are visible if you want to pin these ids
     # os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2"
-
     init_wandb(batch_size, principle)
-
     principle_path = Path(data_path)
     pattern_folders = sorted(file_utils.list_folders(str(principle_path / "train")))
     if not pattern_folders:
@@ -370,14 +368,13 @@ def run_internVL_X(data_path, principle, batch_size, device, img_num, epochs, st
 
     device_map = build_device_map_3gpus('OpenGVLab/InternVL3-78B')
     model, tokenizer = load_internX_model(device_map=device_map, dtype=DTYPE)
-
     for pattern_folder in tqdm(pattern_folders):
         rtpt.step()
         print(f"Evaluating pattern: {pattern_folder.name}")
-        train_positive = load_images(pattern_folder / "positive", img_num)
-        train_negative = load_images(pattern_folder / "negative", img_num)
-        test_positive = load_images((principle_path / "test" / pattern_folder.name) / "positive", img_num)
-        test_negative = load_images((principle_path / "test" / pattern_folder.name) / "negative", img_num)
+        train_positive = load_images(pattern_folder / "positive", img_size, img_num)
+        train_negative = load_images(pattern_folder / "negative", img_size, img_num)
+        test_positive = load_images((principle_path / "test" / pattern_folder.name) / "positive", img_size, img_num)
+        test_negative = load_images((principle_path / "test" / pattern_folder.name) / "negative", img_size, img_num)
 
         logic_rules = infer_logic_rules(model, tokenizer, train_positive, train_negative, device, principle)
 
@@ -405,7 +402,7 @@ def run_internVL_X(data_path, principle, batch_size, device, img_num, epochs, st
 
     output_dir = f"/elvis_result/{principle}"
     os.makedirs(output_dir, exist_ok=True)
-    results_path = Path(output_dir) / f"internVL_X_eval_res_{timestamp}_img_num_{img_num}.json"
+    results_path = Path(output_dir) / f"internVL_X_eval_res_{img_size}_{timestamp}_img_num_{img_num}.json"
     with open(results_path, "w") as json_file:
         json.dump(results, json_file, indent=4)
 
@@ -479,7 +476,7 @@ def run_internVL_X(data_path, principle, batch_size, device, img_num, epochs, st
 #     return avg_accuracy, avg_f1
 
 
-def run_internVL(data_path, principle, batch_size, device, img_num, epochs, task_num):
+def run_internVL(data_path, img_size, principle, batch_size, device, img_num, epochs, task_num):
     init_wandb(batch_size, principle)
 
     principle_path = Path(data_path)
@@ -507,10 +504,10 @@ def run_internVL(data_path, principle, batch_size, device, img_num, epochs, task
 
     for pattern_folder in tqdm(pattern_folders):
         print(f"Evaluating pattern: {pattern_folder.name}")
-        train_positive = load_images(pattern_folder / "positive", img_num)
-        train_negative = load_images(pattern_folder / "negative", img_num)
-        test_positive = load_images((principle_path / "test" / pattern_folder.name) / "positive", img_num)
-        test_negative = load_images((principle_path / "test" / pattern_folder.name) / "negative", img_num)
+        train_positive = load_images(pattern_folder / "positive", img_size, img_num)
+        train_negative = load_images(pattern_folder / "negative", img_size, img_num)
+        test_positive = load_images((principle_path / "test" / pattern_folder.name) / "positive", img_size, img_num)
+        test_negative = load_images((principle_path / "test" / pattern_folder.name) / "negative", img_size, img_num)
         logic_rules = infer_logic_rules(model, tokenizer, train_positive, train_negative, device, principle)
 
         test_images = [(img, 1) for img in test_positive] + [(img, 0) for img in test_negative]

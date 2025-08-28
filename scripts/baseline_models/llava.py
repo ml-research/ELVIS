@@ -40,9 +40,9 @@ def load_llava_model(device):
     return model.to(device), processor
 
 
-def load_images(image_dir, num_samples=5):
+def load_images(image_dir, img_size, num_samples=5):
     image_paths = sorted(Path(image_dir).glob("*.png"))[:num_samples]
-    return [Image.open(img_path).convert("RGB").resize((224, 224)) for img_path in image_paths]
+    return [Image.open(img_path).convert("RGB").resize((img_size, img_size)) for img_path in image_paths]
 
 
 def generate_reasoning_prompt(principle):
@@ -132,7 +132,7 @@ def evaluate_llm(model, processor, test_images, logic_rules, device, principle):
     return accuracy, f1_score, precision, recall
 
 
-def run_llava(data_path, principle, batch_size, device, img_num, epochs, start_num, task_num):
+def run_llava(data_path, img_size, principle, batch_size, device, img_num, epochs, start_num, task_num):
     init_wandb(batch_size, principle)
 
     model, processor = load_llava_model(device)
@@ -158,10 +158,10 @@ def run_llava(data_path, principle, batch_size, device, img_num, epochs, start_n
 
     for pattern_folder in pattern_folders:
         rtpt.step()
-        train_positive = load_images(pattern_folder / "positive", img_num)
-        train_negative = load_images(pattern_folder / "negative", img_num)
-        test_positive = load_images((principle_path / "test" / pattern_folder.name) / "positive", img_num)
-        test_negative = load_images((principle_path / "test" / pattern_folder.name) / "negative", img_num)
+        train_positive = load_images(pattern_folder / "positive", img_size, img_num)
+        train_negative = load_images(pattern_folder / "negative", img_size, img_num)
+        test_positive = load_images((principle_path / "test" / pattern_folder.name) / "positive", img_size, img_num)
+        test_negative = load_images((principle_path / "test" / pattern_folder.name) / "negative", img_size, img_num)
 
         # print(type(train_positive))
         # print(type(train_positive[0]))
