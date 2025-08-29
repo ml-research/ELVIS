@@ -65,9 +65,10 @@ def evaluate_gpt5(client, test_images, logic_rules, device, principle):
     correct, total = 0, 0
     all_labels, all_predictions = [], []
     torch.cuda.empty_cache()
+    print(f"Logic Rules for {principle}: {logic_rules}")
     for image, label in test_images:
         response = client.responses.create(
-            model="gpt-4.1-mini",
+            model="gpt-5",
             input=conversations.gpt_eval_conversation(image, logic_rules)
         )
         response = response.output_text
