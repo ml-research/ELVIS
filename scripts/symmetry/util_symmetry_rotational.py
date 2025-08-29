@@ -120,11 +120,14 @@ def rotational_symmetry_pattern(params, irrel_params, is_positive, clu_num, obj_
     invariant_shape = random.choice(config.all_shapes)
     invariant_color = random.choice(config.color_large_exclude_gray)
     grp_obj_num = config.standard_quantity_dict[obj_quantity]
-
+    logic = {
+        "shape": ["plus", "cross"],
+        "color": ["red", "blue", "green", "yellow", "purple"]
+    }
     # Define available pattern interfaces
     pattern_funcs = [
         symmetry_pattern_type1,
-        # symmetry_pattern_type2,
+        symmetry_pattern_type2,
         # symmetry_pattern_type3,
         # Add more pattern functions as needed
     ]
@@ -138,21 +141,60 @@ def rotational_symmetry_pattern(params, irrel_params, is_positive, clu_num, obj_
 
     all_positions = []
     for i in range(clu_num):
-        pattern_func = random.choice(pattern_funcs)
-        # positions = pattern_func(branch_centers[i], angles[i], grp_obj_num)
-        positions = pattern_func(center, angles[i], grp_obj_num)
-        all_positions.extend(positions)
+        if not is_positive and "symmetry" not in cf_params:
+            all_positions.append(get_almost_radius_symmetry_positions(center, angles[i], grp_obj_num))
+        else:
+            # pattern_func = random.choice(pattern_funcs)
+            # positions = pattern_func(branch_centers[i], angles[i], grp_obj_num)
+            positions = symmetry_pattern_type1(center, angles[i], grp_obj_num)
+            all_positions.append(positions)
+
+    objs = []
+    for a_i in range(clu_num):
+        if "shape" in params and is_positive or (not is_positive and "shape" in cf_params):
+            shapes = [random.choice(logic["shape"]) for _ in range(grp_obj_num)]
+        else:
+            shapes = [random.choice(config.all_shapes) for _ in range(grp_obj_num)]
+        if "shape" in irrel_params:
+            shapes = [invariant_shape] * grp_obj_num
+
+        if "color" in params and is_positive or (not is_positive and "color" in cf_params):
+            colors = [random.choice(logic["color"]) for _ in range(grp_obj_num)]
+        else:
+            colors = [random.choice(config.color_large_exclude_gray) for _ in range(grp_obj_num)]
+        if "color" in irrel_params:
+            colors = [invariant_color] * grp_obj_num
+
+        if "size" in params and is_positive or (not is_positive and "size" in cf_params):
+            sizes = [obj_size] * grp_obj_num
+        else:
+            sizes = [random.uniform(obj_size * 0.5, obj_size * 1.5) for _ in range(grp_obj_num)]
+        if "size" in irrel_params:
+            sizes = [obj_size] * grp_obj_num
+
+        positions = all_positions[a_i]
+        grp_ids = [a_i] * grp_obj_num
+        objs += encode_utils.encode_scene(positions, sizes, colors, shapes, grp_ids, is_positive)
 
     # Assign shapes/colors/sizes (same as before, but for all objects)
-    total_obj_num = clu_num * grp_obj_num
-    shapes = [invariant_shape] * total_obj_num
-    colors = [invariant_color] * total_obj_num
-    sizes = [obj_size] * total_obj_num
-    grp_ids = [i for i in range(clu_num) for _ in range(grp_obj_num)]
+    # total_obj_num = clu_num * grp_obj_num
+    # shapes = [invariant_shape] * total_obj_num
+    # colors = [invariant_color] * total_obj_num
+    # sizes = [obj_size] * total_obj_num
+    # grp_ids = [i for i in range(clu_num) for _ in range(grp_obj_num)]
 
-    objs = encode_utils.encode_scene(all_positions, sizes, colors, shapes, grp_ids, is_positive)
+    # objs = encode_utils.encode_scene(all_positions, sizes, colors, shapes, grp_ids, is_positive)
     logics = get_logics(is_positive, params, cf_params, irrel_params)
     return objs, logics
+
+
+def get_almost_radius_symmetry_positions(center,  angle, grp_obj_num):
+    all_positions = []
+
+    positions = symmetry_pattern_type2(center, angle, grp_obj_num)
+    all_positions.extend(positions)
+    return all_positions
+
 
 # Example pattern interfaces
 def symmetry_pattern_type1(center, angle, grp_obj_num):
@@ -169,14 +211,25 @@ def symmetry_pattern_type1(center, angle, grp_obj_num):
         positions.append((x, y))
     return positions
 
+
 def symmetry_pattern_type2(center, angle, grp_obj_num):
-    # Implement pattern details here
-    return [(center[0], center[1])] * grp_obj_num
+    """
+    Generate points along a straight line from the center outward in the direction of angle with noise.
+    """
+    positions = []
+    # Start from the center, move outward along the angle
+    for i in range(1, grp_obj_num + 1):
+        # Distance from center increases with i
+        dist = 0.07 * i
+        x = center[0] + dist * math.cos(angle) + random.uniform(-0.05, 0.05)
+        y = center[1] + dist * math.sin(angle) + random.uniform(-0.05, 0.05)
+        positions.append((x, y))
+    return positions
+
 
 def symmetry_pattern_type3(center, angle, grp_obj_num):
     # Implement pattern details here
     return [(center[0], center[1])] * grp_obj_num
-
 
 # def rotational_symmetry_pattern(params, irrel_params, is_positive, clu_num, obj_quantity, pin):
 #     obj_size = 0.05
