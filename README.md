@@ -143,7 +143,11 @@ python -m scripts.evaluate_models --batch_size 1 --principle continuity --img_nu
 
 # train gpt5
 python -m scripts.evaluate_models --batch_size 1 --principle proximity --model gpt5 --img_num 3 --device_id 3
-python -m scripts.evaluate_models --batch_size 1 --principle similarity --img_num 3 --model gpt5 --start_num 0 --task_num 3 --device_id 4
+python -m scripts.evaluate_models --batch_size 1 --principle similarity --model gpt5 --img_num 3 --device_id 3
+python -m scripts.evaluate_models --batch_size 1 --principle closure --model gpt5 --img_num 3 --device_id 3
+python -m scripts.evaluate_models --batch_size 1 --principle symmetry --model gpt5 --img_num 3 --device_id 3
+python -m scripts.evaluate_models --batch_size 1 --principle continuity --model gpt5 --img_num 3 --device_id 3
+
 
 
 ##### Analysis Results

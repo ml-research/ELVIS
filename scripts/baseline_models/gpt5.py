@@ -22,8 +22,8 @@ def init_openai():
     return OpenAI()
 
 
-def init_wandb(batch_size):
-    wandb.init(project="GPT5-Gestalt-Patterns", config={"batch_size": batch_size})
+def init_wandb(batch_size, principle):
+    wandb.init(project=f"GPT5-Gestalt-{principle}", config={"batch_size": batch_size})
 
 
 def load_images(image_dir, num_samples=5):
@@ -53,7 +53,7 @@ def infer_logic_rules(client, train_positive, train_negative, device, principle)
     torch.cuda.empty_cache()
 
     response = client.responses.create(
-        model="gpt-4.1-mini",
+        model="gpt-5",
         input=conversations.gpt_conversation(train_positive, train_negative, principle),
     )
     text = response.output_text
@@ -91,8 +91,8 @@ def evaluate_gpt5(client, test_images, logic_rules, device, principle):
     return accuracy, f1_score, precision, recall
 
 
-def run_gpt5(data_path,img_size, principle, batch_size, device, img_num, epochs, start_num, task_num):
-    init_wandb(batch_size)
+def run_gpt5(data_path, img_size, principle, batch_size, device, img_num, epochs, start_num, task_num):
+    init_wandb(batch_size, principle)
     # model, processor = load_gpt5_model(device)
     principle_path = Path(data_path)
     # pattern_folders = sorted((principle_path / "train").iterdir())
