@@ -176,7 +176,7 @@ def evaluate_vit(model, test_loader, device, principle, pattern_name):
     return accuracy, f1_score, precision, recall
 
 
-def run_vit(data_path, principle, batch_size, device, img_num, epochs, start_num, task_num):
+def run_vit(data_path, img_size, principle, batch_size, device, img_num, epochs, start_num, task_num):
     init_wandb(batch_size, epochs, principle, img_num)
     model_name = "vit_base_patch16_224"
     output_dir = Path(f"/elvis_result/vit/{principle}")

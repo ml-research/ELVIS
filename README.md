@@ -128,7 +128,7 @@ python -m scripts.evaluate_models --batch_size 4 --principle similarity --img_nu
 python -m scripts.evaluate_models --batch_size 100 --principle closure --img_num 3 --model vit --device_id 5
 python -m scripts.evaluate_models --batch_size 4 --principle closure --img_num 100 --model vit --device_id 5
 
-python -m scripts.evaluate_models --batch_size 100 --principle symmetry --img_num 3 --model vit --start_num 400 --task_num 100 --device_id 4
+python -m scripts.evaluate_models --batch_size 100 --principle symmetry --img_num 3 --model vit --device_id 15
 python -m scripts.evaluate_models --batch_size 4 --principle symmetry --img_num 100 --model vit --start_num 400 --task_num 100 --device_id 4
 
 python -m scripts.evaluate_models --batch_size 100 --principle continuity --img_num 3 --model vit --task_num 20 --start_num 300 --device_id 7
