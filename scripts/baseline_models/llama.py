@@ -1,7 +1,6 @@
 # Created by MacBook Pro at 28.07.25
 
 
-
 import torch
 import wandb
 from pathlib import Path
@@ -20,23 +19,63 @@ def init_wandb(batch_size):
     wandb.init(project="LLAMA-Gestalt-Patterns", config={"batch_size": batch_size})
 
 
-def load_images(image_dir,img_size, num_samples=5):
+def load_images(image_dir, img_size, num_samples=5):
     image_paths = sorted(Path(image_dir).glob("*.png"))[:num_samples]
     return [Image.open(img_path).convert("RGB").resize((img_size, img_size)) for img_path in image_paths]
 
 
-def load_llama_model(device):
+# def load_llama_model(device_map):
+#     from transformers import AutoProcessor, Llama4ForConditionalGeneration
+#
+#     model_id = "meta-llama/Llama-4-Scout-17B-16E-Instruct"
+#
+#     processor = AutoProcessor.from_pretrained(model_id)
+#     model = Llama4ForConditionalGeneration.from_pretrained(
+#         model_id,
+#         attn_implementation="flex_attention",
+#         device_map="auto",
+#         torch_dtype=torch.bfloat16,
+#         device_map=device_map,
+#
+#     )
+#     return model, processor
+
+def load_llama_model(
+        model_id: str = "meta-llama/Llama-4-Scout-17B-16E-Instruct",
+        gpus: int = 4,
+        dtype: str = "bfloat16",
+        use_4bit: bool = False,
+        max_mem_per_gpu_gib: int = 78,
+        attn_impl: str = "flex_attention",
+        trust_remote_code: bool = True
+):
+    import torch
     from transformers import AutoProcessor, Llama4ForConditionalGeneration
 
-    model_id = "meta-llama/Llama-4-Scout-17B-16E-Instruct"
+    torch_dtype = {"float16": torch.float16, "bfloat16": torch.bfloat16}[dtype]
+    max_memory = {i: f"{max_mem_per_gpu_gib}GiB" for i in range(gpus)}
 
-    processor = AutoProcessor.from_pretrained(model_id)
-    model = Llama4ForConditionalGeneration.from_pretrained(
-        model_id,
-        attn_implementation="flex_attention",
+    processor = AutoProcessor.from_pretrained(model_id, trust_remote_code=trust_remote_code)
+
+    kwargs = dict(
+        torch_dtype=torch_dtype,
         device_map="auto",
-        torch_dtype=torch.bfloat16,
+        max_memory=max_memory,
+        attn_implementation=attn_impl,
+        trust_remote_code=trust_remote_code,
     )
+
+    if use_4bit:
+        from transformers import BitsAndBytesConfig
+        kwargs["quantization_config"] = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_compute_dtype=torch_dtype,
+            bnb_4bit_use_double_quant=True,
+            bnb_4bit_quant_type="nf4",
+        )
+
+    model = Llama4ForConditionalGeneration.from_pretrained(model_id, **kwargs)
+
     return model, processor
 
 
@@ -129,16 +168,17 @@ def evaluate_llama(model, processor, test_images, logic_rules, device, principle
     return accuracy, f1_score, precision, recall
 
 
-def run_llama(data_path,img_size, principle, batch_size, device, img_num, epochs, start_num, task_num):
+def run_llama(data_path, img_size, principle, batch_size, device, img_num, epochs, start_num, task_num):
     init_wandb(batch_size)
-    model, processor = load_llama_model(device)
+    model_id = "meta-llama/Llama-4-Scout-17B-16E-Instruct"
+    # device_map = build_device_map_2gpus(model_id)
+    model, processor = load_llama_model()
     principle_path = Path(data_path)
 
     pattern_folders = sorted([p for p in (principle_path / "train").iterdir() if p.is_dir()], key=lambda x: x.stem)
     if not pattern_folders:
         print("No pattern folders found in", principle_path)
         return
-
 
     total_accuracy, total_f1 = [], []
     results = {}
@@ -153,10 +193,10 @@ def run_llama(data_path,img_size, principle, batch_size, device, img_num, epochs
     for pattern_folder in pattern_folders:
         rtpt.step()
 
-        train_positive = load_images(pattern_folder / "positive",img_size, img_num)
-        train_negative = load_images(pattern_folder / "negative",img_size, img_num)
-        test_positive = load_images((principle_path / "test" / pattern_folder.name) / "positive",img_size, img_num)
-        test_negative = load_images((principle_path / "test" / pattern_folder.name) / "negative",img_size, img_num)
+        train_positive = load_images(pattern_folder / "positive", img_size, img_num)
+        train_negative = load_images(pattern_folder / "negative", img_size, img_num)
+        test_positive = load_images((principle_path / "test" / pattern_folder.name) / "positive", img_size, img_num)
+        test_negative = load_images((principle_path / "test" / pattern_folder.name) / "negative", img_size, img_num)
 
         logic_rules = infer_logic_rules(model, processor, train_positive, train_negative, device, principle)
 
