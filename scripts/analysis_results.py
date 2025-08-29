@@ -991,8 +991,8 @@ def analysis_obj_ablation_performance(args):
 
             for i, cat in enumerate(categories):
                 values = [np.mean(results[principle][model_name][cat]) for model_name in official_model_names]
-
                 ax.bar(x * group_width + i * bar_width, values, width=bar_width, color=palette[i], label=model_names)
+
                 for j, model_name in enumerate(model_names):
                     ax.text(x[j] * group_width + i * bar_width, values[j] + 2, f"{values[j]:.1f}", rotation=60, ha='center', va='bottom', fontsize=10)
             ax.set_xticks(x * group_width + (n * bar_width) / 2 - bar_width / 2)
@@ -1008,12 +1008,57 @@ def analysis_obj_ablation_performance(args):
             ax.spines['right'].set_visible(False)
             if row_idx == 0 and col_idx == 0:
                 handles, labels = ax.get_legend_handles_labels()
-    fig.legend(handles[:len(model_names)], labels[:len(model_names)], loc="lower center", bbox_to_anchor=(0.5, -0.02), ncol=len(labels), fontsize=30)
+    legend_handles = [handles[0], handles[len(model_names)]]
+    fig.legend(legend_handles, ["related", "irrelated"], loc="lower center", bbox_to_anchor=(0.5, -0.02), ncol=2, fontsize=30)
     plt.tight_layout(rect=[0, 0.08, 1, 1])  # leave space for legend at bottom
     save_path = config.figure_path / f"ablation_obj_all_props_all_principles_matrix.pdf"
     plt.savefig(save_path, format="pdf", bbox_inches="tight")
     plt.close()
 
+    # Compute average accuracy for each prop across all principles and models
+    avg_results = {prop: [] for prop in props}
+    avg_irrel_results = {prop: [] for prop in props}
+    for prop in props:
+        for model_name in official_model_names:
+            rel_accs = []
+            irrel_accs = []
+            for principle in all_principles:
+                rel_accs.extend(results[principle][model_name]["related"])
+                irrel_accs.extend(results[principle][model_name]["irrelated"])
+            avg_results[prop].append(np.mean(rel_accs) if rel_accs else np.nan)
+            avg_irrel_results[prop].append(np.mean(irrel_accs) if irrel_accs else np.nan)
+
+    # Draw grouped bar chart: each subplot is a prop, bars are related/irrelated for each model
+    fig, axes = plt.subplots(1, len(props), figsize=(6 * len(props), 6), sharey=True)
+    if len(props) == 1:
+        axes = [axes]
+    bar_width = 0.35
+    x = np.arange(len(official_model_names))
+    palette = sns.color_palette("Set2", n_colors=2)
+    for idx, prop in enumerate(props):
+        ax = axes[idx]
+        rel_vals = avg_results[prop]
+        irrel_vals = avg_irrel_results[prop]
+        ax.bar(x - bar_width/2, rel_vals, width=bar_width, color=palette[0], label="related")
+        ax.bar(x + bar_width/2, irrel_vals, width=bar_width, color=palette[1], label="irrelated")
+        for i, v in enumerate(rel_vals):
+            ax.text(x[i] - bar_width/2, v + 2, f"{v:.1f}", ha='center', va='bottom', fontsize=15, rotation=60)
+        for i, v in enumerate(irrel_vals):
+            ax.text(x[i] + bar_width/2, v + 2, f"{v:.1f}", ha='center', va='bottom', fontsize=15, rotation=60)
+        ax.set_title(f"Acc: {prop}", fontsize=30, fontweight='bold')
+        if idx == 0:
+            ax.set_ylabel("Accuracy", fontsize=25)
+        ax.set_xticks(x)
+        ax.set_xticklabels(model_names, fontsize=25)
+        ax.set_ylim(0, 100)
+        ax.axhline(50, color='gray', linestyle='--', linewidth=1)
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.legend(fontsize=20)
+    plt.tight_layout()
+    save_path = config.figure_path / "obj_ablation_avg_accuracy_per_prop_grouped.pdf"
+    plt.savefig(save_path, format="pdf", bbox_inches="tight")
+    plt.show()
 
 def analysis_ablation_performance(args):
     import matplotlib.pyplot as plt
@@ -1082,13 +1127,13 @@ def analysis_ablation_performance(args):
                 values = [results[principle][model_name].get(cat, np.nan) for cat in categories]
                 ax.bar(x * group_width + i * bar_width, values, width=bar_width, color=palette[i], label=model_name)
                 for j, v in enumerate(values):
-                    ax.text(x[j] * group_width + i * bar_width, v + 2, f"{v:.1f}", rotation=60, ha='center', va='bottom', fontsize=10)
+                    ax.text(x[j] * group_width + i * bar_width, v + 2, f"{v:.1f}", rotation=90, ha='center', va='bottom', fontsize=10)
             ax.set_xticks(x * group_width + (n * bar_width) / 2 - bar_width / 2)
             ax.set_xticklabels(categories, fontsize=30, ha='right')
             ax.set_xlabel(prop, fontsize=25)
             if row_idx == 0:
                 ax.set_title(principle, fontsize=35, fontweight='bold')
-            ax.set_ylim(0, 70)
+            ax.set_ylim(0, 100)
             if col_idx == 0:
                 ax.set_ylabel('Accuracy', fontsize=25)
             ax.axhline(50, color='gray', linestyle='--', linewidth=1)
@@ -1097,7 +1142,9 @@ def analysis_ablation_performance(args):
             if row_idx == 0 and col_idx == 0:
                 handles, labels = ax.get_legend_handles_labels()
                 # ax.legend(title="Model", fontsize=12, loc='best')
-    fig.legend(handles, labels, loc="lower center", bbox_to_anchor=(0.5, -0.02), ncol=len(labels), fontsize=30)
+    fig.legend(handles, labels, loc="lower center",
+               bbox_to_anchor=(0.5, -0.08), ncol=3,
+               fontsize=30, frameon=True)
     plt.tight_layout(rect=[0, 0.08, 1, 1])  # leave space for legend at bottom
     save_path = config.figure_path / f"ablation_all_props_all_principles_matrix.pdf"
     plt.savefig(save_path, format="pdf", bbox_inches="tight")

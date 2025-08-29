@@ -102,7 +102,7 @@ python -m scripts.main --remote --principle all --img_size 448
 
 
 ##### train llama
-CUDA_VISIBLE_DEVICES=1,2,3 python -m scripts.evaluate_models --model llama --batch_size 1 --principle proximity --img_num 3 --task_num 5 --device_id 0
+CUDA_VISIBLE_DEVICES=1,2,3,4 python -m scripts.evaluate_models --model llama --batch_size 1 --principle proximity --img_num 3 --task_num 5 --device_id 0
 ##### train internVL
 python -m scripts.evaluate_models --batch_size 1 --principle proximity --img_num 3 --model internVL --device_id 6
 python -m scripts.evaluate_models --batch_size 1 --principle similarity --img_num 3 --model internVL --device_id 2
@@ -142,7 +142,7 @@ python -m scripts.evaluate_models --batch_size 1 --principle symmetry --img_num 
 python -m scripts.evaluate_models --batch_size 1 --principle continuity --img_num 3 --model llava --device_id 5
 
 # train gpt5
-python -m scripts.evaluate_models --batch_size 1 --principle proximity --model gpt5 --device_id 2
+python -m scripts.evaluate_models --batch_size 1 --principle proximity --model gpt5 --img_num 3 --device_id 3
 python -m scripts.evaluate_models --batch_size 1 --principle similarity --img_num 3 --model gpt5 --start_num 0 --task_num 3 --device_id 4
 
 

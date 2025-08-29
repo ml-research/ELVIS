@@ -87,7 +87,6 @@ def infer_logic_rules(model, processor, train_positive, train_negative, device, 
     torch.cuda.empty_cache()
     # Prepare a batch of two prompts, where the first one is a multi-turn conversation and the second is not
     conversation = conversations.llama_reasoning_conversation(train_positive, train_negative, principle)
-
     inputs = processor.apply_chat_template(
         conversation,
         add_generation_prompt=True,
@@ -96,10 +95,7 @@ def infer_logic_rules(model, processor, train_positive, train_negative, device, 
         return_tensors="pt",
     ).to(model.device)
 
-    outputs = model.generate(
-        **inputs,
-        max_new_tokens=256,
-    )
+    outputs = model.generate(**inputs, max_new_tokens=256,)
 
     response = processor.batch_decode(outputs[:, inputs["input_ids"].shape[-1]:])[0]
     print(response)
