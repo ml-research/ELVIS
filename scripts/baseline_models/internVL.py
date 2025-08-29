@@ -476,7 +476,7 @@ def run_internVL_X(data_path, img_size, principle, batch_size, device, img_num, 
 #     return avg_accuracy, avg_f1
 
 
-def run_internVL(data_path, img_size, principle, batch_size, device, img_num, epochs, task_num):
+def run_internVL(data_path, img_size, principle, batch_size, device, img_num, epochs,start_num, task_num):
     init_wandb(batch_size, principle)
 
     principle_path = Path(data_path)
@@ -490,9 +490,10 @@ def run_internVL(data_path, img_size, principle, batch_size, device, img_num, ep
     total_precision_scores = []
     total_recall_scores = []
 
+
     if task_num != "full":
         task_num = int(task_num)
-        pattern_folders = pattern_folders[:task_num]
+        pattern_folders = pattern_folders[start_num:start_num + task_num]
 
     rtpt = RTPT(name_initials='JIS', experiment_name='Elvis-vit', max_iterations=len(pattern_folders))
     rtpt.start()
@@ -503,6 +504,7 @@ def run_internVL(data_path, img_size, principle, batch_size, device, img_num, ep
     #     print(f"Processing pattern folder: {pattern_folder.name}")
 
     for pattern_folder in tqdm(pattern_folders):
+        rtpt.step()
         print(f"Evaluating pattern: {pattern_folder.name}")
         train_positive = load_images(pattern_folder / "positive", img_size, img_num)
         train_negative = load_images(pattern_folder / "negative", img_size, img_num)
