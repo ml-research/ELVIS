@@ -12,10 +12,10 @@ def get_num_samples(lite=False):
     if lite:
         return 3
     else:
-        return 5
+        return 100
 
 
-img_width = 1024
+img_width = 224
 prin_in_neg = False
 
 # quantity settings
