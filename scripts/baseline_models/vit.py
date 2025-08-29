@@ -201,7 +201,7 @@ def run_vit(data_path, img_size, principle, batch_size, device, img_num, epochs,
         task_num = int(task_num)
         pattern_folders = pattern_folders[start_num:start_num + task_num]
 
-    rtpt = RTPT(name_initials='JIS', experiment_name='Elvis-vit', max_iterations=len(pattern_folders))
+    rtpt = RTPT(name_initials='JIS', experiment_name=f'Elvis-vit-{principle}', max_iterations=len(pattern_folders))
     rtpt.start()
 
     for pattern_folder in tqdm(pattern_folders):
