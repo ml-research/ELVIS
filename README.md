@@ -102,7 +102,7 @@ python -m scripts.main --remote --principle all --img_size 448
 
 
 ##### train llama
-python -m scripts.evaluate_models --model llama --batch_size 2 --principle proximity --img_num 3 --task_num 5 --device_id 6
+CUDA_VISIBLE_DEVICES=1,2,3 python -m scripts.evaluate_models --model llama --batch_size 1 --principle proximity --img_num 3 --task_num 5 --device_id 0
 ##### train internVL
 python -m scripts.evaluate_models --batch_size 1 --principle proximity --img_num 3 --model internVL --device_id 6
 python -m scripts.evaluate_models --batch_size 1 --principle similarity --img_num 3 --model internVL --device_id 2

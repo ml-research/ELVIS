@@ -20,9 +20,9 @@ def init_wandb(batch_size):
     wandb.init(project="LLAMA-Gestalt-Patterns", config={"batch_size": batch_size})
 
 
-def load_images(image_dir, num_samples=5):
+def load_images(image_dir,img_size, num_samples=5):
     image_paths = sorted(Path(image_dir).glob("*.png"))[:num_samples]
-    return [Image.open(img_path).convert("RGB").resize((224, 224)) for img_path in image_paths]
+    return [Image.open(img_path).convert("RGB").resize((img_size, img_size)) for img_path in image_paths]
 
 
 def load_llama_model(device):
@@ -129,29 +129,34 @@ def evaluate_llama(model, processor, test_images, logic_rules, device, principle
     return accuracy, f1_score, precision, recall
 
 
-def run_llama(data_path, principle, batch_size, device, img_num, epochs, task_num):
+def run_llama(data_path,img_size, principle, batch_size, device, img_num, epochs, start_num, task_num):
     init_wandb(batch_size)
     model, processor = load_llama_model(device)
     principle_path = Path(data_path)
 
-    pattern_folders = sorted((principle_path / "train").iterdir())
+    pattern_folders = sorted([p for p in (principle_path / "train").iterdir() if p.is_dir()], key=lambda x: x.stem)
     if not pattern_folders:
         print("No pattern folders found in", principle_path)
         return
+
 
     total_accuracy, total_f1 = [], []
     results = {}
     total_precision_scores = []
     total_recall_scores = []
-    rtpt = RTPT(name_initials='JS', experiment_name=f'Elvis-llama-{principle}', max_iterations=len(pattern_folders))
+    if task_num != "full":
+        task_num = int(task_num)
+        pattern_folders = pattern_folders[start_num:start_num + task_num]
+
+    rtpt = RTPT(name_initials='JIS', experiment_name=f'Elvis-llama-{principle}', max_iterations=len(pattern_folders))
     rtpt.start()
     for pattern_folder in pattern_folders:
         rtpt.step()
 
-        train_positive = load_images(pattern_folder / "positive", img_num)
-        train_negative = load_images(pattern_folder / "negative", img_num)
-        test_positive = load_images((principle_path / "test" / pattern_folder.name) / "positive", img_num)
-        test_negative = load_images((principle_path / "test" / pattern_folder.name) / "negative", img_num)
+        train_positive = load_images(pattern_folder / "positive",img_size, img_num)
+        train_negative = load_images(pattern_folder / "negative",img_size, img_num)
+        test_positive = load_images((principle_path / "test" / pattern_folder.name) / "positive",img_size, img_num)
+        test_negative = load_images((principle_path / "test" / pattern_folder.name) / "negative",img_size, img_num)
 
         logic_rules = infer_logic_rules(model, processor, train_positive, train_negative, device, principle)
 
@@ -173,13 +178,13 @@ def run_llama(data_path, principle, batch_size, device, img_num, epochs, task_nu
     avg_accuracy = sum(total_accuracy) / len(total_accuracy) if total_accuracy else 0
     avg_f1 = sum(total_f1) / len(total_f1) if total_f1 else 0
 
-    results["average"] = {"accuracy": avg_accuracy,
-                          "f1_score": avg_f1}
+    # results["average"] = {"accuracy": avg_accuracy,
+    #                       "f1_score": avg_f1}
 
     # Save results to JSON file
     output_dir = f"/elvis_result/{principle}"
     os.makedirs(output_dir, exist_ok=True)
-    results_path = Path(output_dir) / f"llama_{principle}_eval_res_img_num_{img_num}_{timestamp}.json"
+    results_path = Path(output_dir) / f"llama_{principle}_eval_res_{img_size}_img_num_{img_num}_{timestamp}.json"
     # results_path = Path(data_path) / f"llama_{principle}.json"
     with open(results_path, "w") as json_file:
         json.dump(results, json_file, indent=4)
