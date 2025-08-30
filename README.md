@@ -92,11 +92,11 @@ ln -s /home/ml-jsha/nesy_causal_p/storage/dataset/grb /home/ml-jsha/ELVIS/grb
 #### Generate Patterns
 
 ```
-python -m scripts.main --remote --principle similarity --img_size 112
-python -m scripts.main --remote --principle closure --img_size 112
-python -m scripts.main --remote --principle proximity 
-python -m scripts.main --remote --principle symmetry --img_size 112
-python -m scripts.main --remote --principle continuity
+python -m scripts.main --remote --principle similarity --img_size 1024
+python -m scripts.main --remote --principle closure --img_size 1024
+python -m scripts.main --remote --principle proximity --img_size 224
+python -m scripts.main --remote --principle symmetry --img_size 1024
+python -m scripts.main --remote --principle continuity --img_size 1024
 python -m scripts.main --remote --principle all --img_size 448
 ``` 
 

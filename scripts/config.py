@@ -12,7 +12,7 @@ def get_num_samples(lite=False):
     if lite:
         return 3
     else:
-        return 3
+        return 100
 
 
 img_width = 224
