@@ -141,14 +141,14 @@ def run_gpt5(data_path, img_size, principle, batch_size, device, img_num, epochs
         total_f1.append(f1)
         total_precision_scores.append(precision)
         total_recall_scores.append(recall)
-    avg_accuracy = sum(total_accuracy) / len(total_accuracy) if total_accuracy else 0
-    avg_f1 = sum(total_f1) / len(total_f1) if total_f1 else 0
-    output_dir = f"/elvis_result/{principle}"
-    os.makedirs(output_dir, exist_ok=True)
-    results_path = Path(output_dir) / f"gpt5_{principle}_eval_res_{img_size}_img_num_{img_num}_{timestamp}.json"
-    with open(results_path, "w") as json_file:
-        json.dump(results, json_file, indent=4)
-    print("Evaluation complete. Results saved to evaluation_results.json.")
-    print(f"Overall Average Accuracy: {avg_accuracy:.2f}% | Average F1 Score: {avg_f1:.4f}")
+        avg_accuracy = sum(total_accuracy) / len(total_accuracy) if total_accuracy else 0
+        avg_f1 = sum(total_f1) / len(total_f1) if total_f1 else 0
+        output_dir = f"/elvis_result/{principle}"
+        os.makedirs(output_dir, exist_ok=True)
+        results_path = Path(output_dir) / f"gpt5_{principle}_eval_res_{img_size}_img_num_{img_num}_{timestamp}.json"
+        with open(results_path, "w") as json_file:
+            json.dump(results, json_file, indent=4)
+        print("Evaluation complete. Results saved to evaluation_results.json.")
+        print(f"Overall Average Accuracy: {avg_accuracy:.2f}% | Average F1 Score: {avg_f1:.4f}")
     wandb.finish()
     return avg_accuracy, avg_f1
