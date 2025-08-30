@@ -354,7 +354,7 @@ if __name__ == "__main__":
     parser.add_argument("--remote", action="store_true")
     parser.add_argument("--lite", action="store_true")
     parser.add_argument("--principle", type=str)
-    parser.add_argument("--img_size", type=int, default=224, choices=[224, 448, 1024])
+    parser.add_argument("--img_size", type=int, default=224, choices=[112, 224, 448, 1024])
     parser.add_argument("--labelOn", action="store_true", help="Show labels on the generated images.")
     args = parser.parse_args()
 
