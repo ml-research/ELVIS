@@ -15,7 +15,7 @@ def get_num_samples(lite=False):
         return 100
 
 
-img_width = 224
+img_width = 112
 prin_in_neg = False
 
 # quantity settings

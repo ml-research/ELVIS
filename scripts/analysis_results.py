@@ -695,7 +695,7 @@ def analysis_average_performance(json_path, principle, model_name, img_num):
     # load the JSON data
     with open(json_path, 'r') as f:
         data = json.load(f)
-    if model_name == "vit":
+    if "vit" in model_name:
         per_task_data = data[principle]
     else:
         per_task_data = data

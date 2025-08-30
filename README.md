@@ -94,7 +94,7 @@ ln -s /home/ml-jsha/nesy_causal_p/storage/dataset/grb /home/ml-jsha/ELVIS/grb
 ```
 python -m scripts.main --remote --principle similarity
 python -m scripts.main --remote --principle closure
-python -m scripts.main --remote --principle proximity
+python -m scripts.main --remote --principle proximity 
 python -m scripts.main --remote --principle symmetry
 python -m scripts.main --remote --principle continuity
 python -m scripts.main --remote --principle all --img_size 448
@@ -107,11 +107,11 @@ CUDA_VISIBLE_DEVICES=1,2,3,4 python -m scripts.evaluate_models --model llama --b
 python -m scripts.evaluate_models --batch_size 1 --principle proximity --img_num 3 --model internVL --device_id 6
 python -m scripts.evaluate_models --batch_size 1 --principle similarity --img_num 3 --model internVL --device_id 2
 python -m scripts.evaluate_models --batch_size 1 --principle closure --img_num 3 --model internVL --device_id 7
-python -m scripts.evaluate_models --batch_size 1 --principle symmetry --img_num 3 --model internVL --device_id 5
+python -m scripts.evaluate_models --batch_size 1 --principle symmetry --img_num 3 --model internVL --device_id 3
 python -m scripts.evaluate_models --batch_size 1 --principle continuity --img_num 3 --model internVL --device_id 1
 
 ##### train internVL 78B
-CUDA_VISIBLE_DEVICES=0,1,2 python -m scripts.evaluate_models --batch_size 1 --principle proximity --img_num 3 --model internVL_X --device_id 0 --img_size 448
+CUDA_VISIBLE_DEVICES=0,1,2 python -m scripts.evaluate_models --batch_size 1 --principle symmetry --img_num 3 --model internVL_X --device_id 0 --img_size 224
 CUDA_VISIBLE_DEVICES=1,2,3 python -m scripts.evaluate_models --batch_size 1 --principle closure --img_num 3 --model internVL_X --device_id 0 --img_size 448
 python -m scripts.evaluate_models --batch_size 1 --principle closure --img_num 3 --model internVL --device_id 7
 python -m scripts.evaluate_models --batch_size 1 --principle symmetry --img_num 3 --model internVL --device_id 7
@@ -129,7 +129,7 @@ python -m scripts.evaluate_models --batch_size 100 --principle closure --img_num
 python -m scripts.evaluate_models --batch_size 4 --principle closure --img_num 100 --model vit --device_id 5
 
 python -m scripts.evaluate_models --batch_size 100 --principle symmetry --img_num 3 --model vit --device_id 15
-python -m scripts.evaluate_models --batch_size 4 --principle symmetry --img_num 100 --model vit --start_num 400 --task_num 100 --device_id 4
+python -m scripts.evaluate_models --batch_size 4 --principle symmetry --img_num 100 --model vit --device_id 14
 
 python -m scripts.evaluate_models --batch_size 100 --principle continuity --img_num 3 --model vit --task_num 20 --start_num 300 --device_id 7
 python -m scripts.evaluate_models --batch_size 4 --principle continuity --img_num 100 --model vit --device_id 7
@@ -138,14 +138,14 @@ python -m scripts.evaluate_models --batch_size 4 --principle continuity --img_nu
 python -m scripts.evaluate_models --batch_size 1 --principle proximity --img_num 3 --model llava --device_id 7
 python -m scripts.evaluate_models --batch_size 1 --principle similarity --img_num 3 --model llava --device_id 2
 python -m scripts.evaluate_models --batch_size 1 --principle closure  --img_num 3 --model llava --device_id 6
-python -m scripts.evaluate_models --batch_size 1 --principle symmetry --img_num 3 --model llava  --device_id 6
+python -m scripts.evaluate_models --batch_size 1 --principle symmetry --img_num 3 --model llava  --device_id 5
 python -m scripts.evaluate_models --batch_size 1 --principle continuity --img_num 3 --model llava --device_id 5
 
 # train gpt5
 python -m scripts.evaluate_models --batch_size 1 --principle proximity --model gpt5 --img_num 3 --device_id 3
 python -m scripts.evaluate_models --batch_size 1 --principle similarity --model gpt5 --img_num 3 --device_id 3
-python -m scripts.evaluate_models --batch_size 1 --principle closure --model gpt5 --img_num 3 --device_id 3
-python -m scripts.evaluate_models --batch_size 1 --principle symmetry --model gpt5 --img_num 3 --device_id 3
+python -m scripts.evaluate_models --batch_size 1 --principle closure --model gpt5 --img_num 3 --device_id 0
+python -m scripts.evaluate_models --batch_size 1 --principle symmetry --model gpt5 --img_num 3 --device_id 1
 python -m scripts.evaluate_models --batch_size 1 --principle continuity --model gpt5 --img_num 3 --device_id 3
 
 
