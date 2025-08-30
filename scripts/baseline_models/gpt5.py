@@ -110,8 +110,10 @@ def run_gpt5(data_path, img_size, principle, batch_size, device, img_num, epochs
 
     if task_num != "full":
         task_num = int(task_num)
-        pattern_folders = pattern_folders[start_num:start_num + task_num]
-
+        if task_num != "end":
+            pattern_folders = pattern_folders[start_num:start_num + task_num]
+        else:
+            pattern_folders = pattern_folders[start_num:start_num + task_num]
     rtpt = RTPT(name_initials='JIS', experiment_name=f'Elvis-gpt5-{principle}', max_iterations=len(pattern_folders))
     rtpt.start()
     for pattern_folder in pattern_folders:

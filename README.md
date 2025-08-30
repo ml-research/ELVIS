@@ -167,7 +167,7 @@ python -m scripts.evaluate_models --batch_size 1 --principle proximity --model g
 python -m scripts.evaluate_models --batch_size 1 --principle similarity --model gpt5 --img_num 3 --device_id 3
 python -m scripts.evaluate_models --batch_size 1 --principle closure --model gpt5 --img_num 3 --device_id 0
 python -m scripts.evaluate_models --batch_size 1 --principle symmetry --model gpt5 --img_num 3 --device_id 1
-python -m scripts.evaluate_models --batch_size 1 --principle continuity --model gpt5 --img_num 3 --device_id 0
+python -m scripts.evaluate_models --batch_size 1 --principle continuity --model gpt5 --img_num 3 --start_num 147 --device_id 0
 
 ##### Analysis Results
 
