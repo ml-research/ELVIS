@@ -119,7 +119,7 @@ def run_gpt5(data_path, img_size, principle, batch_size, device, img_num, epochs
     rtpt.start()
     for pattern_folder in pattern_folders:
         rtpt.step()
-
+        print(f"Processing pattern: {pattern_folder.name}")
         train_positive = load_images(pattern_folder / "positive", img_num)
         train_negative = load_images(pattern_folder / "negative", img_num)
 
