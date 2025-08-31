@@ -74,8 +74,6 @@ def get_raw_patterns_path(remote=False):
     if not os.path.exists(raw_patterns_path):
         os.makedirs(raw_patterns_path)
     return raw_patterns_path
-
-
 # -------------- llm path -----------------------
 cache_model_path = data / "llm_pretrained"
 if not os.path.exists(cache_model_path):
@@ -84,17 +82,20 @@ if not os.path.exists(cache_model_path):
 scripts = root / 'scripts'
 if not os.path.exists(scripts):
     os.mkdir(scripts)
-
 result_path = root / 'baseline_results'
 figure_path = result_path / 'figures'
 os.makedirs(figure_path, exist_ok=True)
-
 # -------------- categories -----------------------
 categories = {
     "proximity": ["red_triangle", "grid", "fixed_props", "circle_features"],
     "similarity": ["fixed_number", "pacman", "palette"],
     "closure": ["big_triangle", "big_square", "big_circle", "feature_triangle", "feature_square", "feature_circle"],
     "symmetry": ["solar_sys", "symmetry_circle", "symmetry_pattern"],
-    "continuity": ["one_split_n", "with_intersected_n_splines", "non_intersected_n_splines", "feature_continuity_overlap_splines"]
+    "continuity": ["one_split_n", "with_intersected_n_splines", "non_intersected_n_splines", "feature_continuity_overlap_splines"]}
 
+
+name_map = {
+    "solar_sys": "axis_symmetry_with_bkg",
+    "symmetry_circle": "axis_symmetry",
+    "symmetry_pattern": "rotational_symmetry",
 }

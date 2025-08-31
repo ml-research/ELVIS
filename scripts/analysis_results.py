@@ -15,11 +15,12 @@ import seaborn as sns
 import matplotlib
 
 model_dict = {
-    "vit_base_patch16_224/3": {"model": "vit", "img_num": 3},
-    "vit_base_patch16_224/100": {"model": "vit", "img_num": 100},
-    "llava-onevision-qwen2-7b-si-hf/3": {"model": "llava", "img_num": 3},
-    "InternVL3-2B/3": {"model": "internVL3_2B", "img_num": 3},
-    "InternVL3-78B/3": {"model": "internVL3_78B", "img_num": 3},
+    "vit_base_patch16_224": {"model": "vit", "img_num": 3},
+    # "vit_base_patch16_224/100": {"model": "vit", "img_num": 100},
+    "llava-onevision-qwen2-7b": {"model": "llava", "img_num": 3},
+    "InternVL3-2B": {"model": "internVL3_2B", "img_num": 3},
+    "InternVL3-78B": {"model": "internVL3_78B", "img_num": 3},
+    "GPT-5": {"model": "gpt5", "img_num": 3},
 
 }
 
@@ -181,11 +182,12 @@ def analysis_llava(principle, model_name):
 def draw_f1_heat_map(csv_files, model_names, gestalt_principles):
     # Function to categorize tasks
     category_acc_scores = {
-        "vit_base_patch16_224/3": pd.Series(dtype=float),
-        "vit_base_patch16_224/100": pd.Series(dtype=float),
-        "llava-onevision-qwen2-7b-si-hf/3": pd.Series(dtype=float),
-        "InternVL3-2B/3": pd.Series(dtype=float),
-        "InternVL3-78B/3": pd.Series(dtype=float),
+        "vit_base_patch16_224": pd.Series(dtype=float),
+        # "vit_base_patch16_224": pd.Series(dtype=float),
+        "llava-onevision-qwen2-7b": pd.Series(dtype=float),
+        "InternVL3-2B": pd.Series(dtype=float),
+        "InternVL3-78B": pd.Series(dtype=float),
+        "GPT-5": pd.Series(dtype=float),
         # "llava-onevision-qwen2-7b-si-hf/3": pd.Series(dtype=float)
     }
 
@@ -200,21 +202,29 @@ def draw_f1_heat_map(csv_files, model_names, gestalt_principles):
                         return category
 
             if "vit_3" in file.name:
-                model_name = "vit_base_patch16_224/3"
-            elif "vit_100" in file.name:
-                model_name = "vit_base_patch16_224/100"
+                model_name = "vit_base_patch16_224"
             elif "llava" in file.name:
-                model_name = "llava-onevision-qwen2-7b-si-hf/3"
+                model_name = "llava-onevision-qwen2-7b"
             elif "internVL3_78B" in file.name:
-                model_name = "InternVL3-78B/3"
+                model_name = "InternVL3-78B"
             elif "internVL3_2B" in file.name:
-                model_name = "InternVL3-2B/3"
+                model_name = "InternVL3-2B"
+            elif "gpt5" in file.name:
+                model_name = "GPT-5"
             else:
                 raise ValueError("Unknown model in file name:", file.name)
             # df = df.reindex(tmp_df.index, fill_value=0)
             categories = config.categories[principle]
             df["Category"] = df.index.map(categorize_task)
             category_avg_f1 = df.groupby("Category")["F1 Score"].mean()
+
+            # iterative the category_avg_f1, check the name if it is in the config.name_map, then replace it with the value
+            if "symmetry" in str(file):
+                for cat in category_avg_f1.index:
+                    if cat in config.name_map:
+                        new_name = config.name_map[cat]
+                        category_avg_f1 = category_avg_f1.rename(index={cat: new_name})
+
             category_acc_scores[model_name] = pd.concat([category_acc_scores[model_name], category_avg_f1])  # Store results
     # Convert dictionary to DataFrame for heatmap
     heatmap_data = pd.DataFrame(category_acc_scores)
@@ -222,8 +232,10 @@ def draw_f1_heat_map(csv_files, model_names, gestalt_principles):
     # Adjust figure size dynamically based on the number of columns
     plt.figure(figsize=(max(15, len(heatmap_data.columns) * 1.5), 4))  # Auto-scale width
     ax = sns.heatmap(heatmap_data.T, cmap="coolwarm", annot=True, fmt=".2f", linewidths=0.8,
-                     cbar_kws={'label': 'F1 Score'})
+                     cbar_kws={'label': 'F1 Score'}
+                     )
     ax2 = ax.twiny()  # Create a secondary x-axis
+    ax.set_yticklabels(ax.get_yticklabels(), fontsize=15)  # Increase y-axis label font size
 
     counts = 0
     principle_pos = []
