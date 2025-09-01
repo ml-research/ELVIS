@@ -107,77 +107,6 @@ def analysis_llava(principle, model_name):
                                     dataframe=formatted_performance_table)
 
 
-# def draw_f1_heat_map(csv_files, model_names, gestalt_principles):
-#     """
-#     Draws and saves a heatmap showing F1 scores of models across tasks,
-#     grouping tasks into 5 areas corresponding to different Gestalt principles.
-#
-#     Args:
-#         csv_files (dict): Dictionary where keys are Gestalt principles and values are lists of CSV files.
-#         model_names (list): List of model names.
-#         gestalt_principles (dict): Dictionary mapping Gestalt principles to column ranges.
-#     """
-#
-#     path = config.results
-#     category_f1_scores = {model: pd.Series(dtype=float) for model in model_names}
-#
-#     for principle, principle_csv_files in csv_files.items():
-#         for file in principle_csv_files:
-#             df = pd.read_csv(file, index_col=0)  # Load CSV and set first column as index (model names)
-#
-#             # Categorize tasks
-#             def categorize_task(task_name):
-#                 for category in config.categories[principle]:
-#                     if category in task_name:
-#                         return category
-#
-#             # Identify model name from file name
-#             if "vit_3" in file.name:
-#                 model_name = "vit_3"
-#             elif "vit_100" in file.name:
-#                 model_name = "vit_100"
-#             else:
-#                 model_name = "llava"
-#
-#             df["Category"] = df.index.map(categorize_task)
-#             category_avg_f1 = df.groupby("Category")["F1 Score"].mean()
-#             category_f1_scores[model_name] = pd.concat([category_f1_scores[model_name], category_avg_f1])
-#
-#     # Convert dictionary to DataFrame for heatmap
-#     heatmap_data = pd.DataFrame(category_f1_scores)
-#
-#     # Plot the heatmap
-#     plt.figure(figsize=(12, 6))
-#     ax = sns.heatmap(heatmap_data.T, cmap="coolwarm", annot=True, fmt=".2f", linewidths=0.8, cbar_kws={'label': 'F1 Score'})
-#
-#     # **Add vertical separators for Gestalt principles**
-#     column_positions = [0]  # Start at the first column
-#     col_names = list(heatmap_data.columns)
-#
-#     # Compute column splits based on Gestalt principles
-#     for principle, categories in gestalt_principles.items():
-#         end_col_idx = max([col_names.index(cat) for cat in categories if cat in col_names], default=0)
-#         column_positions.append(end_col_idx + 1)
-#
-#     # Draw vertical lines between sections
-#     for pos in column_positions[1:-1]:  # Avoid the last position
-#         ax.axvline(pos, color='black', linestyle='dashed', linewidth=1.5)
-#
-#     # **Label each Gestalt principle in the center of its area**
-#     mid_positions = [(column_positions[i] + column_positions[i+1]) / 2 for i in range(len(column_positions)-1)]
-#     plt.xticks(mid_positions, list(gestalt_principles.keys()), fontsize=12, rotation=30)
-#
-#     # Labels
-#     plt.xlabel("Gestalt Principles", fontsize=12)
-#     plt.ylabel("Models", fontsize=12)
-#
-#     # Save the heatmap as a PDF file
-#     heat_map_filename = path / "f1_heat_map.pdf"
-#     plt.tight_layout()
-#     plt.savefig(heat_map_filename, format="pdf", bbox_inches="tight")
-#
-#     print(f"Heatmap saved to: {heat_map_filename}")
-
 
 def draw_f1_heat_map(csv_files, model_names, gestalt_principles):
     # Function to categorize tasks
@@ -506,50 +435,6 @@ def analysis_result(principles, data):
     print(f"F1 Score: mean={mean_f1:.3f}, std={std_f1:.3f}")
 
 
-# def draw_category_subfigures(results, save_path=None):
-#     models = list(results.keys())
-#     categories = list(next(iter(results.values())).keys())
-#     n_cats = len(categories)
-#     n_cols = min(6, n_cats)
-#     n_rows = int(np.ceil(n_cats / n_cols))
-#
-#     fig_width = 15
-#     fig_height = 2.5 * n_rows
-#     fig, axes = plt.subplots(n_rows, n_cols, figsize=(fig_width, fig_height), squeeze=False)
-#
-#     palette = sns.color_palette("Set2", n_colors=len(models))
-#
-#     for idx, cat in enumerate(categories):
-#         row, col = divmod(idx, n_cols)
-#         ax = axes[row][col]
-#         values = [results[model].get(cat, np.nan) for model in models]
-#         bars = ax.bar(range(len(models)), values, color=palette)
-#         ax.set_title(cat, fontsize=10, fontweight='bold', pad=6)
-#         ax.set_ylim(0, 100)
-#         ax.set_ylabel('Acc.', fontsize=8)
-#         ax.yaxis.set_label_coords(-0.08, 0.5)
-#         ax.set_xticks(range(len(models)))
-#         ax.set_xticklabels(models, fontsize=8, rotation=20)
-#         ax.tick_params(axis='y', labelsize=8)
-#         yticks = ax.get_yticks()
-#         ax.set_yticks(yticks[::2])
-#         for i, v in enumerate(values):
-#             ax.text(i, v + 2, f"{v:.1f}", ha='center', va='bottom', fontsize=7)
-#         ax.margins(y=0.15)
-#         # Remove top and right spines
-#         ax.spines['top'].set_visible(False)
-#         ax.spines['right'].set_visible(False)
-#         # Add 50% dashed line
-#         ax.axhline(50, color='gray', linestyle='--', linewidth=1)
-#     # Hide unused subplots
-#     for idx in range(n_cats, n_rows * n_cols):
-#         row, col = divmod(idx, n_cols)
-#         fig.delaxes(axes[row][col])
-#     fig.suptitle(f'Mean Accuracy by Category', fontsize=12, fontweight='bold', y=0.99)
-#     plt.tight_layout(rect=[0, 0, 1, 0.97], pad=1.0, h_pad=1.2, w_pad=1.2)
-#     if save_path:
-#         plt.savefig(save_path, format="pdf", bbox_inches="tight")
-#     plt.show()
 
 
 def draw_grouped_categories(results, name, x_label, save_path=None):
@@ -1007,12 +892,12 @@ def analysis_obj_ablation_performance(args):
 
                 for j, model_name in enumerate(model_names):
                     ax.text(x[j] * group_width + i * bar_width, values[j] + 2, f"{values[j]:.1f}", rotation=60, ha='center', va='bottom', fontsize=10)
-            ax.set_xticks(x * group_width + (n * bar_width) / 2 - bar_width / 2)
+            ax.set_xticks(x * group_width + (n * bar_width) / 2)
             ax.set_xticklabels(model_names, fontsize=30, ha='right')
             ax.set_xlabel(prop, fontsize=25)
             if row_idx == 0:
                 ax.set_title(principle, fontsize=35, fontweight='bold')
-            ax.set_ylim(0, 70)
+            ax.set_ylim(0, 100)
             if col_idx == 0:
                 ax.set_ylabel('Accuracy', fontsize=25)
             ax.axhline(50, color='gray', linestyle='--', linewidth=1)
@@ -1066,7 +951,7 @@ def analysis_obj_ablation_performance(args):
         ax.axhline(50, color='gray', linestyle='--', linewidth=1)
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
-        ax.legend(fontsize=20)
+        ax.legend(fontsize=20, loc='upper left')
     plt.tight_layout()
     save_path = config.figure_path / "obj_ablation_avg_accuracy_per_prop_grouped.pdf"
     plt.savefig(save_path, format="pdf", bbox_inches="tight")
