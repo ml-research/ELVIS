@@ -15,7 +15,7 @@ def upload_to_huggingface(args):
     if args.remote:
         source_folder = f"/home/ml-jsha/storage/ELVIS_Data/res_{args.resolution}_pin_False"
     else:
-        source_folder = Path(f"/Users/jing/PycharmProjects/ELVIS/data/raw_patterns/res_{args.resolution}_pin_False")
+        source_folder = Path(f"/Users/jing/PycharmProjects/ELVIS/gen_data/res_{args.resolution}_pin_False")
 
     upload_folder = Path("./upload_repo")  # local working dir
     # ===============

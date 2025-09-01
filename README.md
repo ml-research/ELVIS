@@ -116,6 +116,12 @@ python -m scripts.main --remote --principle continuity --img_size 1024
 python -m scripts.main --remote --principle all --img_size 448
 ``` 
 
+##### upload patterns to hg
+
+``` 
+python -m scripts.huggingface_upload --remote --resolution 224
+```
+
 ##### train llama
 
 CUDA_VISIBLE_DEVICES=1,2,3,4 python -m scripts.evaluate_models --model llama --batch_size 1 --principle proximity --img_num 3 --task_num 5 --device_id 0
@@ -170,14 +176,11 @@ python -m scripts.evaluate_models --batch_size 1 --principle symmetry --model gp
 python -m scripts.evaluate_models --batch_size 1 --principle continuity --model gpt5 --img_num 3 --start_num 147 --task_num end --device_id 15
 
 ##### Analysis Results
-
 ``` 
 python -m scripts.analysis_results --principle proximity --remote --model vit
-
 ```
 
 ```
-
 ## File Structure
 ```
 

@@ -16,7 +16,6 @@ import matplotlib
 
 model_dict = {
     "vit_base_patch16_224": {"model": "vit", "img_num": 3},
-    # "vit_base_patch16_224/100": {"model": "vit", "img_num": 100},
     "llava-onevision-qwen2-7b": {"model": "llava", "img_num": 3},
     "InternVL3-2B": {"model": "internVL3_2B", "img_num": 3},
     "InternVL3-78B": {"model": "internVL3_78B", "img_num": 3},
@@ -1089,7 +1088,6 @@ def main():
     parser.add_argument("--mode", type=str, default="avg_principle")
     parser.add_argument("--img_num", type=int)
     args = parser.parse_args()
-
     json_path = get_results_path(args.remote, args.principle, args.model, args.img_num)
 
     if args.mode == "principle":
