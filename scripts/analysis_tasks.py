@@ -41,27 +41,9 @@ def main(args):
         neg_json_files = list(Path(task_folder).glob("negative/*.json"))
         all_json_files.extend(pos_json_files)
         all_json_files.extend(neg_json_files)
-
         for json_file in all_json_files:
-
-            # load the JSON file and process it
             data = load_json(json_file)
             statistic_data["objs_per_img"].append(len(data["img_data"]))
-
-            # Here you can add code to process each JSON file
-            # For example, you might want to load the JSON data and analyze it
-            # with open(json_file, 'r') as f:
-            #     json_data = json.load(f)
-            #     # Process json_data as needed
-        # Here you can add code to process each task folder
-        # For example, you might want to load images, analyze data, etc.
-        # data_path = os.path.join(task_folder, "data.json")
-        # if os.path.exists(data_path):
-        #     with open(data_path, 'r') as f:
-        #         json_data = json.load(f)
-        #     # Process json_data as needed
-        # else:
-        #     print(f"No data file found in {task_folder}")
 
 
 

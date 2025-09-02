@@ -20,7 +20,6 @@ model_dict = {
     "InternVL3-2B": {"model": "internVL3_2B", "img_num": 3},
     "InternVL3-78B": {"model": "internVL3_78B", "img_num": 3},
     "GPT-5": {"model": "gpt5", "img_num": 3},
-
 }
 
 principles = ["proximity", "similarity", "closure", "symmetry", "continuity"]
@@ -568,13 +567,6 @@ def analysis_per_principle_model_category_performance():
     # llava_closure_acc = get_category_accuracy(llava_closure, base_categories)
     closure_results = {"vit_3": vit_3_closure, "vit_100": vit_100_closure, "llava": llava_closure}
     symmetry_results = {"vit_3": vit_3_symmetry, "vit_100": vit_100_symmetry, "llava": llava_symmetry}
-
-    # Call the function
-    # draw_category_subfigures(closure_results, "closure", save_path=config.figure_path / f"closure_category_accuracy.pdf")
-    # draw_category_subfigures(results, "proximity", save_path=config.figure_path / f"proximity_category_accuracy.pdf")
-    # draw_category_subfigures(results, "proximity", save_path=config.figure_path / f"proximity_category_accuracy.pdf")
-    # draw_category_subfigures(results, "proximity", save_path=config.figure_path / f"proximity_category_accuracy.pdf")
-    # draw_category_subfigures(results, "proximity", save_path=config.figure_path / f"proximity_category_accuracy.pdf")
 
 
 def analysis_model_category_performance(categories, name):

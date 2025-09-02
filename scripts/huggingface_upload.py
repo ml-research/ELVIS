@@ -10,7 +10,7 @@ from scripts import config
 
 def upload_to_huggingface(args):
     # ==== CONFIG ====
-    username = "akweury"
+    username = "akweury`"
     repo_name = "ELVIS"
     if args.remote:
         source_folder = f"/home/ml-jsha/storage/ELVIS_Data/res_{args.resolution}_pin_False"

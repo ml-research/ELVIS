@@ -74,6 +74,8 @@ def get_raw_patterns_path(remote=False):
     if not os.path.exists(raw_patterns_path):
         os.makedirs(raw_patterns_path)
     return raw_patterns_path
+
+
 # -------------- llm path -----------------------
 cache_model_path = data / "llm_pretrained"
 if not os.path.exists(cache_model_path):
