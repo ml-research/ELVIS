@@ -32,12 +32,10 @@ def get_patterns(lite=False):
         size_list = ["s"]
         grp_num_range = range(2, 3)
         feature_props = ["color", "size", "shape", "axis"]
-        axis_list = [-45, 0, 45, 90]
     else:
         size_list = list(config.standard_quantity_dict.keys())
         grp_num_range = range(2, 3)
-        axis_list = [-45, 0, 45, 90]
-        feature_props = ["shape", "color", "size", "axis"]
+        feature_props = ["color","size", "axis"]
     pin = config.prin_in_neg
     all_tasks = []
     all_names = []

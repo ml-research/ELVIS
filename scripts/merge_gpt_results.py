@@ -263,8 +263,8 @@ if __name__ == "__main__":
     res_path = config.result_path
     # merge_cont(res_path)
     # merge_closure(res_path)
-    merge_symm(res_path)
-
+    # merge_symm(res_path)
+    # merge_proximity(res_path)
     # merge_similarity(res_path)
 
     print("program finished.")

@@ -189,7 +189,7 @@ def get_logics(is_positive, fixed_props, cf_params, irrel_params):
 def non_overlap_solar_sys(params, irrel_params, is_positive, clu_num, obj_quantity, pin):
 
     obj_size = 0.05
-    sym_axis = [-45, 0, 45, 90]
+    sym_axis = [-45, 0,45, 90]
     cf_params = data_utils.get_proper_sublist(params + ["symmetry"])
     objs = symmetry_solar_sys(obj_size, is_positive, clu_num, params, irrel_params, cf_params, obj_quantity, sym_axis)
     logics = get_logics(is_positive, params, cf_params, irrel_params)
