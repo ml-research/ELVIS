@@ -94,7 +94,7 @@ def get_symmetry_on_cir_positions(center, radius, num_points, axis=0, min_dist_t
     return all_positions
 
 
-def symmetry_solar_sys(obj_size, is_positive, clu_num, params, irrel_params, cf_params, obj_quantity, axis_list):
+def symmetry_axis_with_bkg(obj_size, is_positive, clu_num, params, irrel_params, cf_params, obj_quantity, axis_list):
     cir_so = 0.6 + random.random() * 0.1
     logic = {
         "shape": ["cross", "plus"],
@@ -186,11 +186,11 @@ def get_logics(is_positive, fixed_props, cf_params, irrel_params):
     return logic
 
 
-def non_overlap_solar_sys(params, irrel_params, is_positive, clu_num, obj_quantity, pin):
+def axis_symmetry_with_bkg(params, irrel_params, is_positive, clu_num, obj_quantity, pin):
 
     obj_size = 0.05
     sym_axis = [-45, 0,45, 90]
     cf_params = data_utils.get_proper_sublist(params + ["symmetry"])
-    objs = symmetry_solar_sys(obj_size, is_positive, clu_num, params, irrel_params, cf_params, obj_quantity, sym_axis)
+    objs = symmetry_axis_with_bkg(obj_size, is_positive, clu_num, params, irrel_params, cf_params, obj_quantity, sym_axis)
     logics = get_logics(is_positive, params, cf_params, irrel_params)
     return objs, logics

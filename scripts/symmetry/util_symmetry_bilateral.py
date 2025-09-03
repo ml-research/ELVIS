@@ -112,7 +112,7 @@ def get_circumference_points(cluster_num, x, y, radius):
     return points
 
 
-def feature_symmetry_circle(params, irrel_params, is_positive, clu_num, obj_quantity, pin):
+def axis_symmetry_no_bkg(params, irrel_params, is_positive, clu_num, obj_quantity, pin):
     obj_size = 0.05
     axis_list = [-45, 0, 45, 90]
     cf_params = data_utils.get_proper_sublist(params + ["symmetry"])

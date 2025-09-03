@@ -69,7 +69,7 @@ def wrap_non_overlap_big_square(fixed_props, is_positive, cluster_num, obj_quant
 
 # Symmetry wrappers
 def wrap_non_overlap_solar_sys(fixed_props, is_positive, cluster_num, obj_quantities, qualifiers, pin):
-    return util_solar_system.non_overlap_solar_sys(fixed_props, is_positive, cluster_num)
+    return util_solar_system.axis_symmetry_with_bkg(fixed_props, is_positive, cluster_num)
 
 
 def wrap_feature_symmetry_circle(fixed_props, is_positive, cluster_num, obj_quantities, qualifiers, pin):
