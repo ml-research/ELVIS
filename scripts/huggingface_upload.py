@@ -10,7 +10,7 @@ from scripts import config
 
 def upload_to_huggingface(args):
     # ==== CONFIG ====
-    username = "akweury`"
+    username = "akweury"
     repo_name = "ELVIS"
     if args.remote:
         source_folder = f"/home/ml-jsha/storage/ELVIS_Data/res_{args.resolution}_pin_False"
@@ -30,7 +30,15 @@ def upload_to_huggingface(args):
     # Clone the repo locally
     repo = Repository(local_dir=str(upload_folder), clone_from=repo_id, repo_type="dataset")
     # Copy source folder into cloned repo
-    shutil.copytree(source_folder, upload_folder)
+    for item in os.listdir(source_folder):
+        if item == ".git":
+            continue
+        s = os.path.join(source_folder, item)
+        d = os.path.join(upload_folder, item)
+        if os.path.isdir(s):
+            shutil.copytree(s, d, dirs_exist_ok=True)
+        else:
+            shutil.copy2(s, d)
     # Commit and push
     repo.push_to_hub(commit_message=f"Upload (res_{args.resolution}, pin_False)")
     print(f"✅ Uploaded successfully to https://huggingface.co/datasets/{repo_id}")
