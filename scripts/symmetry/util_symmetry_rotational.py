@@ -117,11 +117,14 @@ def rotational_symmetry_pattern(params, irrel_params, is_positive, clu_num, obj_
     cf_params = data_utils.get_proper_sublist(params + ["symmetry"])
     cir_so = 0.3 + random.random() * 0.1
     center = (0.5, 0.5)
-    invariant_shape = random.choice(config.all_shapes)
+    if config.shape_quantity == "s":
+        invariant_shape = random.choice(config.s_shapes)
+    else:
+        invariant_shape = random.choice(config.all_shapes)
     invariant_color = random.choice(config.color_large_exclude_gray)
     grp_obj_num = config.standard_quantity_dict[obj_quantity]
     logic = {
-        "shape": ["plus", "cross"],
+        "shape": ["triangle", "circle"],
         "color": ["red", "blue", "green", "yellow", "purple"]
     }
     # Define available pattern interfaces
@@ -154,7 +157,10 @@ def rotational_symmetry_pattern(params, irrel_params, is_positive, clu_num, obj_
         if "shape" in params and is_positive or (not is_positive and "shape" in cf_params):
             shapes = [random.choice(logic["shape"]) for _ in range(grp_obj_num)]
         else:
-            shapes = [random.choice(config.all_shapes) for _ in range(grp_obj_num)]
+            if config.shape_quantity == "s":
+                shapes = [random.choice(config.s_shapes) for _ in range(grp_obj_num * 2)]
+            else:
+                shapes = [random.choice(config.all_shapes) for _ in range(grp_obj_num)]
         if "shape" in irrel_params:
             shapes = [invariant_shape] * grp_obj_num
 
@@ -175,13 +181,6 @@ def rotational_symmetry_pattern(params, irrel_params, is_positive, clu_num, obj_
         positions = all_positions[a_i]
         grp_ids = [a_i] * grp_obj_num
         objs += encode_utils.encode_scene(positions, sizes, colors, shapes, grp_ids, is_positive)
-
-    # Assign shapes/colors/sizes (same as before, but for all objects)
-    # total_obj_num = clu_num * grp_obj_num
-    # shapes = [invariant_shape] * total_obj_num
-    # colors = [invariant_color] * total_obj_num
-    # sizes = [obj_size] * total_obj_num
-    # grp_ids = [i for i in range(clu_num) for _ in range(grp_obj_num)]
 
     # objs = encode_utils.encode_scene(all_positions, sizes, colors, shapes, grp_ids, is_positive)
     logics = get_logics(is_positive, params, cf_params, irrel_params)

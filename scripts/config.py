@@ -15,6 +15,7 @@ def get_num_samples(lite=False):
         return 10
 
 
+shape_quantity = "s"
 # img_width = 224
 prin_in_neg = False
 
@@ -32,6 +33,7 @@ def get_grp_r(r, grp_size):
 
 # -------------------- shape settings --------------------
 bk_shapes = ["none", "triangle", "square", "circle"]
+s_shapes = ["triangle", "square", "circle"]
 all_shapes = [
     "triangle",
     "square",
@@ -94,7 +96,6 @@ categories = {
     "closure": ["big_triangle", "big_square", "big_circle", "feature_triangle", "feature_square", "feature_circle"],
     "symmetry": ["solar_sys", "symmetry_circle", "symmetry_pattern"],
     "continuity": ["one_split_n", "with_intersected_n_splines", "non_intersected_n_splines", "feature_continuity_overlap_splines"]}
-
 
 name_map = {
     "solar_sys": "axis_symmetry_with_bkg",

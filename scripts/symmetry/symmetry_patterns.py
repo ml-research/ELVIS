@@ -26,7 +26,7 @@ def get_all_combs(given_list):
     return all_combinations
 
 
-def get_patterns(lite=False):
+def get_patterns(lite=False, shape_quantity="s"):
     # Define task functions dynamically
     if lite:
         size_list = ["s"]

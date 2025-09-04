@@ -54,7 +54,7 @@ def get_symmetry_on_cir_positions(center, radius, num_points, axis=0, min_dist_t
     axis_dy = math.sin(axis_rad)
     axis_point = (0.5, 0.5)
     # Generate evenly spaced offsets in both positive and negative ranges
-    offsets_pos = np.linspace(min_offset, max_offset, sum(num_points)+10)
+    offsets_pos = np.linspace(min_offset, max_offset, sum(num_points) + 10)
 
     np.random.shuffle(offsets_pos)  # Shuffle offsets to ensure randomness
     counter = 0
@@ -97,7 +97,7 @@ def get_symmetry_on_cir_positions(center, radius, num_points, axis=0, min_dist_t
 def symmetry_axis_with_bkg(obj_size, is_positive, clu_num, params, irrel_params, cf_params, obj_quantity, axis_list):
     cir_so = 0.6 + random.random() * 0.1
     logic = {
-        "shape": ["cross", "plus"],
+        "shape": ["circle", "square"],
         "color": ["red", "blue", "green", "yellow", "purple"]
     }
 
@@ -117,7 +117,6 @@ def symmetry_axis_with_bkg(obj_size, is_positive, clu_num, params, irrel_params,
     if "count" in params and not is_positive:
         clu_num = data_utils.neg_clu_num(clu_num, 1, clu_num + 2)
 
-
     # Generate evenly distributed group centers on the circumference
     group_centers = get_circumference_points(clu_num, 0.5, 0.5, cir_so)
     grp_obj_nums = [config.standard_quantity_dict[obj_quantity] - 3 for i in range(clu_num)]
@@ -129,7 +128,10 @@ def symmetry_axis_with_bkg(obj_size, is_positive, clu_num, params, irrel_params,
 
     all_positions = get_symmetry_on_cir_positions(group_centers, cir_so * random.uniform(0.3, 0.6), grp_obj_nums, sym_axis)
 
-    invariant_shape = random.choice(config.all_shapes)
+    if config.shape_quantity == "s":
+        invariant_shape = random.choice(config.s_shapes)
+    else:
+        invariant_shape = random.choice(config.all_shapes)
     invariant_color = random.choice(config.color_large_exclude_gray)
 
     if not is_positive and "symmetry" not in cf_params:
@@ -140,7 +142,10 @@ def symmetry_axis_with_bkg(obj_size, is_positive, clu_num, params, irrel_params,
             shapes = [random.choice(logic["shape"]) for _ in range(grp_obj_num)]
             shapes = data_utils.duplicate_maintain_order(shapes, 2)
         else:
-            shapes = [random.choice(config.all_shapes) for _ in range(grp_obj_num * 2)]
+            if config.shape_quantity == "s":
+                shapes = [random.choice(config.s_shapes) for _ in range(grp_obj_num * 2)]
+            else:
+                shapes = [random.choice(config.all_shapes) for _ in range(grp_obj_num * 2)]
         if "shape" in irrel_params:
             shapes = [invariant_shape] * grp_obj_num * 2
         if "color" in params and is_positive or (not is_positive and "color" in cf_params):
@@ -187,9 +192,8 @@ def get_logics(is_positive, fixed_props, cf_params, irrel_params):
 
 
 def axis_symmetry_with_bkg(params, irrel_params, is_positive, clu_num, obj_quantity, pin):
-
     obj_size = 0.05
-    sym_axis = [-45, 0,45, 90]
+    sym_axis = [-45, 0, 45, 90]
     cf_params = data_utils.get_proper_sublist(params + ["symmetry"])
     objs = symmetry_axis_with_bkg(obj_size, is_positive, clu_num, params, irrel_params, cf_params, obj_quantity, sym_axis)
     logics = get_logics(is_positive, params, cf_params, irrel_params)

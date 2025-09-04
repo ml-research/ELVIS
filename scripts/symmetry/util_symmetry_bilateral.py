@@ -129,7 +129,7 @@ def axis_symmetry_no_bkg(params, irrel_params, is_positive, clu_num, obj_quantit
     )]
 
     logic = {
-        "shape": ["hexagon", "star"],
+        "shape": ["triangle", "square"],
         "color": ["red", "blue", "green", "yellow", "purple"],
     }
     if "count" in params and not is_positive:
@@ -158,12 +158,10 @@ def axis_symmetry_no_bkg(params, irrel_params, is_positive, clu_num, obj_quantit
     else:
         all_positions = [pos_utils.get_random_positions(grp_obj_nums[a_i]*2, obj_size) for a_i in range(clu_num)]
 
-        # all_positions = pos_utils.get_almost_symmetry_positions(group_centers, cir_so * random.uniform(0.3, 0.6), grp_obj_nums)
-
-        # all_positions = [get_surrounding_positions(group_centers[a_i], cir_so * 1, grp_obj_nums[a_i])
-        #                  for a_i in range(clu_num)]
-
-    invariant_shape = random.choice(config.all_shapes)
+    if config.shape_quantity == "s":
+        invariant_shape = random.choice(config.s_shapes)
+    else:
+        invariant_shape = random.choice(config.all_shapes)
     invariant_color = random.choice(config.color_large_exclude_gray)
 
     for a_i in range(clu_num):
@@ -172,7 +170,10 @@ def axis_symmetry_no_bkg(params, irrel_params, is_positive, clu_num, obj_quantit
             shapes = [random.choice(logic["shape"]) for _ in range(grp_obj_num)]
             shapes = data_utils.duplicate_maintain_order(shapes, 2)
         else:
-            shapes = [random.choice(config.all_shapes) for _ in range(grp_obj_num * 2)]
+            if config.shape_quantity == "s":
+                shapes = [random.choice(config.s_shapes) for _ in range(grp_obj_num * 2)]
+            else:
+                shapes = [random.choice(config.all_shapes) for _ in range(grp_obj_num * 2)]
         if "shape" in irrel_params:
             shapes = [invariant_shape] * grp_obj_num * 2
 

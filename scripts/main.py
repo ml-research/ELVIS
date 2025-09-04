@@ -339,7 +339,7 @@ def main(args):
         "similarity": similarity_patterns.get_patterns(args.lite),
         "closure": closure_patterns.get_patterns(args.lite),
         "continuity": continuity_patterns.get_patterns(args.lite),
-        "symmetry": symmetry_patterns.get_patterns(args.lite),
+        "symmetry": symmetry_patterns.get_patterns(args.lite, args.shape_quantity),
         # "mixed":mixed_patterns.pattern_dicts
     }
     if args.principle == "all":
@@ -356,6 +356,7 @@ if __name__ == "__main__":
     parser.add_argument("--principle", type=str)
     parser.add_argument("--img_size", type=int, choices=[112, 224, 448, 1024])
     parser.add_argument("--labelOn", action="store_true", help="Show labels on the generated images.")
+    parser.add_argument("--shape_quantity", type=str, choices=["s", "m"])
     args = parser.parse_args()
 
     main(args)
