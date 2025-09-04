@@ -15,7 +15,7 @@ def upload_to_huggingface(args):
     if args.remote:
         source_folder = f"/home/ml-jsha/storage/ELVIS_Data/res_{args.resolution}_pin_False"
     else:
-        source_folder = Path(f"/Users/jing/PycharmProjects/ELVIS/gen_data/res_{args.resolution}_pin_False")
+        source_folder = Path(f"/Users/jing/PycharmProjects/ELVIS/gen_data/res_{args.resolution}_pin_False/symmetry")
 
     upload_folder = Path("./upload_repo")  # local working dir
     # ===============
@@ -30,7 +30,7 @@ def upload_to_huggingface(args):
     # Clone the repo locally
     repo = Repository(local_dir=str(upload_folder), clone_from=repo_id, repo_type="dataset")
     # Copy source folder into cloned repo
-    shutil.copytree(source_folder, upload_folder / "closure")
+    shutil.copytree(source_folder, upload_folder)
     # Commit and push
     repo.push_to_hub(commit_message=f"Upload (res_{args.resolution}, pin_False)")
     print(f"✅ Uploaded successfully to https://huggingface.co/datasets/{repo_id}")
