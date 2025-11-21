@@ -64,12 +64,12 @@ def similarity_palette(obj_size, params, irrel_params, cf_params, is_positive, c
     - List of objects with their properties and positions.
     """
     objs = []
-    num_rings = max(3, config.standard_quantity_dict[quantity]//2)
-    num_objects_per_cluster = config.standard_quantity_dict[quantity]//2
+    num_rings = max(3, config.standard_quantity_dict[quantity] // 2)
+    num_objects_per_cluster = config.standard_quantity_dict[quantity] // 2
 
     all_positions = generate_cluster_positions(clu_num, num_rings, obj_size, num_objects_per_cluster)
     logics = {
-        "shape": random.choices(config.all_shapes, k=clu_num),
+        "shape": ["circle", "square", "triangle", "circle", "square", "triangle", ],
         "color": random.choices(config.color_large_exclude_gray, k=clu_num),
     }
     invariant_color = random.choice(config.color_large_exclude_gray)
@@ -79,7 +79,10 @@ def similarity_palette(obj_size, params, irrel_params, cf_params, is_positive, c
         if "color" in params and is_positive or (not is_positive and "color" in cf_params):
             colors = [logics["color"][i]] * clu_size
         else:
-            colors = [random.choice(config.color_large_exclude_gray) for _ in range(clu_size)]
+            if i == 0 and clu_num > 1:
+                colors = [logics["color"][i]] * clu_size
+            else:
+                colors = [random.choice(config.color_large_exclude_gray) for _ in range(clu_size)]
         if "color" in irrel_params:
             colors = [invariant_color] * clu_size
         if "shape" in params and is_positive or (not is_positive and "shape" in cf_params):
