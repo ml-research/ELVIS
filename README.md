@@ -175,6 +175,11 @@ python -m scripts.evaluate_models --batch_size 1 --principle closure --model gpt
 python -m scripts.evaluate_models --batch_size 1 --principle symmetry --model gpt5 --img_num 3 --device_id 13 --start_num 800 --task_num 100
 python -m scripts.evaluate_models --batch_size 1 --principle continuity --model gpt5 --img_num 3 --start_num 147 --task_num end --device_id 15
 
+
+# pure principle evaluation
+
+python -m pure_perception.models.pure_principle_vit --remote --model vit --img_size 224
+
 ##### Analysis Results
 ``` 
 python -m scripts.analysis_results --principle proximity --remote --model vit
