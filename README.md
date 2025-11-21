@@ -178,7 +178,7 @@ python -m scripts.evaluate_models --batch_size 1 --principle continuity --model 
 
 # pure principle evaluation
 
-python -m pure_perception.models.pure_principle_vit --remote --model vit --img_size 224
+python -m pure_perception.models.pure_principle_vit --remote --model vit --img_size 224 --device 7
 
 ##### Analysis Results
 ``` 

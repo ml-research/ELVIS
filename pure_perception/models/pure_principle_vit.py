@@ -17,7 +17,7 @@ from scripts import config
 
 
 class ProximityDataset(Dataset):
-    def __init__(self, principle_folder):
+    def __init__(self, principle_folder, top_data):
         """
         samples = [
             {
@@ -28,7 +28,9 @@ class ProximityDataset(Dataset):
             ...
         ]
         """
-        pattern_folders = sorted([p for p in (Path(principle_folder) / "train").iterdir() if p.is_dir()], key=lambda x: x.stem)[:20]
+        pattern_folders = sorted([p for p in (Path(principle_folder) / "train").iterdir() if p.is_dir()], key=lambda x: x.stem)
+        if top_data != "full":
+            pattern_folders = pattern_folders[:int(top_data)]
 
         samples = []
 
@@ -289,7 +291,7 @@ def main():
 
     principle_path = config.get_raw_patterns_path(args.remote) / f"res_{args.img_size}_pin_False" / args.principle
 
-    dataset = ProximityDataset(principle_path)
+    dataset = ProximityDataset(principle_path, top_data=args.task_num)
 
     # create checkpoint folder
     save_dir = Path(args.save_dir) / f"vit_{args.principle}"
