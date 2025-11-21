@@ -263,7 +263,6 @@ def main():
     parser.add_argument("--start_num", type=int, default=0)
     parser.add_argument("--batch_size", type=int, default=1)
     parser.add_argument("--test_split", type=float, default=0.2, help="Fraction of dataset to use as test set.")
-    parser.add_argument("--save_dir", type=str, default="./checkpoints", help="Directory to save model checkpoints.")
     args = parser.parse_args()
 
     # resolve torch.device
@@ -276,7 +275,7 @@ def main():
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
     # initialize wandb for visualization
-    wandb.init(project="ELVIS-vit", name=f"vit-{args.principle}", reinit=True)
+    wandb.init(project="ELVIS-vit_pure", name=f"vit-{args.principle}", reinit=True)
     # upload simple config
     try:
         wandb.config.update(vars(args))
@@ -294,7 +293,8 @@ def main():
     dataset = ProximityDataset(principle_path, top_data=args.task_num)
 
     # create checkpoint folder
-    save_dir = Path(args.save_dir) / f"vit_{args.principle}"
+
+    save_dir = Path(f"/elvis_result/{args.principle}") / f"vit_pure_{args.principle}"
     save_dir.mkdir(parents=True, exist_ok=True)
 
     # split dataset into train / test
@@ -370,6 +370,7 @@ def main():
         wandb.finish()
     except Exception:
         pass
+
 
 if __name__ == "__main__":
     main()
