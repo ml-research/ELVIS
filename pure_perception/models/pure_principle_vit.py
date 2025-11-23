@@ -12,6 +12,9 @@ from pathlib import Path
 from tqdm import tqdm
 import math
 
+# add PIL for drawing visualizations
+from PIL import Image, ImageDraw
+
 import utils
 from scripts import config
 
@@ -251,9 +254,46 @@ def train_epoch(model, dataloader, optimizer, device):
 
     return total_loss / len(dataloader)
 
+def visualize_error(image,boxes, FP, FN,caption):
+    try:
+        # get the corresponding image tensor from batch, convert to PIL
+        img_tensor = image.detach().cpu().clamp(0.0, 1.0)  # [3,H,W]
+        np_img = (img_tensor * 255).byte().permute(1, 2, 0).numpy()
+        pil_img = Image.fromarray(np_img)
+
+        draw = ImageDraw.Draw(pil_img)
+        width, height = pil_img.size  # PIL size: (W,H)
+
+        # draw FP pairs in red, FN pairs in blue (both boxes of the pair)
+        for (i, j) in FP:
+            for k in (i, j):
+                x1 = int(boxes[k, 0].item() * width)
+                y1 = int(boxes[k, 1].item() * height)
+                x2 = int(boxes[k, 2].item() * width)
+                y2 = int(boxes[k, 3].item() * height)
+                draw.rectangle([x1, y1, x2, y2], outline="red", width=3)
+
+        for (i, j) in FN:
+            for k in (i, j):
+                x1 = int(boxes[k, 0].item() * width)
+                y1 = int(boxes[k, 1].item() * height)
+                x2 = int(boxes[k, 2].item() * width)
+                y2 = int(boxes[k, 3].item() * height)
+                draw.rectangle([x1, y1, x2, y2], outline="blue", width=3)
+
+
+        # log to wandb
+        try:
+            wandb.log({f"val_vis": wandb.Image(pil_img, caption=caption)})
+        except Exception:
+            # non-blocking: if wandb logging fails, continue
+            pass
+    except Exception:
+        # avoid breaking evaluation if visualization fails
+        pass
 
 # new: evaluation function to compute loss and pairwise accuracy on a dataloader
-def eval_epoch(model, dataloader, device):
+def eval_epoch(model, dataloader, device, epoch=None):
     model.eval()
     total_loss = 0.0
     total_acc = 0.0
@@ -264,43 +304,52 @@ def eval_epoch(model, dataloader, device):
     total_pairs_pos = 0
     total_pairs_neg = 0
 
+    total_img_level_correct = 0
     with torch.no_grad():
         for images, positions, group_ids in dataloader:
             images = images.to(device)
-
             boxes_list = [b.to(device) for b in positions]
             gid_list = [g.to(device) for g in group_ids]
-
             A_pred_list = model(images, boxes_list)
-
             batch_loss = 0.0
             batch_acc = 0.0
-            for A_pred, gid in zip(A_pred_list, gid_list):
+            # iterate with index so we can pick the corresponding image from the batch
+            for idx, (A_pred, gid, boxes) in enumerate(zip(A_pred_list, gid_list, boxes_list)):
                 gid2affinity = (gid.unsqueeze(0).expand(len(gid), len(gid)) == gid.unsqueeze(1).expand(len(gid), len(gid))).float()
                 batch_loss += affinity_loss(A_pred, gid2affinity).item()
-                batch_acc += pairwise_accuracy(A_pred, gid)
+
+                # compute sample-level accuracy
+                acc_sample = pairwise_accuracy(A_pred, gid)
+                batch_acc += acc_sample
 
                 FP, FN, TP, TN = compute_pairwise_errors(A_pred, gid)
-
                 total_FP += len(FP)
                 total_FN += len(FN)
                 total_pairs_pos += len(TP) + len(FN)
                 total_pairs_neg += len(TN) + len(FP)
 
+                if acc_sample == 1:
+                    total_img_level_correct += 1
+                else:
+                    # visualization if the sample-level accuracy is not 100%
+                    caption = f"epoch={epoch} sample_idx={idx} acc={acc_sample:.3f} FP={len(FP)} FN={len(FN)}"
+                    visualize_error(images[idx], boxes, FP, FN, caption)
+
+
             batch_loss = batch_loss / len(A_pred_list)
             batch_acc = batch_acc / len(A_pred_list)
-
             total_loss += batch_loss
             total_acc += batch_acc
             count += 1
-    FP_rate = total_FP / total_pairs_neg
-    FN_rate = total_FN / total_pairs_pos
 
+    FP_rate = total_FP / total_pairs_neg if total_pairs_neg > 0 else 0.0
+    FN_rate = total_FN / total_pairs_pos if total_pairs_pos > 0 else 0.0
+    img_level_acc = total_img_level_correct / count if count > 0 else 0.0
 
     if count == 0:
-        return 0.0, 0.0, 0.0,0.0
+        return 0.0, 0.0, 0.0, 0.0, 0.0
 
-    return total_loss / count, total_acc / count, FP_rate, FN_rate
+    return total_loss / count, total_acc / count, FP_rate, FN_rate, img_level_acc
 
 
 def main():
@@ -309,7 +358,7 @@ def main():
     parser.add_argument("--model", type=str, required=True)
     parser.add_argument("--device", type=int, help="Specify GPU device ID. If not provided, CPU will be used.")
     parser.add_argument("--remote", action="store_true")
-    parser.add_argument("--epochs", type=int, default=10)
+    parser.add_argument("--epochs", type=int, default=5)
     parser.add_argument("--img_num", type=int, default=5)
     parser.add_argument("--img_size", type=int, default=224, choices=[224, 448, 1024])
     parser.add_argument("--task_num", type=str, default="full")
@@ -359,9 +408,11 @@ def main():
     for epoch in range(args.epochs):
         rtpt.step()
         train_loss = train_epoch(model, train_loader, optimizer, device)
-        val_loss, val_acc, FP_rate, FN_rate = eval_epoch(model, test_loader, device)
+        # pass epoch into eval_epoch so visualizations are labeled per epoch
+        val_loss, val_acc, FP_rate, FN_rate, img_level_acc = eval_epoch(model, test_loader, device, epoch)
         print(f"Epoch {epoch}: Train Loss {train_loss:.4f} | Val Loss {val_loss:.4f} | "
-              f"Val Pairwise Acc {val_acc:.4f} | FP Rate {FP_rate:.4f} | FN Rate {FN_rate:.4f}")
+              f"Val Pairwise Acc {val_acc:.4f} | FP Rate {FP_rate:.4f} | FN Rate {FN_rate:.4f} | "
+              f"Img-level Acc {img_level_acc:.4f}")
 
         # log metrics to wandb
         wandb.log({
@@ -369,7 +420,8 @@ def main():
             "val_loss": val_loss,
             "val_pairwise_acc": val_acc,
             "val_FP_rate": FP_rate,
-            "val_FN_rate": FN_rate
+            "val_FN_rate": FN_rate,
+            "val_img_level_acc": img_level_acc,
         })
 
         # save checkpoint for this epoch
