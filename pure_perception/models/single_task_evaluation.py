@@ -1,4 +1,4 @@
-# Created by MacBook Pro at 21.11.25
+# Created by MacBook Pro at 23.11.25
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -18,10 +18,10 @@ from PIL import Image, ImageDraw
 
 import utils
 from scripts import config
+from pure_perception.models.vit_model import ProximityViT
 
-
-class ProximityDataset(Dataset):
-    def __init__(self, principle_folder, top_data):
+class SingleTaskDataset(Dataset):
+    def __init__(self, pattern_folder):
         """
         samples = [
             {
@@ -32,17 +32,7 @@ class ProximityDataset(Dataset):
             ...
         ]
         """
-        pattern_folders = sorted([p for p in (Path(principle_folder) / "train").iterdir() if p.is_dir()], key=lambda x: x.stem)
-        if top_data != "full":
-            pattern_folders = pattern_folders[:int(top_data)]
-
-        samples = []
-
-        for pattern_folder in tqdm(pattern_folders, "loading patterns"):
-            pattern_samples = utils.get_pattern_data(pattern_folder)
-            samples += pattern_samples
-
-        self.samples = samples
+        self.samples = utils.get_pattern_data(pattern_folder)
 
     def __len__(self):
         return len(self.samples)
@@ -50,100 +40,6 @@ class ProximityDataset(Dataset):
     def __getitem__(self, idx):
         data = self.samples[idx]
         return data['image'], data['boxes'], data['group_ids']
-
-
-class ProximityViT(nn.Module):
-    def __init__(self, vit_name="vit_base_patch16_224", hidden_dim=768):
-        super().__init__()
-
-        # ViT backbone (no classifier)
-        self.vit = timm.create_model(vit_name, pretrained=True, num_classes=0)
-
-        self.hidden_dim = hidden_dim
-
-        # Pairwise head (maps 2*D → 1)
-        self.pairwise_head = nn.Sequential(
-            nn.Linear(2 * hidden_dim, hidden_dim),
-            nn.ReLU(),
-            nn.Linear(hidden_dim, 1)
-        )
-
-    def forward(self, images, boxes_list):
-        """
-        images: [B,3,H,W]
-        boxes_list: list of length B, each is [N_i,4]
-        """
-
-        B = images.shape[0]
-
-        # 1) Extract ViT patch embeddings
-        patch_tokens = self.vit.forward_features(images)  # [B, num_patches, D]
-
-        # 2) For each image, pool object features
-        object_feats_all = []
-        for b in range(B):
-            boxes = boxes_list[b]  # [N_i, 4]
-            feats = []
-
-            # Convert patch tokens to spatial grid
-            # e.g., 14x14 patches → reshape
-            token_hw = int(patch_tokens.shape[1] ** 0.5)
-            seq = patch_tokens[b]  # (N, D)
-            # Drop class token if present (common in ViT outputs)
-            if seq.shape[0] == (token_hw * token_hw + 1):
-                seq = seq[1:]
-            # compute side length from remaining token count
-            th = int(round(math.sqrt(seq.shape[0])))
-            if th * th != seq.shape[0]:
-                raise RuntimeError(
-                    f"Cannot reshape patch tokens of length {seq.shape[0]} into square grid (expected a perfect square)."
-                )
-            feat_map = seq.reshape(th, th, -1)  # [H,W,D]
-
-            for box in boxes:
-                x1, y1, x2, y2 = box.tolist()
-                x1 = int(x1 * images.shape[3])
-                y1 = int(y1 * images.shape[2])
-                x2 = int(x2 * images.shape[3])
-                y2 = int(y2 * images.shape[2])
-
-                # Normalize boxes for patch grid selection
-                px1 = int(x1 / images.shape[3] * token_hw)
-                py1 = int(y1 / images.shape[2] * token_hw)
-                px2 = int(x2 / images.shape[3] * token_hw)
-                py2 = int(y2 / images.shape[2] * token_hw)
-
-                px1 = min(max(px1, 0), token_hw - 1)
-                py1 = min(max(py1, 0), token_hw - 1)
-                px2 = min(max(px2, 1), token_hw)  # ensure px2 > px1
-                py2 = min(max(py2, 1), token_hw)  # ensure py2 > py1
-
-                region = feat_map[py1:py2, px1:px2, :]  # [h,w,D]
-                if region.numel() == 0:
-                    region = feat_map[py1:py1 + 1, px1:px1 + 1, :]
-                    # empty region, use zeros
-                    # pooled = torch.zeros(self.hidden_dim, device=images.device)
-                pooled = region.mean(dim=(0, 1))  # [D]
-                feats.append(pooled)
-
-            object_feats = torch.stack(feats, dim=0)  # [N_i, D]
-            object_feats_all.append(object_feats)
-
-        # 3) Compute pairwise affinities
-        A_pred_list = []
-        for feats in object_feats_all:
-            N = feats.shape[0]
-
-            # Pairwise concatenate: (i,j): [fi, fj]
-            fi = feats.unsqueeze(1).expand(N, N, self.hidden_dim)
-            fj = feats.unsqueeze(0).expand(N, N, self.hidden_dim)
-            pair_feats = torch.cat([fi, fj], dim=-1)  # [N,N,2D]
-
-            A_logits = self.pairwise_head(pair_feats).squeeze(-1)  # [N,N]
-            A_prob = torch.sigmoid(A_logits)
-            A_pred_list.append(A_prob)
-
-        return A_pred_list
 
 
 def affinity_loss(A_pred, group_ids):
@@ -414,93 +310,55 @@ def main():
     # initialize wandb for visualization
     wandb.init(project="ELVIS-vit_pure", name=f"vit-{args.principle}", reinit=True)
 
+    # --- new: create a wandb.Table to collect per-task metrics across all tasks/epochs ---
+    metrics_table = wandb.Table(columns=[
+        "epoch", "task", "train_loss", "val_loss",
+        "val_pairwise_acc", "val_FP_rate", "val_FN_rate", "val_img_level_acc"
+    ])
+
     principle_path = config.get_raw_patterns_path(args.remote) / f"res_{args.img_size}_pin_False" / args.principle
+    pattern_folders = sorted([p for p in (Path(principle_path) / "train").iterdir() if p.is_dir()], key=lambda x: x.stem)
+    datasets = [SingleTaskDataset(pattern_folder) for pattern_folder in pattern_folders]
 
-    dataset = ProximityDataset(principle_path, top_data=args.task_num)
+    # iterate with pattern folder to get a stable task name
+    for pattern_folder, ds in zip(pattern_folders, datasets):
+        task_name = pattern_folder.stem
+        print(f"Dataset {task_name}: {len(ds)} samples")
+        total_len = len(ds)
+        test_len = int(total_len * args.test_split)
+        train_len = total_len - test_len
+        if train_len <= 0 or test_len <= 0:
+            raise ValueError(f"Invalid split: dataset size {total_len}, train {train_len}, test {test_len}")
+        train_dataset, test_dataset = torch.utils.data.random_split(ds, [train_len, test_len])
+        train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
+        test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False)
+        rtpt = RTPT(name_initials='JIS', experiment_name=f'Elvis-vit-{args.principle}',
+                    max_iterations=args.epochs)
+        rtpt.start()
+        for epoch in range(args.epochs):
+            rtpt.step()
+            train_loss = train_epoch(model, train_loader, optimizer, device)
+            # pass epoch into eval_epoch so visualizations are labeled per epoch
+            val_loss, val_acc, FP_rate, FN_rate, img_level_acc = eval_epoch(model, test_loader, device, epoch)
+            print(f"Epoch {epoch}: Train Loss {train_loss:.4f} | Val Loss {val_loss:.4f} | "
+                  f"Val Pairwise Acc {val_acc:.4f} | FP Rate {FP_rate:.4f} | FN Rate {FN_rate:.4f} | "
+                  f"Img-level Acc {img_level_acc:.4f}")
+            # log scalars (per-task prefixed) and add a row to the metrics table so all tasks appear on same page
+            wandb.log({
+                f"task/{task_name}/train_loss": train_loss,
+                f"task/{task_name}/val_loss": val_loss,
+                f"task/{task_name}/val_pairwise_acc": val_acc,
+                f"task/{task_name}/val_FP_rate": FP_rate,
+                f"task/{task_name}/val_FN_rate": FN_rate,
+                f"task/{task_name}/val_img_level_acc": img_level_acc,
+            }, commit=False)
 
-    # create checkpoint folder
+            # append to the global table (accumulates across tasks and epochs)
+            metrics_table.add_data(epoch, task_name, train_loss, val_loss, val_acc, FP_rate, FN_rate, img_level_acc)
+            # log the table (shows all rows on the same wandb page). commit=True here to finalize this step.
+            wandb.log({"tasks_metrics": metrics_table}, commit=True)
+    wandb.finish()
 
-    save_dir = config.get_out_dir(args.principle, args.remote)
-    save_dir.mkdir(parents=True, exist_ok=True)
-
-    # split dataset into train / test
-    total_len = len(dataset)
-    test_len = int(total_len * args.test_split)
-    train_len = total_len - test_len
-    if train_len <= 0 or test_len <= 0:
-        raise ValueError(f"Invalid split: dataset size {total_len}, train {train_len}, test {test_len}")
-
-    train_dataset, test_dataset = torch.utils.data.random_split(dataset, [train_len, test_len])
-
-    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False)
-
-    rtpt = RTPT(name_initials='JIS', experiment_name=f'Elvis-vit-{args.principle}',
-                max_iterations=args.epochs)
-    rtpt.start()
-
-    best_val_acc = -1.0
-    for epoch in range(args.epochs):
-        rtpt.step()
-        train_loss = train_epoch(model, train_loader, optimizer, device)
-        # pass epoch into eval_epoch so visualizations are labeled per epoch
-        val_loss, val_acc, FP_rate, FN_rate, img_level_acc = eval_epoch(model, test_loader, device, epoch)
-        print(f"Epoch {epoch}: Train Loss {train_loss:.4f} | Val Loss {val_loss:.4f} | "
-              f"Val Pairwise Acc {val_acc:.4f} | FP Rate {FP_rate:.4f} | FN Rate {FN_rate:.4f} | "
-              f"Img-level Acc {img_level_acc:.4f}")
-
-        # log metrics to wandb
-        wandb.log({
-            "train_loss": train_loss,
-            "val_loss": val_loss,
-            "val_pairwise_acc": val_acc,
-            "val_FP_rate": FP_rate,
-            "val_FN_rate": FN_rate,
-            "val_img_level_acc": img_level_acc,
-        })
-
-        # save checkpoint for this epoch
-        try:
-            ckpt = {
-                "epoch": epoch,
-                "model_state_dict": model.state_dict(),
-                "optimizer_state_dict": optimizer.state_dict(),
-                "val_loss": val_loss,
-                "val_acc": val_acc,
-            }
-            epoch_path = save_dir / f"ckpt_epoch_{epoch}.pt"
-            torch.save(ckpt, epoch_path)
-            print(f"Saved checkpoint: {epoch_path}")
-        except Exception as e:
-            print(f"Warning: failed to save checkpoint for epoch {epoch}: {e}")
-
-        # save best model by val pairwise accuracy
-        try:
-            if val_acc > best_val_acc:
-                best_val_acc = val_acc
-                best_path = save_dir / "best_model.pt"
-                torch.save(ckpt, best_path)
-                print(f"Saved new best model (val_acc={best_val_acc:.4f}): {best_path}")
-        except Exception as e:
-            print(f"Warning: failed to save best model at epoch {epoch}: {e}")
-
-    # save final/last checkpoint
-    try:
-        last_path = save_dir / "last.pt"
-        torch.save({
-            "epoch": args.epochs - 1,
-            "model_state_dict": model.state_dict(),
-            "optimizer_state_dict": optimizer.state_dict()
-        }, last_path)
-        print(f"Saved last checkpoint: {last_path}")
-    except Exception:
-        pass
-
-    # finish wandb run
-    try:
-        wandb.finish()
-    except Exception:
-        pass
 
 
 if __name__ == "__main__":
