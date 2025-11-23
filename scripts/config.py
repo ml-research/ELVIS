@@ -12,7 +12,7 @@ def get_num_samples(lite=False):
     if lite:
         return 3
     else:
-        return 10
+        return 100
 
 
 shape_quantity = "s"
