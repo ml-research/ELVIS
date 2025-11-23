@@ -43,17 +43,17 @@ def get_patterns(lite=False):
     all_tasks = []
     all_names = []
 
-    # tasks, names = create_tasks_v3(non_overlap_fixed_number, feature_props, range(2,4), size_list[:2], pin)
-    # all_tasks.extend(tasks)
-    # all_names.extend(names)
+    tasks, names = create_tasks_v3(non_overlap_fixed_number, ["shape", "color", "size"], range(2, 4), size_list[:2], pin)
+    all_tasks.extend(tasks)
+    all_names.extend(names)
     #
     # tasks, names = create_tasks_v3(non_overlap_pacman, ["color", "size", "count"], range(2, 4), size_list[:3], pin)
     # all_tasks.extend(tasks)
     # all_names.extend(names)
     #
-    tasks, names = create_tasks_v3(non_overlap_palette, feature_props, grp_num_range, size_list, pin)
-    all_tasks.extend(tasks)
-    all_names.extend(names)
+    # tasks, names = create_tasks_v3(non_overlap_palette, feature_props, grp_num_range, size_list, pin)
+    # all_tasks.extend(tasks)
+    # all_names.extend(names)
 
     # Convert tasks to pattern dictionary
     pattern_dicts = [{"name": key, "module": task} for key, task in zip(all_names, all_tasks)]

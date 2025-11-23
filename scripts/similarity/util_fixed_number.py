@@ -169,6 +169,7 @@ def similarity_fixed_number(is_positive, obj_size, cluster_num, params, irrel_pa
     logic = {
         "shape": ["circle", "square", "triangle", "cross", "star"],
         "color": ["yellow", "blue", "red", "green", "purple", "orange", "pink", "brown"],
+        "size": [0.03, 0.05, 0.07, 0.09],
     }
 
     def adjust_count(base):
@@ -196,7 +197,7 @@ def similarity_fixed_number(is_positive, obj_size, cluster_num, params, irrel_pa
         shapes += grp_shapes
 
         if is_positive and "size" in params or (not is_positive and "size" in cf_params):
-            grp_sizes = [obj_size] * base_count
+            grp_sizes = [logic["size"][i]] * base_count
         else:
             grp_sizes = [random.uniform(obj_size * 0.5, obj_size * 1.5) for _ in range(base_count)]
         sizes += grp_sizes
@@ -204,7 +205,7 @@ def similarity_fixed_number(is_positive, obj_size, cluster_num, params, irrel_pa
         if is_positive and "color" in params or (not is_positive and "color" in cf_params):
             grp_colors = [logic["color"][i]] * base_count
         else:
-            grp_colors = [random.choice(config.color_large_exclude_gray)] * base_count
+            grp_colors = [random.choice(config.color_large_exclude_gray) for _ in range(base_count)]
         colors += grp_colors
         group_ids += [i] * base_count
 
