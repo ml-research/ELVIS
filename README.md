@@ -180,9 +180,9 @@ python -m scripts.evaluate_models --batch_size 1 --principle continuity --model 
 
 python -m pure_perception.models.pure_principle_vit --remote --model vit --img_size 224 --principle proximity --device 7
 python -m pure_perception.models.pure_principle_vit --remote --model vit --img_size 224 --principle similarity --device 6
-python -m pure_perception.models.pure_principle_vit --remote --model vit --img_size 224 --principle closure --device 7
-python -m pure_perception.models.pure_principle_vit --remote --model vit --img_size 224 --principle symmetry --device 7
-python -m pure_perception.models.pure_principle_vit --remote --model vit --img_size 224 --principle continuity --device 7
+python -m pure_perception.models.pure_principle_vit --remote --model vit --img_size 224 --principle closure --device 5
+python -m pure_perception.models.pure_principle_vit --remote --model vit --img_size 224 --principle symmetry --device 4
+python -m pure_perception.models.pure_principle_vit --remote --model vit --img_size 224 --principle continuity --device 3
 
 ##### Analysis Results
 ``` 

@@ -184,6 +184,44 @@ def pairwise_accuracy(A_pred, group_ids, threshold=0.5):
     acc = (preds == gts).float().mean().item()
     return acc
 
+def compute_pairwise_errors(A_pred, group_ids, threshold=0.5):
+    """
+    A_pred: tensor [N,N]  - predicted affinity matrix (0~1)
+    group_ids: tensor [N] - GT group labels
+    return :
+        FP_pairs, FN_pairs, TP_pairs, TN_pairs
+        (each list of (i,j)  object pair index)
+    """
+    N = len(group_ids)
+
+    # 1) 构造 GT affinity matrix
+    group_ids = group_ids.unsqueeze(0).expand(N, N)
+    A_gt = (group_ids == group_ids.T).int()  # [N,N]
+
+    # 2) pred binarization
+    A_bin = (A_pred > threshold).int()
+
+    FP_pairs = []   # predicted same-group but GT says different-group
+    FN_pairs = []   # predicted different-group but GT says same-group
+    TP_pairs = []
+    TN_pairs = []
+
+    # 3) 遍历 upper triangular (i<j)
+    for i in range(N):
+        for j in range(i+1, N):
+            gt = A_gt[i, j].item()
+            pr = A_bin[i, j].item()
+
+            if pr == 1 and gt == 0:
+                FP_pairs.append((i, j))
+            elif pr == 0 and gt == 1:
+                FN_pairs.append((i, j))
+            elif pr == 1 and gt == 1:
+                TP_pairs.append((i, j))
+            else:
+                TN_pairs.append((i, j))
+
+    return FP_pairs, FN_pairs, TP_pairs, TN_pairs
 
 def train_epoch(model, dataloader, optimizer, device):
     model.train()
@@ -221,6 +259,11 @@ def eval_epoch(model, dataloader, device):
     total_acc = 0.0
     count = 0
 
+    total_FP = 0
+    total_FN = 0
+    total_pairs_pos = 0
+    total_pairs_neg = 0
+
     with torch.no_grad():
         for images, positions, group_ids in dataloader:
             images = images.to(device)
@@ -237,17 +280,27 @@ def eval_epoch(model, dataloader, device):
                 batch_loss += affinity_loss(A_pred, gid2affinity).item()
                 batch_acc += pairwise_accuracy(A_pred, gid)
 
+                FP, FN, TP, TN = compute_pairwise_errors(A_pred, gid)
+
+                total_FP += len(FP)
+                total_FN += len(FN)
+                total_pairs_pos += len(TP) + len(FN)
+                total_pairs_neg += len(TN) + len(FP)
+
             batch_loss = batch_loss / len(A_pred_list)
             batch_acc = batch_acc / len(A_pred_list)
 
             total_loss += batch_loss
             total_acc += batch_acc
             count += 1
+    FP_rate = total_FP / total_pairs_neg
+    FN_rate = total_FN / total_pairs_pos
+
 
     if count == 0:
-        return 0.0, 0.0
+        return 0.0, 0.0, 0.0,0.0
 
-    return total_loss / count, total_acc / count
+    return total_loss / count, total_acc / count, FP_rate, FN_rate
 
 
 def main():
@@ -275,18 +328,7 @@ def main():
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
     # initialize wandb for visualization
-    wandb.init(project="ELVIS-vit_pure", name=f"vit-{args.principle}", reinit=True)
-    # upload simple config
-    try:
-        wandb.config.update(vars(args))
-    except Exception:
-        # fallback if args contains non-serializable items
-        pass
-    # optionally watch model (comment out if too verbose)
-    try:
-        wandb.watch(model, log="all", log_freq=100)
-    except Exception:
-        pass
+    # wandb.init(project="ELVIS-vit_pure", name=f"vit-{args.principle}", reinit=True)
 
     principle_path = config.get_raw_patterns_path(args.remote) / f"res_{args.img_size}_pin_False" / args.principle
 
@@ -294,7 +336,7 @@ def main():
 
     # create checkpoint folder
 
-    save_dir = Path(f"/elvis_result/{args.principle}") / f"vit_pure_{args.principle}"
+    save_dir = config.get_out_dir(args.principle, args.remote)
     save_dir.mkdir(parents=True, exist_ok=True)
 
     # split dataset into train / test
@@ -317,15 +359,17 @@ def main():
     for epoch in range(args.epochs):
         rtpt.step()
         train_loss = train_epoch(model, train_loader, optimizer, device)
-        val_loss, val_acc = eval_epoch(model, test_loader, device)
-        print(f"Epoch {epoch}: Train Loss {train_loss:.4f} | Val Loss {val_loss:.4f} | Val Pairwise Acc {val_acc:.4f}")
+        val_loss, val_acc, FP_rate, FN_rate = eval_epoch(model, test_loader, device)
+        print(f"Epoch {epoch}: Train Loss {train_loss:.4f} | Val Loss {val_loss:.4f} | "
+              f"Val Pairwise Acc {val_acc:.4f} | FP Rate {FP_rate:.4f} | FN Rate {FN_rate:.4f}")
 
         # log metrics to wandb
         wandb.log({
             "train_loss": train_loss,
             "val_loss": val_loss,
             "val_pairwise_acc": val_acc,
-            "val_acc_avg": val_acc  # average validation pairwise accuracy for this epoch
+            "val_FP_rate": FP_rate,
+            "val_FN_rate": FN_rate
         })
 
         # save checkpoint for this epoch

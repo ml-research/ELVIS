@@ -67,6 +67,15 @@ if not os.path.exists(data):
     os.makedirs(data)
 
 
+def get_out_dir(principle, remote=False):
+    if remote:
+        out_dir = Path(f"/elvis_result/{principle}") / f"vit_pure_{principle}"
+    else:
+        out_dir = root / "results" / principle / f"vit_pure_{principle}"
+
+    return out_dir
+
+
 def get_raw_patterns_path(remote=False):
     if remote:
         raw_patterns_path = Path('/gen_data')
