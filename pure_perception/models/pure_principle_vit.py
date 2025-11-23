@@ -188,6 +188,7 @@ def pairwise_accuracy(A_pred, group_ids, threshold=0.5):
     acc = (preds == gts).float().mean().item()
     return acc
 
+
 def compute_pairwise_errors(A_pred, group_ids, threshold=0.5):
     """
     A_pred: tensor [N,N]  - predicted affinity matrix (0~1)
@@ -205,14 +206,14 @@ def compute_pairwise_errors(A_pred, group_ids, threshold=0.5):
     # 2) pred binarization
     A_bin = (A_pred > threshold).int()
 
-    FP_pairs = []   # predicted same-group but GT says different-group
-    FN_pairs = []   # predicted different-group but GT says same-group
+    FP_pairs = []  # predicted same-group but GT says different-group
+    FN_pairs = []  # predicted different-group but GT says same-group
     TP_pairs = []
     TN_pairs = []
 
     # 3) 遍历 upper triangular (i<j)
     for i in range(N):
-        for j in range(i+1, N):
+        for j in range(i + 1, N):
             gt = A_gt[i, j].item()
             pr = A_bin[i, j].item()
 
@@ -226,6 +227,7 @@ def compute_pairwise_errors(A_pred, group_ids, threshold=0.5):
                 TN_pairs.append((i, j))
 
     return FP_pairs, FN_pairs, TP_pairs, TN_pairs
+
 
 def train_epoch(model, dataloader, optimizer, device):
     model.train()
@@ -254,6 +256,7 @@ def train_epoch(model, dataloader, optimizer, device):
         total_loss += loss.item()
 
     return total_loss / len(dataloader)
+
 
 def visualize_error(image, boxes, FP, FN, caption, group_ids=None):
     try:
@@ -322,6 +325,7 @@ def visualize_error(image, boxes, FP, FN, caption, group_ids=None):
     except Exception:
         pass
 
+
 # new: evaluation function to compute loss and pairwise accuracy on a dataloader
 def eval_epoch(model, dataloader, device, epoch=None):
     model.eval()
@@ -335,6 +339,7 @@ def eval_epoch(model, dataloader, device, epoch=None):
     total_pairs_neg = 0
 
     total_img_level_correct = 0
+    visual_count = 0
     with torch.no_grad():
         for images, positions, group_ids in dataloader:
             images = images.to(device)
@@ -360,11 +365,11 @@ def eval_epoch(model, dataloader, device, epoch=None):
 
                 if acc_sample == 1:
                     total_img_level_correct += 1
-                else:
+                elif visual_count < 10:
                     # visualization if the sample-level accuracy is not 100%
                     caption = f"epoch={epoch} sample_idx={idx} acc={acc_sample:.3f} FP={len(FP)} FN={len(FN)}"
                     visualize_error(images[idx], boxes, FP, FN, caption)
-
+                    visual_count += 1
 
             batch_loss = batch_loss / len(A_pred_list)
             batch_acc = batch_acc / len(A_pred_list)
