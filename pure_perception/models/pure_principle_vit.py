@@ -328,7 +328,7 @@ def main():
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
     # initialize wandb for visualization
-    # wandb.init(project="ELVIS-vit_pure", name=f"vit-{args.principle}", reinit=True)
+    wandb.init(project="ELVIS-vit_pure", name=f"vit-{args.principle}", reinit=True)
 
     principle_path = config.get_raw_patterns_path(args.remote) / f"res_{args.img_size}_pin_False" / args.principle
 
