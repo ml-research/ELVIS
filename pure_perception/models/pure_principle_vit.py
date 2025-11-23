@@ -11,6 +11,7 @@ import wandb
 from pathlib import Path
 from tqdm import tqdm
 import math
+from matplotlib import cm
 
 # add PIL for drawing visualizations
 from PIL import Image, ImageDraw
@@ -254,42 +255,71 @@ def train_epoch(model, dataloader, optimizer, device):
 
     return total_loss / len(dataloader)
 
-def visualize_error(image,boxes, FP, FN,caption):
+def visualize_error(image, boxes, FP, FN, caption, group_ids=None):
     try:
-        # get the corresponding image tensor from batch, convert to PIL
-        img_tensor = image.detach().cpu().clamp(0.0, 1.0)  # [3,H,W]
+        # Convert image tensor to PIL
+        img_tensor = image.detach().cpu().clamp(0.0, 1.0)
         np_img = (img_tensor * 255).byte().permute(1, 2, 0).numpy()
         pil_img = Image.fromarray(np_img)
+        width, height = pil_img.size
 
-        draw = ImageDraw.Draw(pil_img)
-        width, height = pil_img.size  # PIL size: (W,H)
+        # --- Draw ground-truth groups (left) ---
+        gt_img = pil_img.copy()
+        draw_gt = ImageDraw.Draw(gt_img)
+        if group_ids is not None:
+            group_ids_np = group_ids.cpu().numpy()
+            # Assign a color to each group
+            import random
+            random.seed(42)
+            unique_groups = sorted(set(group_ids_np.tolist()))
+            cmap = cm.get_cmap('tab10' if len(unique_groups) <= 10 else 'tab20')
+            palette = [tuple(int(255 * c) for c in cmap(i)[:3]) for i in range(len(unique_groups))]
+            group2color = {g: palette[i % len(palette)] for i, g in enumerate(unique_groups)}
+            for k, gid in enumerate(group_ids_np):
+                x1 = int(boxes[k, 0].item() * width)
+                y1 = int(boxes[k, 1].item() * height)
+                x2 = int(boxes[k, 2].item() * width)
+                y2 = int(boxes[k, 3].item() * height)
+                draw_gt.rectangle([x1, y1, x2, y2], outline=group2color[gid], width=3)
+        else:
+            # fallback: draw all boxes in black
+            for k in range(boxes.shape[0]):
+                x1 = int(boxes[k, 0].item() * width)
+                y1 = int(boxes[k, 1].item() * height)
+                x2 = int(boxes[k, 2].item() * width)
+                y2 = int(boxes[k, 3].item() * height)
+                draw_gt.rectangle([x1, y1, x2, y2], outline="black", width=3)
 
-        # draw FP pairs in red, FN pairs in blue (both boxes of the pair)
+        # --- Draw error image (right) ---
+        err_img = pil_img.copy()
+        draw_err = ImageDraw.Draw(err_img)
         for (i, j) in FP:
             for k in (i, j):
                 x1 = int(boxes[k, 0].item() * width)
                 y1 = int(boxes[k, 1].item() * height)
                 x2 = int(boxes[k, 2].item() * width)
                 y2 = int(boxes[k, 3].item() * height)
-                draw.rectangle([x1, y1, x2, y2], outline="red", width=3)
-
+                draw_err.rectangle([x1, y1, x2, y2], outline="red", width=3)
         for (i, j) in FN:
             for k in (i, j):
                 x1 = int(boxes[k, 0].item() * width)
                 y1 = int(boxes[k, 1].item() * height)
                 x2 = int(boxes[k, 2].item() * width)
                 y2 = int(boxes[k, 3].item() * height)
-                draw.rectangle([x1, y1, x2, y2], outline="blue", width=3)
+                draw_err.rectangle([x1, y1, x2, y2], outline="blue", width=3)
 
+        # --- Concatenate images side by side ---
+        total_width = width * 2
+        out_img = Image.new("RGB", (total_width, height))
+        out_img.paste(gt_img, (0, 0))
+        out_img.paste(err_img, (width, 0))
 
-        # log to wandb
+        # Log to wandb
         try:
-            wandb.log({f"val_vis": wandb.Image(pil_img, caption=caption)})
+            wandb.log({f"val_vis": wandb.Image(out_img, caption=caption)})
         except Exception:
-            # non-blocking: if wandb logging fails, continue
             pass
     except Exception:
-        # avoid breaking evaluation if visualization fails
         pass
 
 # new: evaluation function to compute loss and pairwise accuracy on a dataloader
