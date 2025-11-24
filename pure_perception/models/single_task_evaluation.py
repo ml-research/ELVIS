@@ -391,7 +391,7 @@ def main():
         device = torch.device(f"cuda:{args.device}" if torch.cuda.is_available() else "cpu")
 
     vit = timm.create_model("vit_base_patch16_224", pretrained=True)
-    model = TaskConditionedGroupingModel(vit, embed_dim=768, patch_size=16)
+    model = TaskConditionedGroupingModel(vit, embed_dim=768, patch_size=16).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
     # initialize wandb for visualization
