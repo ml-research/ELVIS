@@ -161,7 +161,7 @@ def train_epoch(model, dataloader_list, optimizer, device):
         train_boxes = [data["boxes"].to(device) for data in train_data]
         train_gids = [data["group_ids"].to(device) for data in train_data]
 
-        query_imgs = [data["image"].to(device) for data in val_data]
+        query_imgs = [data["image"].to(device) for data in val_data][:10]
         query_bxs = [data["boxes"].to(device) for data in val_data]
         query_groups = [data["group_ids"].to(device) for data in val_data]
 
@@ -484,12 +484,12 @@ def main():
     rtpt.start()
     for epoch in range(args.epochs):
         rtpt.step()
-        train_loss, train_acc = train_epoch(model, train_datasets, optimizer, device)
+        train_loss, train_acc = train_epoch(model, train_datasets[:2], optimizer, device)
         # pass epoch into eval_epoch so visualizations are labeled per epoch
         val_loss, val_acc, FP_rate, FN_rate, img_level_acc,total_img_level_accs = eval_epoch(model, test_datasets, device)
         print(f"Epoch {epoch}: Train Loss {train_loss:.4f} | Val Loss {val_loss:.4f} | "
               f"Val Pairwise Acc {val_acc:.4f} | FP Rate {FP_rate:.4f} | FN Rate {FN_rate:.4f} | "
-              f"Img-level Acc {img_level_acc:.4f}, total img-level accs: {total_img_level_accs}")
+              f"Img-level Acc {img_level_acc:.4f}")
 
     wandb.finish()
 
