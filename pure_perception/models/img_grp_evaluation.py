@@ -293,7 +293,7 @@ def eval_epoch(model, dataloader_list, device, threshold=0.5):
     img_level_accs = []
     with torch.no_grad():
         # iterate per-task DataLoader-like lists
-        for train_data, val_data in dataloader_list:
+        for train_data in dataloader_list:
             train_imgs = [data["image"].to(device) for data in train_data]
             train_boxes = [data["boxes"].to(device) for data in train_data]
             train_gids = [data["group_ids"].to(device) for data in train_data]
