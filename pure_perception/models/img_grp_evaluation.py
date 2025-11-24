@@ -294,9 +294,9 @@ def eval_epoch(model, dataloader_list, device, threshold=0.5):
     with torch.no_grad():
         # iterate per-task DataLoader-like lists
         for train_data in dataloader_list:
-            train_imgs = [data["image"].to(device) for data in train_data]
-            train_boxes = [data["boxes"].to(device) for data in train_data]
-            train_gids = [data["group_ids"].to(device) for data in train_data]
+            train_imgs = train_data["image"].unsqueeze(0).to(device)
+            train_boxes = train_data["boxes"].unsqueeze(0).to(device)
+            train_gids = train_data["group_ids"].unsqueeze(0).to(device)
             # Forward
             A_pred_list = model(train_imgs, train_boxes)
             batch_loss = 0.0
