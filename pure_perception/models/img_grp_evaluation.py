@@ -368,6 +368,8 @@ def load_imgs(args, split="train"):
     for folder in task_folders:
         folder_samples = utils.get_pattern_data(folder)
         samples.extend(folder_samples)
+
+    samples = samples[:args.img_num]
     print(f"Total images: {len(samples)}.")
     return samples
 
@@ -404,7 +406,7 @@ def main():
     rtpt.start()
     for epoch in range(args.epochs):
         rtpt.step()
-        train_loss, train_acc, img_level_acc = train_epoch(model, train_imgs[:args.img_num], optimizer, device, seed=args.seed)
+        train_loss, train_acc, img_level_acc = train_epoch(model, train_imgs, optimizer, device, seed=args.seed)
         # pass epoch into eval_epoch so visualizations are labeled per epoch
         avg_loss, pair_acc, img_acc, fp_rate, fn_rate = eval_epoch(model, test_imgs, device)
         print(f"Epoch {epoch}: Train Loss {train_loss:.4f} | Train Acc {train_acc:.4f} | img_level_acc {img_level_acc:.4f} || "
