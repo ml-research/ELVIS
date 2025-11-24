@@ -40,7 +40,9 @@ def load_boxes_and_groups(json_path):
         h = item['size']
         boxes.append([x - w / 2, y - h / 2, x + w / 2, y + h / 2])
         group_ids.append(item['group_id'])
-    boxes_tensor = torch.tensor(boxes, dtype=torch.float32)
+    ## convert box value to 0-255 range
+    boxes = [[b[0] * 255, b[1] * 255, b[2] * 255, b[3] * 255] for b in boxes]
+    boxes_tensor = torch.tensor(boxes, dtype=torch.int32)
     group_ids_tensor = torch.tensor(group_ids, dtype=torch.int64)
     return boxes_tensor, group_ids_tensor
 

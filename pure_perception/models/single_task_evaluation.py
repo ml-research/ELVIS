@@ -18,10 +18,11 @@ from PIL import Image, ImageDraw
 
 import utils
 from scripts import config
-from pure_perception.models.vit_model import ProximityViT
+from pure_perception.models.vit_model import ProximityViT, TaskConditionedGroupingModel
+
 
 class SingleTaskDataset(Dataset):
-    def __init__(self, pattern_folder):
+    def __init__(self, train_folder, test_folder):
         """
         samples = [
             {
@@ -32,8 +33,8 @@ class SingleTaskDataset(Dataset):
             ...
         ]
         """
-        self.samples = utils.get_pattern_data(pattern_folder)
-
+        self.samples = utils.get_pattern_data(train_folder)
+        self.samples += utils.get_pattern_data(test_folder)
     def __len__(self):
         return len(self.samples)
 
@@ -41,6 +42,10 @@ class SingleTaskDataset(Dataset):
         data = self.samples[idx]
         return data['image'], data['boxes'], data['group_ids']
 
+def single_task_data(train_folder, test_folder):
+    train_samples = utils.get_pattern_data(train_folder)
+    test_samples = utils.get_pattern_data(test_folder)
+    return train_samples, test_samples
 
 def affinity_loss(A_pred, group_ids):
     """
@@ -125,33 +130,91 @@ def compute_pairwise_errors(A_pred, group_ids, threshold=0.5):
     return FP_pairs, FN_pairs, TP_pairs, TN_pairs
 
 
-def train_epoch(model, dataloader, optimizer, device):
+def compute_pairwise_gt(group_ids):
+    """
+    group_ids: list of int length N
+    returns: [N, N] matrix of 0/1
+    """
+    N = len(group_ids)
+    gt = torch.zeros(N, N, dtype=torch.float32)
+
+    for i in range(N):
+        for j in range(N):
+            gt[i, j] = 1.0 if group_ids[i] == group_ids[j] else 0.0
+
+    return gt
+
+
+def train_epoch(model, dataloader_list, optimizer, device):
+    """
+    dataloader_list: list of DataLoader objects (each DataLoader yields batches).
+    If a DataLoader batch has batch_size == 2, the batch will contain two items along
+    the first dimension. Access them by indexing: batch_item0 = batch_field[0], batch_item1 = batch_field[1].
+    """
     model.train()
-    total_loss = 0
+    total_loss = 0.0
+    criterion = nn.BCEWithLogitsLoss()
+    total_acc = 0.0
+    count = 0
 
-    for images, positions, group_ids in dataloader:
-        images = images.to(device)
+    # dataloader_list is expected to be a list of DataLoaders (one per task)
+    for train_data, val_data in dataloader_list:
+        train_imgs = [data["image"].to(device) for data in train_data]
+        train_boxes = [data["boxes"].to(device) for data in train_data]
+        train_gids = [data["group_ids"].to(device) for data in train_data]
 
-        # move lists to GPU
-        boxes_list = [b.to(device) for b in positions]
-        gid_list = [g.to(device) for g in group_ids]
+        query_imgs = [data["image"].to(device) for data in val_data]
+        query_bxs = [data["boxes"].to(device) for data in val_data]
+        query_groups = [data["group_ids"].to(device) for data in val_data]
 
+        task_embedding = model.compute_task_embedding(train_imgs, train_boxes)
+        # -----------------------------
+        # 2. Loop through each query image
+        # -----------------------------
+        query_losses = []
+        query_accs   = []
+        for qimg, qbxs, qgrp in zip(query_imgs, query_bxs, query_groups):
+            # --- forward ---
+            logits = model.forward_query(
+                qimg, qbxs, task_embedding
+            )  # → [N, N]
+
+            # --- GT ---
+            gt = compute_pairwise_gt(qgrp).to(device)
+
+            # --- loss ---
+            loss = F.binary_cross_entropy_with_logits(logits, gt)
+            query_losses.append(loss)
+
+            # --- accuracy ---
+            pred = (torch.sigmoid(logits) > 0.5).float()
+            acc  = (pred == gt).float().mean()
+            query_accs.append(acc)
+
+        # -----------------------------
+        # 3. Task-level loss = average query losses
+        # -----------------------------
+        task_loss = torch.stack(query_losses).mean()
+        task_acc  = torch.stack(query_accs).mean()
+
+
+        # -----------------------------
+        # 4. Optimize using task-level loss
+        # -----------------------------
         optimizer.zero_grad()
-
-        A_pred_list = model(images, boxes_list)
-
-        loss = 0
-        for A_pred, gid in zip(A_pred_list, gid_list):
-            gid2affinity = (gid.unsqueeze(0).expand(len(gid), len(gid)) == gid.unsqueeze(1).expand(len(gid), len(gid))).float()
-            loss += affinity_loss(A_pred, gid2affinity)
-
-        loss = loss / len(A_pred_list)
-        loss.backward()
+        task_loss.backward()
         optimizer.step()
 
-        total_loss += loss.item()
+        # -----------------------------
+        # 5. Logging
+        # -----------------------------
+        total_loss += task_loss.item()
+        total_acc  += task_acc.item()
+        count += 1
 
-    return total_loss / len(dataloader)
+    if count == 0:
+        return 0.0, 0.0
+    return total_loss / count, total_acc / count
 
 
 def visualize_error(image, boxes, FP, FN, caption, group_ids=None):
@@ -223,7 +286,11 @@ def visualize_error(image, boxes, FP, FN, caption, group_ids=None):
 
 
 # new: evaluation function to compute loss and pairwise accuracy on a dataloader
-def eval_epoch(model, dataloader, device, epoch=None):
+def eval_epoch(model, dataloader_list, device):
+    """
+    dataloader_list: list of DataLoader objects
+    Access batch items similarly to train_epoch (index along batch dimension).
+    """
     model.eval()
     total_loss = 0.0
     total_acc = 0.0
@@ -236,51 +303,70 @@ def eval_epoch(model, dataloader, device, epoch=None):
 
     total_img_level_correct = 0
     visual_count = 0
+    total_img_level_accs = []
     with torch.no_grad():
-        for images, positions, group_ids in dataloader:
-            images = images.to(device)
-            boxes_list = [b.to(device) for b in positions]
-            gid_list = [g.to(device) for g in group_ids]
-            A_pred_list = model(images, boxes_list)
-            batch_loss = 0.0
-            batch_acc = 0.0
-            # iterate with index so we can pick the corresponding image from the batch
-            for idx, (A_pred, gid, boxes) in enumerate(zip(A_pred_list, gid_list, boxes_list)):
-                gid2affinity = (gid.unsqueeze(0).expand(len(gid), len(gid)) == gid.unsqueeze(1).expand(len(gid), len(gid))).float()
-                batch_loss += affinity_loss(A_pred, gid2affinity).item()
+        # iterate per-task DataLoader
+        for train_data, val_data in dataloader_list:
+            train_imgs = [data["image"].to(device) for data in train_data]
+            train_boxes = [data["boxes"].to(device) for data in train_data]
+            query_imgs = [data["image"].to(device) for data in val_data]
+            query_bxs = [data["boxes"].to(device) for data in val_data]
+            query_groups = [data["group_ids"].to(device) for data in val_data]
 
-                # compute sample-level accuracy
-                acc_sample = pairwise_accuracy(A_pred, gid)
-                batch_acc += acc_sample
+            task_embedding = model.compute_task_embedding(train_imgs, train_boxes)
 
-                FP, FN, TP, TN = compute_pairwise_errors(A_pred, gid)
+            per_img_all_pair_avg_accs = []
+            img_level_accs = []
+            for qimg, qbxs, qgrp in zip(query_imgs, query_bxs, query_groups):
+                logits = model.forward_query(qimg, qbxs, task_embedding)
+                gt = compute_pairwise_gt(qgrp).to(device)
+
+                pred = (torch.sigmoid(logits) > 0.5).float()
+                acc = (pred == gt).float().mean()
+                per_img_all_pair_avg_accs.append(acc)
+                img_level_accs.append(1.0 if acc.item() == 1.0 else 0.0)
+                FP, FN, TP, TN = compute_pairwise_errors(pred, qgrp)
                 total_FP += len(FP)
                 total_FN += len(FN)
                 total_pairs_pos += len(TP) + len(FN)
                 total_pairs_neg += len(TN) + len(FP)
-
-                if acc_sample == 1:
-                    total_img_level_correct += 1
-                elif visual_count < 10:
-                    # visualization if the sample-level accuracy is not 100%
-                    caption = f"epoch={epoch} sample_idx={idx} acc={acc_sample:.3f} FP={len(FP)} FN={len(FN)}"
-                    visualize_error(images[idx], boxes, FP, FN, caption, gid)
-                    visual_count += 1
-
-            batch_loss = batch_loss / len(A_pred_list)
-            batch_acc = batch_acc / len(A_pred_list)
-            total_loss += batch_loss
-            total_acc += batch_acc
+            total_img_level_accs.append(img_level_accs)
+            total_img_level_correct += sum(img_level_accs)
+            total_acc += torch.stack(per_img_all_pair_avg_accs).mean().item()
             count += 1
-
     FP_rate = total_FP / total_pairs_neg if total_pairs_neg > 0 else 0.0
     FN_rate = total_FN / total_pairs_pos if total_pairs_pos > 0 else 0.0
     img_level_acc = total_img_level_correct / count if count > 0 else 0.0
+    val_loss =  total_loss / count
+    val_acc =total_acc / count
 
-    if count == 0:
-        return 0.0, 0.0, 0.0, 0.0, 0.0
+    return val_loss, val_acc, FP_rate, FN_rate, img_level_acc, total_img_level_accs
 
-    return total_loss / count, total_acc / count, FP_rate, FN_rate, img_level_acc
+
+def load_single_task_datasets(args):
+    principle_path = config.get_raw_patterns_path(args.remote) / f"res_{args.img_size}_pin_False" / args.principle
+    train_task_folders = sorted([p for p in (Path(principle_path) / "train").iterdir() if p.is_dir()], key=lambda x: x.stem)
+    test_task_folders = sorted([p for p in (Path(principle_path) / "test").iterdir() if p.is_dir()], key=lambda x: x.stem)
+
+    datasets = [single_task_data(train_folder, test_folder) for train_folder, test_folder in zip(train_task_folders, test_task_folders)]
+
+    # random split of tasks into train-tasks and held-out test-tasks
+    random_indices = np.random.permutation(len(datasets))
+    split_index = int(len(datasets) * 0.8)
+
+    selected_train_datasets = []
+    selected_test_datasets = []
+
+    # for tasks selected for training, use their train_dataset
+    for i in random_indices[:split_index]:
+        selected_train_datasets.append(datasets[i])
+
+    # for held-out tasks, use their test_dataset
+    for i in random_indices[split_index:]:
+        selected_test_datasets.append(datasets[i])
+
+    print(f"Total tasks after split: {len(selected_train_datasets)} train tasks, {len(selected_test_datasets)} test tasks")
+    return selected_train_datasets, selected_test_datasets
 
 
 def main():
@@ -304,11 +390,12 @@ def main():
     else:
         device = torch.device(f"cuda:{args.device}" if torch.cuda.is_available() else "cpu")
 
-    model = ProximityViT().to(device)
+    vit = timm.create_model("vit_base_patch16_224", pretrained=True)
+    model = TaskConditionedGroupingModel(vit, embed_dim=768, patch_size=16)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
     # initialize wandb for visualization
-    wandb.init(project="ELVIS-vit_pure", name=f"vit-{args.principle}", reinit=True)
+    # wandb.init(project="ELVIS-vit_pure", name=f"vit-{args.principle}", reinit=True)
 
     # --- new: create a wandb.Table to collect per-task metrics across all tasks/epochs ---
     metrics_table = wandb.Table(columns=[
@@ -316,50 +403,22 @@ def main():
         "val_pairwise_acc", "val_FP_rate", "val_FN_rate", "val_img_level_acc"
     ])
 
-    principle_path = config.get_raw_patterns_path(args.remote) / f"res_{args.img_size}_pin_False" / args.principle
-    pattern_folders = sorted([p for p in (Path(principle_path) / "train").iterdir() if p.is_dir()], key=lambda x: x.stem)
-    datasets = [SingleTaskDataset(pattern_folder) for pattern_folder in pattern_folders]
+    train_datasets, test_datasets = load_single_task_datasets(args)
 
-    # iterate with pattern folder to get a stable task name
-    for pattern_folder, ds in zip(pattern_folders, datasets):
-        task_name = pattern_folder.stem
-        print(f"Dataset {task_name}: {len(ds)} samples")
-        total_len = len(ds)
-        test_len = int(total_len * args.test_split)
-        train_len = total_len - test_len
-        if train_len <= 0 or test_len <= 0:
-            raise ValueError(f"Invalid split: dataset size {total_len}, train {train_len}, test {test_len}")
-        train_dataset, test_dataset = torch.utils.data.random_split(ds, [train_len, test_len])
-        train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
-        test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False)
-        rtpt = RTPT(name_initials='JIS', experiment_name=f'Elvis-vit-{args.principle}',
-                    max_iterations=args.epochs)
-        rtpt.start()
-        for epoch in range(args.epochs):
-            rtpt.step()
-            train_loss = train_epoch(model, train_loader, optimizer, device)
-            # pass epoch into eval_epoch so visualizations are labeled per epoch
-            val_loss, val_acc, FP_rate, FN_rate, img_level_acc = eval_epoch(model, test_loader, device, epoch)
-            print(f"Epoch {epoch}: Train Loss {train_loss:.4f} | Val Loss {val_loss:.4f} | "
-                  f"Val Pairwise Acc {val_acc:.4f} | FP Rate {FP_rate:.4f} | FN Rate {FN_rate:.4f} | "
-                  f"Img-level Acc {img_level_acc:.4f}")
-            # log scalars (per-task prefixed) and add a row to the metrics table so all tasks appear on same page
-            wandb.log({
-                f"task/{task_name}/train_loss": train_loss,
-                f"task/{task_name}/val_loss": val_loss,
-                f"task/{task_name}/val_pairwise_acc": val_acc,
-                f"task/{task_name}/val_FP_rate": FP_rate,
-                f"task/{task_name}/val_FN_rate": FN_rate,
-                f"task/{task_name}/val_img_level_acc": img_level_acc,
-            }, commit=False)
 
-            # append to the global table (accumulates across tasks and epochs)
-            metrics_table.add_data(epoch, task_name, train_loss, val_loss, val_acc, FP_rate, FN_rate, img_level_acc)
-            # log the table (shows all rows on the same wandb page). commit=True here to finalize this step.
-            wandb.log({"tasks_metrics": metrics_table}, commit=True)
+
+    rtpt = RTPT(name_initials='JIS', experiment_name=f'Elvis-vit-{args.principle}', max_iterations=args.epochs)
+    rtpt.start()
+    for epoch in range(args.epochs):
+        rtpt.step()
+        train_loss, train_acc = train_epoch(model, train_datasets, optimizer, device)
+        # pass epoch into eval_epoch so visualizations are labeled per epoch
+        val_loss, val_acc, FP_rate, FN_rate, img_level_acc,total_img_level_accs = eval_epoch(model, test_datasets, device)
+        print(f"Epoch {epoch}: Train Loss {train_loss:.4f} | Val Loss {val_loss:.4f} | "
+              f"Val Pairwise Acc {val_acc:.4f} | FP Rate {FP_rate:.4f} | FN Rate {FN_rate:.4f} | "
+              f"Img-level Acc {img_level_acc:.4f}, total img-level accs: {total_img_level_accs}")
+
     wandb.finish()
-
-
 
 if __name__ == "__main__":
     main()
