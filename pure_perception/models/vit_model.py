@@ -383,7 +383,13 @@ class ProximityGroupingModel(nn.Module):
         token_hw = int(patch_tokens.shape[1] ** 0.5)
 
         # reshape patch tokens to spatial map
+        # patch_tokens: [B, 197, 768]
+        patch_tokens = patch_tokens[:, 1:, :]  # 去掉 CLS → [B, 196, 768]
+
+        token_hw = int(patch_tokens.shape[1] ** 0.5)  # 14
         feat_maps = patch_tokens.reshape(B, token_hw, token_hw, self.hidden_dim)
+
+        # feat_maps = patch_tokens.reshape(B, token_hw, token_hw, self.hidden_dim)
 
         results = []
 

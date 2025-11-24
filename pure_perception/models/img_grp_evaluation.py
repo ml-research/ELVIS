@@ -159,9 +159,9 @@ def train_epoch(model, dataloader_list, optimizer, device, seed, threshold=0.5):
     img_level_preds = []
     # dataloader_list is expected to be a list of (train_data, val_data) pairs (one per task)
     for train_data in dataloader_list:
-        train_imgs = [data["image"].to(device) for data in train_data]
-        train_boxes = [data["boxes"].to(device) for data in train_data]
-        train_gids = [data["group_ids"].to(device) for data in train_data]
+        train_imgs = train_data["image"].unsqueeze(0).to(device)
+        train_boxes =train_data["boxes"].unsqueeze(0).to(device)
+        train_gids = train_data["group_ids"].unsqueeze(0).to(device)
         # -----------------------------
         optimizer.zero_grad()
         # forward
