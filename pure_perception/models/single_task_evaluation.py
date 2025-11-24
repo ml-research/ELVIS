@@ -147,9 +147,7 @@ def compute_pairwise_gt(group_ids):
 
 def train_epoch(model, dataloader_list, optimizer, device):
     """
-    dataloader_list: list of DataLoader objects (each DataLoader yields batches).
-    If a DataLoader batch has batch_size == 2, the batch will contain two items along
-    the first dimension. Access them by indexing: batch_item0 = batch_field[0], batch_item1 = batch_field[1].
+    dataloader_list: list of (train_data, val_data) pairs (each element is a list of samples).
     """
     model.train()
     total_loss = 0.0
@@ -157,7 +155,7 @@ def train_epoch(model, dataloader_list, optimizer, device):
     total_acc = 0.0
     count = 0
 
-    # dataloader_list is expected to be a list of DataLoaders (one per task)
+    # dataloader_list is expected to be a list of (train_data, val_data) pairs (one per task)
     for train_data, val_data in dataloader_list:
         train_imgs = [data["image"].to(device) for data in train_data]
         train_boxes = [data["boxes"].to(device) for data in train_data]
@@ -208,13 +206,35 @@ def train_epoch(model, dataloader_list, optimizer, device):
         # -----------------------------
         # 5. Logging
         # -----------------------------
+        # per-task logging (guarded if wandb not initialized)
+        try:
+            if wandb.run is not None:
+                wandb.log({
+                    f"train/task_{count}_loss": task_loss.item(),
+                    f"train/task_{count}_acc": task_acc.item(),
+                }, commit=False)
+        except Exception:
+            pass
+
         total_loss += task_loss.item()
         total_acc  += task_acc.item()
         count += 1
 
+    # epoch-level logging
+    avg_loss = total_loss / count if count > 0 else 0.0
+    avg_acc = total_acc / count if count > 0 else 0.0
+    try:
+        if wandb.run is not None:
+            wandb.log({
+                "train/epoch_loss": avg_loss,
+                "train/epoch_acc": avg_acc,
+            }, commit=True)
+    except Exception:
+        pass
+
     if count == 0:
         return 0.0, 0.0
-    return total_loss / count, total_acc / count
+    return avg_loss, avg_acc
 
 
 def visualize_error(image, boxes, FP, FN, caption, group_ids=None):
@@ -288,8 +308,7 @@ def visualize_error(image, boxes, FP, FN, caption, group_ids=None):
 # new: evaluation function to compute loss and pairwise accuracy on a dataloader
 def eval_epoch(model, dataloader_list, device):
     """
-    dataloader_list: list of DataLoader objects
-    Access batch items similarly to train_epoch (index along batch dimension).
+    dataloader_list: list of (train_data, val_data) pairs
     """
     model.eval()
     total_loss = 0.0
@@ -304,8 +323,10 @@ def eval_epoch(model, dataloader_list, device):
     total_img_level_correct = 0
     visual_count = 0
     total_img_level_accs = []
+    criterion = nn.BCEWithLogitsLoss()
+    task_idx = 0
     with torch.no_grad():
-        # iterate per-task DataLoader
+        # iterate per-task DataLoader-like lists
         for train_data, val_data in dataloader_list:
             train_imgs = [data["image"].to(device) for data in train_data]
             train_boxes = [data["boxes"].to(device) for data in train_data]
@@ -317,9 +338,14 @@ def eval_epoch(model, dataloader_list, device):
 
             per_img_all_pair_avg_accs = []
             img_level_accs = []
+            per_query_losses = []
             for qimg, qbxs, qgrp in zip(query_imgs, query_bxs, query_groups):
                 logits = model.forward_query(qimg, qbxs, task_embedding)
                 gt = compute_pairwise_gt(qgrp).to(device)
+
+                # accumulate loss
+                loss = F.binary_cross_entropy_with_logits(logits, gt)
+                per_query_losses.append(loss.item())
 
                 pred = (torch.sigmoid(logits) > 0.5).float()
                 acc = (pred == gt).float().mean()
@@ -330,15 +356,62 @@ def eval_epoch(model, dataloader_list, device):
                 total_FN += len(FN)
                 total_pairs_pos += len(TP) + len(FN)
                 total_pairs_neg += len(TN) + len(FP)
+
+                # visualization for non-perfect samples
+                if acc.item() < 1.0 and visual_count < 10:
+                    caption = f"task={task_idx} sample_acc={acc.item():.3f} FP={len(FP)} FN={len(FN)}"
+                    try:
+                        visualize_error(qimg, qbxs, FP, FN, caption, qgrp)
+                    except Exception:
+                        pass
+                    visual_count += 1
+
+            # per-task aggregation
+            if len(per_query_losses) > 0:
+                task_val_loss = float(np.mean(per_query_losses))
+            else:
+                task_val_loss = 0.0
+            if len(per_img_all_pair_avg_accs) > 0:
+                task_val_acc = float(torch.stack(per_img_all_pair_avg_accs).mean().item())
+            else:
+                task_val_acc = 0.0
+
+            # log per-task validation metrics
+            try:
+                if wandb.run is not None:
+                    wandb.log({
+                        f"val/task_{task_idx}_loss": task_val_loss,
+                        f"val/task_{task_idx}_acc": task_val_acc,
+                        f"val/task_{task_idx}_img_level_acc": sum(img_level_accs) / len(img_level_accs) if len(img_level_accs) > 0 else 0.0
+                    }, commit=False)
+            except Exception:
+                pass
+
             total_img_level_accs.append(img_level_accs)
             total_img_level_correct += sum(img_level_accs)
-            total_acc += torch.stack(per_img_all_pair_avg_accs).mean().item()
+            total_acc += task_val_acc
+            total_loss += task_val_loss
             count += 1
+            task_idx += 1
+
     FP_rate = total_FP / total_pairs_neg if total_pairs_neg > 0 else 0.0
     FN_rate = total_FN / total_pairs_pos if total_pairs_pos > 0 else 0.0
     img_level_acc = total_img_level_correct / count if count > 0 else 0.0
-    val_loss =  total_loss / count
-    val_acc =total_acc / count
+    val_loss =  total_loss / count if count > 0 else 0.0
+    val_acc = total_acc / count if count > 0 else 0.0
+
+    # epoch-level validation logging
+    try:
+        if wandb.run is not None:
+            wandb.log({
+                "val/epoch_loss": val_loss,
+                "val/epoch_acc": val_acc,
+                "val/FP_rate": FP_rate,
+                "val/FN_rate": FN_rate,
+                "val/img_level_acc": img_level_acc
+            }, commit=True)
+    except Exception:
+        pass
 
     return val_loss, val_acc, FP_rate, FN_rate, img_level_acc, total_img_level_accs
 
