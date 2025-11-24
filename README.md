@@ -187,7 +187,7 @@ python -m pure_perception.models.pure_principle_vit --remote --model vit --img_s
 
 python -m pure_perception.models.single_task_evaluation --remote --model vit --img_size 224 --principle proximity --device 4
 python -m pure_perception.models.single_task_evaluation --remote --model vit --img_size 224 --principle closure --device 3
-
+python -m pure_perception.models.img_grp_evaluation --remote --model vit --img_size 224 --principle similarity --device 7 --img_num 1000
 python -m pure_perception.models.all_tasks_evaluation --remote --model vit --img_size 224 --principle similarity --device 7
 
 ##### Analysis Results

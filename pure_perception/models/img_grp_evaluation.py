@@ -364,7 +364,10 @@ def eval_epoch(model, dataloader_list, device, threshold=0.5):
 def load_imgs(args, split="train"):
     principle_path = config.get_raw_patterns_path(args.remote) / f"res_{args.img_size}_pin_False" / args.principle
     task_folders = sorted([p for p in (Path(principle_path) / split).iterdir() if p.is_dir()], key=lambda x: x.stem)
-    samples = [utils.get_pattern_data(folder) for folder in task_folders]
+    samples = []
+    for folder in task_folders:
+        folder_samples = utils.get_pattern_data(folder)
+        samples.extend(folder_samples)
     print(f"Total images: {len(samples)}.")
     return samples
 
