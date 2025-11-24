@@ -283,3 +283,117 @@ class TaskConditionedGroupingModel(nn.Module):
 
         logits = self.group_head(obj_feats, task_embedding)
         return logits
+
+
+
+
+class ProximityGroupingModel(nn.Module):
+    def __init__(self, vit_name="vit_base_patch16_224", hidden_dim=768):
+        super().__init__()
+
+        # --------------------------
+        # 1. ViT backbone
+        # --------------------------
+        self.vit = timm.create_model(vit_name, pretrained=True, num_classes=0)
+        self.hidden_dim = hidden_dim
+
+        # --------------------------
+        # 2. Pairwise relation MLP: [f_i, f_j] -> p(same group)
+        # --------------------------
+        self.pairwise_head = nn.Sequential(
+            nn.Linear(2 * hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, 1)
+        )
+
+    # ------------------------------------------------------------
+    # Patch-level feature extraction
+    # ------------------------------------------------------------
+    def extract_patch_tokens(self, images):
+        """
+        images: [B, 3, H, W]
+        return patch_tokens: [B, num_patches, hidden_dim]
+        """
+        return self.vit.forward_features(images)
+
+    # ------------------------------------------------------------
+    # Object feature pooling
+    # ------------------------------------------------------------
+    def pool_object_features(self, feat_map, boxes, H, W):
+        """
+        feat_map: [P_H, P_W, hidden_dim]
+        boxes: [N,4] in pixel coordinates
+        H,W: original image size
+        return: [N, hidden_dim]
+        """
+        P_H, P_W, D = feat_map.shape
+        object_feats = []
+
+        for (x1, y1, x2, y2) in boxes:
+            # ---------------------------
+            # convert pixel bbox -> patch indices
+            # ---------------------------
+            px1 = int(x1 / W * P_W)
+            py1 = int(y1 / H * P_H)
+            px2 = int(x2 / W * P_W)
+            py2 = int(y2 / H * P_H)
+
+            # clamp to valid patch range
+            px1 = max(0, min(px1, P_W - 1))
+            py1 = max(0, min(py1, P_H - 1))
+            px2 = max(px1 + 1, min(px2, P_W))
+            py2 = max(py1 + 1, min(py2, P_H))
+
+            region = feat_map[py1:py2, px1:px2, :]  # [h,w,D]
+            pooled = region.mean(dim=(0, 1))        # [D]
+            object_feats.append(pooled)
+
+        return torch.stack(object_feats, dim=0)  # [N, D]
+
+    # ------------------------------------------------------------
+    # Pairwise relation computation
+    # ------------------------------------------------------------
+    def compute_affinity(self, object_feats):
+        """
+        object_feats: [N, D]
+        return: A_pred: [N, N]
+        """
+        N, D = object_feats.shape
+
+        fi = object_feats.unsqueeze(1).expand(N, N, D)
+        fj = object_feats.unsqueeze(0).expand(N, N, D)
+
+        pair = torch.cat([fi, fj], dim=-1)  # [N, N, 2D]
+        logits = self.pairwise_head(pair).squeeze(-1)  # [N,N]
+        A_pred = torch.sigmoid(logits)
+        return A_pred
+
+    # ------------------------------------------------------------
+    # Forward
+    # ------------------------------------------------------------
+    def forward(self, images, boxes_list):
+        """
+        images: [B,3,H,W]
+        boxes_list: list of length B, each item = [N_i,4] tensor
+        return: list of A_pred matrices, one per image
+        """
+        B, _, H, W = images.shape
+
+        patch_tokens = self.extract_patch_tokens(images)
+        token_hw = int(patch_tokens.shape[1] ** 0.5)
+
+        # reshape patch tokens to spatial map
+        feat_maps = patch_tokens.reshape(B, token_hw, token_hw, self.hidden_dim)
+
+        results = []
+
+        for b in range(B):
+            boxes = boxes_list[b]     # [N_i,4]
+            feat_map = feat_maps[b]   # [P_H,P_W,D]
+
+            object_feats = self.pool_object_features(feat_map, boxes, H, W)
+            A_pred = self.compute_affinity(object_feats)
+
+            results.append(A_pred)
+
+        return results
