@@ -468,7 +468,7 @@ def main():
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
     # initialize wandb for visualization
-    # wandb.init(project="ELVIS-vit_pure", name=f"vit-{args.principle}", reinit=True)
+    wandb.init(project="ELVIS-vit_pure", name=f"vit-{args.principle}", reinit=True)
 
     # --- new: create a wandb.Table to collect per-task metrics across all tasks/epochs ---
     metrics_table = wandb.Table(columns=[
@@ -484,7 +484,7 @@ def main():
     rtpt.start()
     for epoch in range(args.epochs):
         rtpt.step()
-        train_loss, train_acc = train_epoch(model, train_datasets[:2], optimizer, device)
+        train_loss, train_acc = train_epoch(model, train_datasets, optimizer, device)
         # pass epoch into eval_epoch so visualizations are labeled per epoch
         val_loss, val_acc, FP_rate, FN_rate, img_level_acc,total_img_level_accs = eval_epoch(model, test_datasets, device)
         print(f"Epoch {epoch}: Train Loss {train_loss:.4f} | Val Loss {val_loss:.4f} | "
