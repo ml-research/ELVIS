@@ -94,7 +94,8 @@ def train_model(args, principle, input_type, sample_size, device, log_wandb=True
     random.shuffle(test_datas)
 
     best_acc = 0.0
-
+    print(f"Training on principle: {principle} with {len(train_datas)} samples.")
+    print(f"Testing on principle: {principle} with {len(test_datas)} samples.")
     for epoch in range(epochs):
         model.train()
         total_loss, correct, total = 0.0, 0.0, 0.0
