@@ -397,7 +397,7 @@ def crop_objs(image, json_data):
 
 
 def run_gpt5_grouping(data_path, img_size, principle, batch_size, device, img_num, epochs, start_num, task_num):
-    # init_wandb(batch_size, principle)
+    init_wandb(batch_size, principle)
     # model, processor = load_gpt5_model(device)
     principle_path = Path(data_path)
     # pattern_folders = sorted((principle_path / "train").iterdir())
