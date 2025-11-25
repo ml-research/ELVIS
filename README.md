@@ -192,6 +192,7 @@ python -m pure_perception.models.img_grp_evaluation --remote --model vit --img_s
 python -m pure_perception.models.all_tasks_evaluation --remote --model vit --img_size 224 --principle similarity --device 7
 
 python -m scripts.baseline_models.train_grm_grp --remote --img_size 224 --principle similarity --device 5
+python -m scripts.baseline_models.train_grm_grp --remote --img_size 224 --principle similarity --device 5 --backbone transformer
 
 ##### Analysis Results
 ``` 

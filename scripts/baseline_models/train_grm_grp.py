@@ -178,8 +178,8 @@ if __name__ == "__main__":
 
     device = torch.device(f"cuda:{args.device}" if torch.cuda.is_available() else "cpu")
 
-    # wandb.init(project="grm_grp_training", name=f"{args.principle}_{args.input_type}_size{args.sample_size}")
-    rtpt = RTPT(name_initials='MG', experiment_name='grm_grp_training', max_iterations=args.epochs)
+    wandb.init(project="grm_grp_training", name=f"{args.principle}_{args.input_type}_size{args.sample_size}")
+    rtpt = RTPT(name_initials='JS', experiment_name='grm_grp_training', max_iterations=args.epochs)
     rtpt.start()
     train_model(args, args.principle, args.input_type, device,
                 log_wandb=True, n=100, epochs=args.epochs, data_num=args.data_num)
