@@ -6,6 +6,7 @@ from scripts.baseline_models import gpt5
 from scripts.baseline_models import llama
 from scripts.baseline_models import llava
 from scripts.baseline_models import internVL
+from scripts.baseline_models import grm
 import torch
 import os
 
@@ -14,6 +15,7 @@ baseline_models = {
     "vit": vit.run_vit,
     "gpt5": gpt5.run_gpt5,
     "gpt5_grp": gpt5.run_gpt5_grouping,
+    "grm_grp": grm.run_grm_grouping,
     "internVL": internVL.run_internVL,
     "internVL_X": internVL.run_internVL_X,
     "llava": llava.run_llava,

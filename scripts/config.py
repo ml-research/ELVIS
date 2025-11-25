@@ -7,6 +7,15 @@ root = Path(__file__).parents[1]
 
 
 # settings
+def get_proj_output_path(remote=False):
+    if remote:
+        output_dir = Path(f"/grm_output/")
+
+    else:
+        output_dir = root / "storage" / "results"
+
+    os.makedirs(output_dir, exist_ok=True)
+    return output_dir
 
 def get_num_samples(lite=False):
     if lite:

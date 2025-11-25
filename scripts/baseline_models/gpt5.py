@@ -199,40 +199,20 @@ def parse_gpt_output(text, expected_images=6):
 
 
 def match_group_labels(y_true, y_pred):
-    """
-    Map predicted group IDs to ground-truth IDs using Hungarian matching.
-
-    y_true: list of true group IDs
-    y_pred: list of predicted group IDs
-    """
-
+    # Hungarian matching to align predicted group labels to true group labels
     y_true = np.array(y_true)
     y_pred = np.array(y_pred)
-
     true_labels = np.unique(y_true)
     pred_labels = np.unique(y_pred)
-
-    # cost matrix: how many mismatches between each true/pred pair
-    cost = np.zeros((len(true_labels), len(pred_labels)))
-
-    for i, tl in enumerate(true_labels):
-        for j, pl in enumerate(pred_labels):
-            # cost = number of positions where tl != pl
-            mismatch = np.sum((y_true == tl) & (y_pred != pl))
-            cost[i, j] = mismatch
-
-    # Hungarian matching to minimize mismatch
-    row_ind, col_ind = linear_assignment(cost)
-
-    # Build mapping dict
-    mapping = {}
-    for i, j in zip(row_ind, col_ind):
-        mapping[pred_labels[j]] = true_labels[i]
-
-    # Apply mapping
-    new_pred = np.array([mapping[p] for p in y_pred])
-
-    return new_pred.tolist()
+    cost_matrix = np.zeros((len(true_labels), len(pred_labels)))
+    for i, t in enumerate(true_labels):
+        for j, p in enumerate(pred_labels):
+            cost_matrix[i, j] = -np.sum((y_true == t) & (y_pred == p))
+    row_ind, col_ind = linear_assignment(cost_matrix)
+    mapping = {pred_labels[j]: true_labels[i] for i, j in zip(row_ind, col_ind)}
+    # Map y_pred using mapping, assign -1 if not found
+    new_pred = np.array([mapping.get(p, -1) for p in y_pred])
+    return new_pred
 
 
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
@@ -452,7 +432,6 @@ def run_gpt5_grouping(data_path, img_size, principle, batch_size, device, img_nu
                                                             train_bxs, test_bxs,
                                                             train_ids, test_ids,
                                                             device, principle)
-
 
         results[pattern_folder.name] = {"accuracy": accuracy,
                                         "f1_score": f1,
