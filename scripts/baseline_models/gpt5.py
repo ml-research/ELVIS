@@ -406,8 +406,8 @@ def run_gpt5_grouping(data_path, img_size, principle, batch_size, device, img_nu
         print("No pattern folders found in", principle_path)
         return
 
-    # client = init_openai()
-    client = None
+    client = init_openai()
+    # client = None
     total_accuracy, total_f1 = [], []
     results = {}
     total_precision_scores = []

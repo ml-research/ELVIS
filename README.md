@@ -175,6 +175,7 @@ python -m scripts.evaluate_models --batch_size 1 --principle closure --model gpt
 python -m scripts.evaluate_models --batch_size 1 --principle symmetry --model gpt5 --img_num 3 --device_id 13 --start_num 800 --task_num 100
 python -m scripts.evaluate_models --batch_size 1 --principle continuity --model gpt5 --img_num 3 --start_num 147 --task_num end --device_id 15
 
+python -m scripts.evaluate_models --batch_size 1 --principle similarity --model gpt5_grp --img_num 3 --device_id 3 --start_num 0 --task_num end
 
 # pure principle evaluation
 
