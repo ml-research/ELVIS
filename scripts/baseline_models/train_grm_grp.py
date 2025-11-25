@@ -176,5 +176,3 @@ if __name__ == "__main__":
     rtpt.start()
     train_model(args, args.principle, args.input_type, args.sample_size, device,
                 log_wandb=True, n=100, epochs=args.epochs, data_num=args.data_num)
-
-    rtpt.stop()

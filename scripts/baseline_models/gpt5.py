@@ -276,6 +276,41 @@ def evaluate_gpt5_grp(client, train_imgs, test_imgs, train_bxs, test_bxs, train_
     return acc, f1, prec, rec
 
 
+def evaluate_gpt5_grp_zero_shot(client, test_imgs, test_bxs, test_ids, principle):
+    torch.cuda.empty_cache()
+    # 2. format 6 test images
+    test_blocks = []
+    for i in range(6):
+        img_block = format_image_block(test_imgs[i], test_bxs[i], ids=None)
+        test_blocks.append(f"### TEST IMAGE {i + 1}\n{img_block}")
+
+    response = client.responses.create(
+        model="gpt-5",
+        input=conversations.gpt_grp_zero_shot_prompts(principle, test_blocks)
+    )
+    response = response.output_text
+    print(response)
+    prediction_label = response.split(".assistant")[-1]
+    # 5. parse predictions
+    pred_ids = parse_gpt_output(prediction_label)
+
+    # 6. compute metrics
+    print(f"test_ids: {test_ids}")
+    print(f"pred_ids: {pred_ids}")
+    acc, f1, prec, rec = compute_grouping_metrics(test_ids, pred_ids)
+
+    wandb.log({f"{principle}/test_accuracy": acc,
+               f"{principle}/f1_score": f1,
+               f"{principle}/precision": prec,
+               f"{principle}/recall": rec
+               })
+    print(
+        f"({principle}) Test Accuracy: "
+        f"{acc:.2f}% | F1 Score: {f1:.4f} | Precision: {prec:.4f} | Recall: {rec:.4f}"
+    )
+    return acc, f1, prec, rec
+
+
 def run_gpt5(data_path, img_size, principle, batch_size, device, img_num, epochs, start_num, task_num):
     init_wandb(batch_size, principle)
     # model, processor = load_gpt5_model(device)
@@ -456,6 +491,69 @@ def run_gpt5_grouping(data_path, img_size, principle, batch_size, device, img_nu
 
     return avg_accuracy, avg_f1
 
+
+
+def run_gpt5_grouping_zero_shot(data_path, img_size, principle, batch_size, device, img_num, epochs, start_num, task_num):
+    init_wandb(batch_size, principle)
+    principle_path = Path(data_path)
+    pattern_folders = sorted([p for p in (principle_path / "train").iterdir() if p.is_dir()], key=lambda x: x.stem)
+    if not pattern_folders:
+        print("No pattern folders found in", principle_path)
+        return
+
+    client = init_openai()
+    # client = None
+    total_accuracy, total_f1 = [], []
+    results = {}
+    total_precision_scores = []
+    total_recall_scores = []
+
+    if task_num != "full":
+        if task_num != "end":
+            task_num = int(task_num)
+            pattern_folders = pattern_folders[start_num:start_num + task_num]
+        else:
+            pattern_folders = pattern_folders[start_num:]
+    rtpt = RTPT(name_initials='JIS', experiment_name=f'Elvis-gpt5-grp-{principle}', max_iterations=len(pattern_folders))
+    rtpt.start()
+    for pattern_folder in pattern_folders:
+        rtpt.step()
+        print(f"Processing pattern: {pattern_folder.name}")
+        test_imgs = load_images((principle_path / "test" / pattern_folder.name) / "positive", img_num) + load_images((principle_path / "test" / pattern_folder.name) / "negative",
+                                                                                                                     img_num)
+        test_jsons = load_jsons((principle_path / "test" / pattern_folder.name) / "positive", img_num) + load_jsons((principle_path / "test" / pattern_folder.name) / "negative",
+                                                                                                                    img_num)
+        test_croped_paths = [crop_objs(img, json_data) for img, json_data in zip(test_imgs, test_jsons)]
+        test_bxs = []
+        test_ids = []
+        for json_data in test_jsons:
+            bxs, g_ids = bxs_from_json(json_data, test_imgs[0].size[0], test_imgs[0].size[1])
+            test_bxs.append(bxs)
+            test_ids.append(g_ids)
+
+        accuracy, f1, precision, recall = evaluate_gpt5_grp_zero_shot(client, test_croped_paths, test_bxs, test_ids, principle)
+        results[pattern_folder.name] = {"accuracy": accuracy,
+                                        "f1_score": f1,
+                                        "precision": precision,
+                                        "recall": recall
+                                        }
+
+        total_accuracy.append(accuracy)
+        total_f1.append(f1)
+        total_precision_scores.append(precision)
+        total_recall_scores.append(recall)
+        avg_accuracy = sum(total_accuracy) / len(total_accuracy) if total_accuracy else 0
+        avg_f1 = sum(total_f1) / len(total_f1) if total_f1 else 0
+        output_dir = f"/elvis_result/{principle}"
+        os.makedirs(output_dir, exist_ok=True)
+        results_path = Path(output_dir) / f"gpt5_{principle}_eval_res_{img_size}_img_num_{img_num}_{timestamp}.json"
+        with open(results_path, "w") as json_file:
+            json.dump(results, json_file, indent=4)
+        print("Evaluation complete. Results saved to evaluation_results.json.")
+        print(f"Overall Average Accuracy: {avg_accuracy:.2f}% | Average F1 Score: {avg_f1:.4f}")
+    wandb.finish()
+
+    return avg_accuracy, avg_f1
 
 if __name__ == "__main__":
     from scripts import config
