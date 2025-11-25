@@ -551,6 +551,10 @@ def run_gpt5_grouping_zero_shot(data_path, img_size, principle, batch_size, devi
             json.dump(results, json_file, indent=4)
         print("Evaluation complete. Results saved to evaluation_results.json.")
         print(f"Overall Average Accuracy: {avg_accuracy:.2f}% | Average F1 Score: {avg_f1:.4f}")
+        wandb.log({
+            f"{principle}/overall_avg_accuracy": avg_accuracy,
+            f"{principle}/overall_avg_f1_score": avg_f1
+        })
     wandb.finish()
 
     return avg_accuracy, avg_f1
