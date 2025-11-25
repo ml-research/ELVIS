@@ -11,7 +11,7 @@ import argparse
 from rtpt import RTPT
 from typing import List
 
-from scripts.baseline_models.grm import ContextContourScorer
+from scripts.baseline_models.grm import ContextContourScorer, GroupingTransformer
 from scripts import config
 from scripts.baseline_models.bm_utils import load_images, load_jsons, load_patterns, get_obj_imgs, preprocess_rgb_image_to_patch_set_batch, process_object_pairs
 
@@ -67,11 +67,11 @@ def load_grm_grp_data(img_num, principle_path, num_patches, points_per_patch):
 
 
 
-def train_model(args, principle, input_type, sample_size, device, log_wandb=True, n=100, epochs=10, data_num=1000):
+def train_model(args, principle, input_type, device, log_wandb=True, n=100, epochs=10, data_num=1000):
     num_patches = args.num_patches
     points_per_patch = args.points_per_patch
     data_path = config.get_raw_patterns_path(args.remote) / f"res_{args.img_size}_pin_False" / principle
-    model_name = config.get_proj_output_path(args.remote) / f"neural_{principle}_model.pt"
+    model_name = config.get_proj_output_path(args.remote) / f"{args.backbone}_{principle}_model.pt"
     model_path_best = str(model_name).replace(".pt", "_best.pt")
     model_path_latest = str(model_name).replace(".pt", "_latest.pt")
 
@@ -82,7 +82,10 @@ def train_model(args, principle, input_type, sample_size, device, log_wandb=True
     input_dim = input_dim_map[input_type]
 
     # Setup
-    model = ContextContourScorer(input_dim=input_dim, patch_len=points_per_patch).to(device)
+    if args.backbone == "transformer":
+        model = GroupingTransformer(patch_dim=args.num_patches, H=args.points_per_patch).to(device)
+    else:
+        model = ContextContourScorer(input_dim=input_dim, patch_len=points_per_patch).to(device)
     orders = list(range(n))
     random.shuffle(orders)  # Randomly shuffle task orders
     criterion = nn.BCEWithLogitsLoss()
@@ -104,13 +107,16 @@ def train_model(args, principle, input_type, sample_size, device, log_wandb=True
             c_i, c_j = c_i.unsqueeze(0).to(device), c_j.unsqueeze(0).to(device)
             others_tensor = others_tensor.unsqueeze(0).to(device)
             label_tensor = torch.tensor([label], device=device).float()
+
             try:
                 logits = model(c_i, c_j, others_tensor)
             except RuntimeError:
                 logits = model(c_i, c_j, others_tensor)
                 print("RuntimeError occurred during model forward pass. Skipping this sample.")
                 continue
-            loss = criterion(logits, label_tensor)
+
+
+            loss = criterion(logits, label_tensor.unsqueeze(0))
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -129,7 +135,7 @@ def train_model(args, principle, input_type, sample_size, device, log_wandb=True
                 label_tensor = torch.tensor([label], device=device).float()
 
                 logits = model(c_i, c_j, others_tensor)
-                loss = criterion(logits, label_tensor)
+                loss = criterion(logits, label_tensor.unsqueeze(0))
                 test_loss += loss.item() * 1
                 pred = (torch.sigmoid(logits) > 0.5).float()
                 test_correct += (pred == label_tensor).sum().item()
@@ -162,17 +168,18 @@ if __name__ == "__main__":
     parser.add_argument("--img_num", type=int, default=3, help="Number of images to load per pattern")
     parser.add_argument("--remote", action="store_true", help="Use remote data path")
     parser.add_argument("--remove_cache", action="store_true", help="Remove cache before training")
-    parser.add_argument("--data_num", type=int, default=100000, help="Number of data samples to use")
+    parser.add_argument("--data_num", type=int, default=3, help="Number of data samples to use")
     parser.add_argument("--epochs", type=int, default=10, help="Number of training epochs")
     parser.add_argument("--num_patches", type=int, default=3, help="Number of patches per object")
     parser.add_argument("--points_per_patch", type=int, default=8, help="Number of points per patch")
     parser.add_argument("--device", type=str, default="0", help="Device to use for training")
+    parser.add_argument("--backbone", type=str, default="transformer", help="Backbone model to use", choices=["mlp", "transformer"])
     args = parser.parse_args()
 
     device = torch.device(f"cuda:{args.device}" if torch.cuda.is_available() else "cpu")
 
-    wandb.init(project="grm_grp_training", name=f"{args.principle}_{args.input_type}_size{args.sample_size}")
+    # wandb.init(project="grm_grp_training", name=f"{args.principle}_{args.input_type}_size{args.sample_size}")
     rtpt = RTPT(name_initials='MG', experiment_name='grm_grp_training', max_iterations=args.epochs)
     rtpt.start()
-    train_model(args, args.principle, args.input_type, args.sample_size, device,
+    train_model(args, args.principle, args.input_type, device,
                 log_wandb=True, n=100, epochs=args.epochs, data_num=args.data_num)

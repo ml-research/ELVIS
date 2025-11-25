@@ -1,22 +1,11 @@
 # Created by MacBook Pro at 25.11.25
-from scripts.baseline_models import bm_utils
-from scripts.baseline_models.bm_utils import load_jsons, load_images
 
-# from transformers import AutoProcessor, GPT5ForConditionalGeneration
-import torch
 import wandb
 from pathlib import Path
-from PIL import Image
 from rtpt import RTPT
 import json
-from scripts.baseline_models import conversations
-from scripts.utils import data_utils
 import os
 from datetime import datetime
-from openai import OpenAI
-import base64
-from io import BytesIO
-import re
 import numpy as np
 from scipy.optimize import linear_sum_assignment as linear_assignment
 import networkx as nx
@@ -24,18 +13,22 @@ from itertools import combinations
 import torch
 import torch.nn as nn
 from typing import List, Tuple, Union
+from torch import Tensor
 
+from scripts.baseline_models import bm_utils
+from scripts.baseline_models.bm_utils import load_jsons, load_images
 from scripts import config
+
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
 
 class ContextContourScorer(nn.Module):
     def __init__(
-        self,
-        input_dim: int = 2,
-        hidden_dim: int = 64,
-        patch_len: int = 16,
-        patch_embed_dim: int = 64,
+            self,
+            input_dim: int = 2,
+            hidden_dim: int = 64,
+            patch_len: int = 16,
+            patch_embed_dim: int = 64,
     ):
         super().__init__()
         self.patch_embed_dim = patch_embed_dim
@@ -70,16 +63,15 @@ class ContextContourScorer(nn.Module):
         return x  # shape: (B, patch_embed_dim)
 
     def forward(
-        self,
-        contour_i: torch.Tensor,     # (1, 6, 16, 2)
-        contour_j: torch.Tensor,     # (1, 6, 16, 2)
-        context_list: torch.Tensor   # (1, N, 6, 16, 2)
+            self,
+            contour_i: torch.Tensor,  # (1, 6, 16, 2)
+            contour_j: torch.Tensor,  # (1, 6, 16, 2)
+            context_list: torch.Tensor  # (1, N, 6, 16, 2)
     ) -> torch.Tensor:
         B = contour_i.size(0)
         # Encode contour_i and contour_j
         emb_i = self.encode_patch_set(contour_i)  # (1, C)
         emb_j = self.encode_patch_set(contour_j)  # (1, C)
-
 
         if context_list.size(1) == 0:
             # N = 0: Use zero vector for context embedding
@@ -98,6 +90,294 @@ class ContextContourScorer(nn.Module):
         pair_emb = torch.cat([emb_i, emb_j, ctx_emb], dim=1)  # (B, 3C)
         logit = self.classifier(pair_emb).squeeze(-1)  # (B,)
         return logit
+
+
+class MLP(nn.Module):
+    def __init__(self, in_dim, out_dim, hidden=128):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(in_dim, hidden),
+            nn.GELU(),
+            nn.Linear(hidden, out_dim)
+        )
+
+    def forward(self, x):
+        return self.net(x)
+
+
+# ----------------------------------------------------------------------
+# 2. Relative Geometry Encoder
+#    Produces attention bias b_{ij}
+# ----------------------------------------------------------------------
+class RelativeGeometry(nn.Module):
+    """
+    Input: pos[N,2], color[N,3], size[N,1]
+    Output: rel_bias[N,N,rel_dim]
+    """
+
+    def __init__(self, rel_dim=64):
+        super().__init__()
+        self.encoder = MLP(in_dim=1 + 1 + 1 + 3 + 1, out_dim=rel_dim)  # dist + dx + dy + color_diff + size_diff = 7
+        # distance, dx, dy, color_diff(3), size_diff
+
+    def forward(self, pos: Tensor, color: Tensor, size: Tensor):
+        """
+        pos:   (B, N, 2)
+        color: (B, N, 3)
+        size:  (B, N, 1)
+        """
+        B, N, _ = pos.shape
+
+        # pairwise diffs
+        dx = pos[:, :, None, 0] - pos[:, None, :, 0]  # (B,N,N)
+        dy = pos[:, :, None, 1] - pos[:, None, :, 1]
+        dist = torch.sqrt(dx ** 2 + dy ** 2 + 1e-6)
+
+        color_diff = color[:, :, None, :] - color[:, None, :, :]  # (B,N,N,3)
+        size_diff = size[:, :, None, :] - size[:, None, :, :]  # (B,N,N,1)
+
+        geom = torch.cat([
+            dist[..., None],  # (B,N,N,1)
+            dx[..., None],
+            dy[..., None],
+            color_diff,  # (B,N,N,3)
+            size_diff  # (B,N,N,1)
+        ], dim=-1)  # → (B,N,N,1+2+3+1 = 7)
+
+        rel = self.encoder(geom)  # (B,N,N,rel_dim)
+        return rel
+
+
+# ----------------------------------------------------------------------
+# 3. Multi-head Attention with Relative Bias
+# ----------------------------------------------------------------------
+class RelMultiHeadAttention(nn.Module):
+    def __init__(self, dim, num_heads, rel_dim):
+        super().__init__()
+        assert dim % num_heads == 0
+
+        self.num_heads = num_heads
+        self.head_dim = dim // num_heads
+
+        self.qkv = nn.Linear(dim, dim * 3)
+        self.out = nn.Linear(dim, dim)
+
+        # Map rel_bias (rel_dim) → scalar attention bias for each head
+        self.rel_proj = nn.Linear(rel_dim, num_heads)
+
+    def forward(self, x, rel_bias):
+        """
+        x: (B, N, D)
+        rel_bias: (B, N, N, rel_dim)
+        """
+        B, N, D = x.shape
+
+        # Compute Q, K, V
+        qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, self.head_dim)
+        q, k, v = qkv[:, :, 0], qkv[:, :, 1], qkv[:, :, 2]
+        # shapes: (B, N, H, Hd)
+
+        # Attention scores
+        attn = torch.einsum("bnhd,bmhd->bhnm", q, k) / (self.head_dim ** 0.5)
+
+        # Add relative bias for each head
+        # rel_bias → (B, N, N, H)
+        rel = self.rel_proj(rel_bias)
+        rel = rel.permute(0, 3, 1, 2)  # (B, H, N, N)
+
+        attn = attn + rel
+        attn = attn.softmax(dim=-1)
+
+        # Weighted sum
+        out = torch.einsum("bhnm,bmhd->bnhd", attn, v)
+        out = out.reshape(B, N, D)
+        return self.out(out)
+
+
+# ----------------------------------------------------------------------
+# 4. Transformer block
+# ----------------------------------------------------------------------
+class TransformerBlock(nn.Module):
+    def __init__(self, dim, num_heads, rel_dim, mlp_ratio=4):
+        super().__init__()
+        self.ln1 = nn.LayerNorm(dim)
+        self.attn = RelMultiHeadAttention(dim, num_heads, rel_dim)
+        self.ln2 = nn.LayerNorm(dim)
+        self.mlp = nn.Sequential(
+            nn.Linear(dim, dim * mlp_ratio),
+            nn.GELU(),
+            nn.Linear(dim * mlp_ratio, dim),
+        )
+
+    def forward(self, x, rel_bias):
+        x = x + self.attn(self.ln1(x), rel_bias)
+        x = x + self.mlp(self.ln2(x))
+        return x
+
+
+class GroupingTransformer(nn.Module):
+    def __init__(self, patch_dim=3, H=8, W=7, hidden_dim=256,
+                 num_heads=4, num_layers=4):
+        super().__init__()
+
+        self.patch_dim = patch_dim
+        self.H = H
+        self.W = W
+        self.num_tokens = patch_dim * H * W   # 168 for (3,8,7)
+
+        # project each patch token to hidden_dim
+        self.token_proj = nn.Linear(patch_dim, hidden_dim)
+
+        # object CLS tokens (2 objects: c_i and c_j)
+        self.obj_cls_i = nn.Parameter(torch.randn(1, 1, hidden_dim))
+        self.obj_cls_j = nn.Parameter(torch.randn(1, 1, hidden_dim))
+
+        # transformer encoder
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model=hidden_dim,
+            nhead=num_heads,
+            dim_feedforward=hidden_dim * 4,
+            batch_first=True,
+            activation="gelu"
+        )
+        self.encoder = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
+
+        # output classifier
+        self.fc_out = nn.Linear(hidden_dim, 1)
+
+    def _flatten_patches(self, obj):
+        # obj shape = (B, 3, H, W)
+        B = obj.shape[0]
+        x = obj.view(B, self.patch_dim, -1).permute(0, 2, 1)  # (B, tokens, patch_dim)
+        x = self.token_proj(x)                                # (B, tokens, hidden_dim)
+        return x
+
+    def forward(self, c_i, c_j, others_tensor):
+        """
+        c_i: (1, 3, 8, 7)
+        c_j: (1, 3, 8, 7)
+        others_tensor: (1, N, 3, 8, 7)
+        """
+
+        B = c_i.shape[0]
+
+        # flatten patch tokens
+        i_tokens = self._flatten_patches(c_i)    # (B, 168, hidden_dim)
+        j_tokens = self._flatten_patches(c_j)
+
+        # prepare CLS tokens
+        cls_i = self.obj_cls_i.expand(B, -1, -1)
+        cls_j = self.obj_cls_j.expand(B, -1, -1)
+
+        # concatenate 2 objects
+        seq = torch.cat([
+            cls_i, i_tokens,
+            cls_j, j_tokens,
+        ], dim=1)  # shape e.g. (1, 338, hidden_dim)
+
+        # include other objects as well
+        # others_tensor: (B, N, 3, H, W)
+        if others_tensor is not None:
+            B, N, C, H, W = others_tensor.shape
+            others = others_tensor.view(B * N, C, H, W)
+            others_flat = self._flatten_patches(others)          # (B*N, 168, hidden)
+            others_flat = others_flat.view(B, N * others_flat.shape[1], -1)  # (B, N*168, hidden)
+            seq = torch.cat([seq, others_flat], dim=1)           # final sequence
+
+        # transformer encoding
+        h = self.encoder(seq)   # (B, seq_len, hidden_dim)
+
+        # use the two object CLS tokens
+        h_i = h[:, 0, :]                    # CLS_i
+        h_j = h[:, 1 + i_tokens.size(1), :] # CLS_j
+
+        # combine for binary classification
+        h_pair = (h_i + h_j) / 2
+        logits = self.fc_out(h_pair)
+
+        return logits
+
+
+def load_group_transformer(model_path, device="cuda", shape_dim=16, app_dim=0, d_model=128, num_heads=4, depth=4, rel_dim=64):
+    """
+    Load a trained GroupingTransformer model from checkpoint
+
+    Args:
+        model_path: path to the saved model checkpoint
+        device: device to load model on ('cuda' or 'cpu')
+        shape_dim: shape embedding dimension (must match training config)
+        app_dim: appearance dimension (must match training config)
+        d_model: transformer model dimension (must match training config)
+        num_heads: number of attention heads (must match training config)
+        depth: number of transformer layers (must match training config)
+        rel_dim: relative geometry dimension (must match training config)
+
+    Returns:
+        model: loaded GroupingTransformer model in eval mode
+        checkpoint_info: dict with training info (epoch, accuracy, loss, etc.)
+    """
+    # Initialize model with same architecture as training
+    model = GroupingTransformer(
+        shape_dim=shape_dim,
+        app_dim=app_dim,
+        d_model=d_model,
+        num_heads=num_heads,
+        depth=depth,
+        rel_dim=rel_dim
+    ).to(device)
+
+    # Load checkpoint
+    if not os.path.exists(model_path):
+        raise FileNotFoundError(f"Model checkpoint not found at: {model_path}")
+
+    checkpoint = torch.load(model_path, map_location=device)
+
+    # Load model state
+    if 'model_state_dict' in checkpoint:
+        model.load_state_dict(checkpoint['model_state_dict'])
+        checkpoint_info = {
+            'epoch': checkpoint.get('epoch', 'unknown'),
+            'train_loss': checkpoint.get('train_loss', 'unknown'),
+            'test_loss': checkpoint.get('test_loss', 'unknown'),
+            'test_accuracy': checkpoint.get('test_accuracy', 'unknown')
+        }
+    else:
+        # Assume checkpoint is just the model state dict
+        model.load_state_dict(checkpoint)
+        checkpoint_info = {'epoch': 'unknown', 'train_loss': 'unknown', 'test_loss': 'unknown', 'test_accuracy': 'unknown'}
+
+    model.eval()
+    print(f"Loaded GroupingTransformer from {model_path}")
+    print(f"Checkpoint info: {checkpoint_info}")
+
+    return model, checkpoint_info
+
+
+def load_gd_transformer_model(principle, device, remote):
+    # Try to load transformer model
+    transformer_model_dir = config.get_proj_output_path(remote) / "models"
+    transformer_model_path = transformer_model_dir / \
+                             f"gd_transformer_{principle}_standalone.pt"
+    if transformer_model_path.exists():
+        print(
+            f"Loading transformer model for {principle} from {transformer_model_path}")
+        group_model, _ = load_group_transformer(
+            model_path=str(transformer_model_path),
+            device=device,
+            shape_dim=16,
+            app_dim=0,
+            d_model=128,
+            num_heads=4,
+            depth=4,
+            rel_dim=64
+        )
+        # Ensure model is on correct device
+        group_model = group_model.to(device)
+    else:
+        raise FileNotFoundError(
+            f"Transformer model file not found at {transformer_model_path}")
+    return group_model
+
 
 @torch.no_grad()
 def group_objects_with_model(model, objects, device, input_type="pos_color_size", threshold=0.5, dim=7):
@@ -198,7 +478,6 @@ def preprocess_rgb_image_to_patch_set_batch(
     return patch_sets, positions, sizes
 
 
-
 def get_model_file_name(remote, principle):
     model_name = config.get_proj_output_path(remote) / f"neural_{principle}_model.pt"
     print(f"Model path: {model_name}")
@@ -209,8 +488,8 @@ def get_model_file_name_best(remote, principle):
     model_name = str(get_model_file_name(remote, principle)).replace(".pt", "_best.pt")
     return model_name
 
-def load_grm_grp_model(device, principle, remote, input_dim=7):
 
+def load_grm_grp_model(device, principle, remote, input_dim=7):
     if principle == "similarity":
         input_dim = 5
 
@@ -221,6 +500,7 @@ def load_grm_grp_model(device, principle, remote, input_dim=7):
 
 
 from PIL import Image, ImageDraw
+
 
 def keep_box_area(img: Image.Image, box: list, bg_color=(211, 211, 211)) -> Image.Image:
     """
@@ -243,18 +523,20 @@ def keep_box_area(img: Image.Image, box: list, bg_color=(211, 211, 211)) -> Imag
     out.paste(img, mask=mask)
     return out
 
+
 def get_obj_imgs(image: Image.Image, json_data: dict) -> List[torch.Tensor]:
     obj_imgs = []
     for data in json_data["img_data"]:
         box = [
-            int((data["x"]-data["size"]/2) * image.size[0]),
-            int((data["y"]-data["size"]/2) * image.size[1]),
-            int((data["x"]+data["size"]/2) * image.size[0]),
-            int((data["y"]+data["size"]/2) * image.size[1])]
+            int((data["x"] - data["size"] / 2) * image.size[0]),
+            int((data["y"] - data["size"] / 2) * image.size[1]),
+            int((data["x"] + data["size"] / 2) * image.size[0]),
+            int((data["y"] + data["size"] / 2) * image.size[1])]
         # keep the box area untouched, else fill with background color
         obj_img = keep_box_area(image, box, bg_color=(211, 211, 211))
         obj_imgs.append(torch.tensor(np.array(obj_img)).permute(2, 0, 1))  # [3, H, W]
     return obj_imgs
+
 
 def match_group_labels(y_true, y_pred):
     """
@@ -275,6 +557,8 @@ def match_group_labels(y_true, y_pred):
     # Use mapping.get to avoid KeyError for unmapped labels
     new_pred = np.array([mapping.get(p, -1) for p in y_pred])
     return new_pred
+
+
 def group_list_to_labels(groups, n_objects):
     """
     Converts a list of groups (list of lists of indices) to a flat label list.
@@ -285,7 +569,9 @@ def group_list_to_labels(groups, n_objects):
             labels[idx] = group_id
     return labels
 
+
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
+
 
 def run_grm_grouping(data_path, img_size, principle, batch_size, device, img_num, epochs, start_num, task_num):
     # bm_utils.init_wandb(batch_size, principle)
@@ -303,11 +589,9 @@ def run_grm_grouping(data_path, img_size, principle, batch_size, device, img_num
     rtpt = RTPT(name_initials='JIS', experiment_name=f'Elvis-gpt5-grp-{principle}', max_iterations=len(pattern_folders))
     rtpt.start()
 
-
     for pattern_folder in pattern_folders:
         rtpt.step()
         print(f"Processing pattern: {pattern_folder.name}")
-
 
         train_imgs = load_images(pattern_folder / "positive", img_num) + load_images(pattern_folder / "negative", img_num)
         train_jsons = load_jsons(pattern_folder / "positive", img_num) + load_jsons(pattern_folder / "negative", img_num)
@@ -320,14 +604,13 @@ def run_grm_grouping(data_path, img_size, principle, batch_size, device, img_num
         accs, f1s, precs, recs = [], [], [], []
 
         grp_model = load_grm_grp_model(device, principle, remote=False)
-        for img, json_data in zip(test_imgs,test_jsons):
+        for img, json_data in zip(test_imgs, test_jsons):
             obj_imgs = get_obj_imgs(img, json_data)
             y_true = [data["group_id"] for data in json_data["img_data"]]
             patch_sets, positions, sizes = preprocess_rgb_image_to_patch_set_batch(obj_imgs)
             if principle == "similarity":
                 # only keep position and color
                 patch_sets = [ps[:, :, :5] for ps in patch_sets]
-
 
             grp_ids = group_objects_with_model(grp_model, patch_sets, device)
             grp_ids = group_list_to_labels(grp_ids, len(y_true))
@@ -374,8 +657,8 @@ def run_grm_grouping(data_path, img_size, principle, batch_size, device, img_num
 
     return avg_accuracy, avg_f1
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
     img_size = 224
     principle = "similarity"
     batch_size = 1
