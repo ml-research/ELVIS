@@ -130,6 +130,7 @@ def train_model(args, principle, input_type, device, log_wandb=True, n=100, epoc
         ## Test loop
         model.eval()
         test_loss, test_correct, test_total = 0, 0, 0
+        test_one_correct, test_zero_correct = 0, 0
         with torch.no_grad():
             for test_pair in test_datas:
                 c_i, c_j, others_tensor, label = test_pair
@@ -142,16 +143,23 @@ def train_model(args, principle, input_type, device, log_wandb=True, n=100, epoc
                 test_loss += loss.item() * 1
                 pred = (torch.sigmoid(logits) > 0.5).float()
                 test_correct += (pred == label_tensor).sum().item()
+                test_one_correct += (1 == label_tensor).sum().item()
+                test_zero_correct += (0 == label_tensor).sum().item()
                 test_total += 1
+
 
         train_acc = correct / total
         test_acc = test_correct / test_total
-        print(f"[][Epoch {epoch + 1}] Train Acc: {train_acc:.4f} | Test Acc: {test_acc:.4f}")
+        test_one_acc = test_one_correct/test_total
+        test_zero_acc = test_zero_correct/test_total
+        print(f"[][Epoch {epoch + 1}] Train Acc: {train_acc:.4f} | Test Acc: {test_acc:.4f} | Test 1 Acc: {test_one_acc:.4f} | Test 0 Acc: {test_zero_acc:.4f}")
         if log_wandb:
             wandb.log({
                 "epoch": epoch + 1,
                 "train_accuracy": train_acc,
                 "test_accuracy": test_acc,
+                "test_one_accuracy": test_one_acc,
+                "test_zero_accuracy": test_zero_acc
             })
         # Save best model
         torch.save(model.state_dict(), model_path_latest)
