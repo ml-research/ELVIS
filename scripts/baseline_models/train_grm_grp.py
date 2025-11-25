@@ -91,10 +91,13 @@ def train_model(args, principle, input_type, device, log_wandb=True, n=100, epoc
     criterion = nn.BCEWithLogitsLoss()
     optimizer = optim.Adam(model.parameters(), lr=1e-3)
     train_datas, test_datas, task_names = load_grm_grp_data(args.img_num, data_path, num_patches, points_per_patch)
-    train_datas = train_datas[:data_num]
+
     # shuffle data
     random.shuffle(train_datas)
     random.shuffle(test_datas)
+
+    train_datas = train_datas[:data_num]
+    test_datas = test_datas[:data_num]
 
     best_acc = 0.0
     print(f"Training on principle: {principle} with {len(train_datas)} samples.")
