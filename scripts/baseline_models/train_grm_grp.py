@@ -165,6 +165,7 @@ if __name__ == "__main__":
     parser.add_argument("--epochs", type=int, default=10, help="Number of training epochs")
     parser.add_argument("--num_patches", type=int, default=3, help="Number of patches per object")
     parser.add_argument("--points_per_patch", type=int, default=8, help="Number of points per patch")
+        parser.add_argument("--device", type=str, default="0", help="Device to use for training")
     args = parser.parse_args()
 
     device = torch.device(f"cuda:{args.device}" if torch.cuda.is_available() else "cpu")

@@ -191,6 +191,8 @@ python -m pure_perception.models.single_task_evaluation --remote --model vit --i
 python -m pure_perception.models.img_grp_evaluation --remote --model vit --img_size 224 --principle similarity --device 7 --img_num 1000
 python -m pure_perception.models.all_tasks_evaluation --remote --model vit --img_size 224 --principle similarity --device 7
 
+python -m scripts.baseline_models.train_grm_grp --remote --img_size 224 --principle similarity --device 5
+
 ##### Analysis Results
 ``` 
 python -m scripts.analysis_results --principle proximity --remote --model vit
