@@ -255,8 +255,6 @@ def compute_grouping_metrics(y_true_list, y_pred_list):
 
 
 def evaluate_gpt5_grp(client, train_imgs, test_imgs, train_bxs, test_bxs, train_ids, test_ids, device, principle):
-    correct, total = 0, 0
-    all_labels, all_predictions = [], []
     torch.cuda.empty_cache()
 
     # 1. format 6 train images
@@ -295,7 +293,7 @@ def evaluate_gpt5_grp(client, train_imgs, test_imgs, train_bxs, test_bxs, train_
         f"({principle}) Test Accuracy: "
         f"{acc:.2f}% | F1 Score: {f1:.4f} | Precision: {prec:.4f} | Recall: {rec:.4f}"
     )
-    return acc, f1_score, prec, rec
+    return acc, f1, prec, rec
 
 
 def run_gpt5(data_path, img_size, principle, batch_size, device, img_num, epochs, start_num, task_num):
