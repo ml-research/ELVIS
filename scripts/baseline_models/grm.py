@@ -25,6 +25,7 @@ import torch
 import torch.nn as nn
 from typing import List, Tuple, Union
 
+from scripts import config
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
 
@@ -177,6 +178,7 @@ def preprocess_rgb_image_to_patch_set_batch(
         coords = torch.stack([xs, ys], dim=1).float()
         if coords.shape[0] < num_patches * points_per_patch:
             continue
+
         idxs = torch.linspace(0, len(coords) - 1, steps=num_patches * points_per_patch).long()
         sampled_xy = coords[idxs]
 
@@ -196,7 +198,6 @@ def preprocess_rgb_image_to_patch_set_batch(
     return patch_sets, positions, sizes
 
 
-from scripts import config
 
 def get_model_file_name(remote, principle):
     model_name = config.get_proj_output_path(remote) / f"neural_{principle}_model.pt"
@@ -218,8 +219,73 @@ def load_grm_grp_model(device, principle, remote, input_dim=7):
     model.load_state_dict(torch.load(model_name, map_location=device))
     return model
 
+
+from PIL import Image, ImageDraw
+
+def keep_box_area(img: Image.Image, box: list, bg_color=(211, 211, 211)) -> Image.Image:
+    """
+    Keeps the area inside `box` untouched, fills the rest with `bg_color`.
+    Args:
+        img: PIL Image
+        box: [x0, y0, x1, y1]
+        bg_color: background color (default: light gray)
+    Returns:
+        PIL Image
+    """
+    # Create a background image
+    bg = Image.new(img.mode, img.size, bg_color)
+    # Create a mask for the box area
+    mask = Image.new("L", img.size, 0)
+    draw = ImageDraw.Draw(mask)
+    draw.rectangle(box, fill=255)
+    # Paste the original image onto the background using the mask
+    out = bg.copy()
+    out.paste(img, mask=mask)
+    return out
+
 def get_obj_imgs(image: Image.Image, json_data: dict) -> List[torch.Tensor]:
-    pass
+    obj_imgs = []
+    for data in json_data["img_data"]:
+        box = [
+            int((data["x"]-data["size"]/2) * image.size[0]),
+            int((data["y"]-data["size"]/2) * image.size[1]),
+            int((data["x"]+data["size"]/2) * image.size[0]),
+            int((data["y"]+data["size"]/2) * image.size[1])]
+        # keep the box area untouched, else fill with background color
+        obj_img = keep_box_area(image, box, bg_color=(211, 211, 211))
+        obj_imgs.append(torch.tensor(np.array(obj_img)).permute(2, 0, 1))  # [3, H, W]
+    return obj_imgs
+
+def match_group_labels(y_true, y_pred):
+    """
+    Aligns predicted group labels to true group labels using Hungarian matching.
+    Handles cases where y_pred or y_true are lists of lists or arrays.
+    """
+    # Flatten if needed
+    y_true = np.array(y_true).flatten()
+    y_pred = np.array(y_pred).flatten()
+    true_labels = np.unique(y_true)
+    pred_labels = np.unique(y_pred)
+    cost_matrix = np.zeros((len(true_labels), len(pred_labels)))
+    for i, t in enumerate(true_labels):
+        for j, p in enumerate(pred_labels):
+            cost_matrix[i, j] = -np.sum((y_true == t) & (y_pred == p))
+    row_ind, col_ind = linear_assignment(cost_matrix)
+    mapping = {pred_labels[j]: true_labels[i] for i, j in zip(row_ind, col_ind)}
+    # Use mapping.get to avoid KeyError for unmapped labels
+    new_pred = np.array([mapping.get(p, -1) for p in y_pred])
+    return new_pred
+def group_list_to_labels(groups, n_objects):
+    """
+    Converts a list of groups (list of lists of indices) to a flat label list.
+    """
+    labels = [n_objects] * n_objects
+    for group_id, group in enumerate(groups):
+        for idx in group:
+            labels[idx] = group_id
+    return labels
+
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 
 def run_grm_grouping(data_path, img_size, principle, batch_size, device, img_num, epochs, start_num, task_num):
     # bm_utils.init_wandb(batch_size, principle)
@@ -251,41 +317,40 @@ def run_grm_grouping(data_path, img_size, principle, batch_size, device, img_num
         test_jsons = load_jsons((principle_path / "test" / pattern_folder.name) / "positive", img_num) + load_jsons((principle_path / "test" / pattern_folder.name) / "negative",
                                                                                                                     img_num)
 
+        accs, f1s, precs, recs = [], [], [], []
 
         grp_model = load_grm_grp_model(device, principle, remote=False)
         for img, json_data in zip(test_imgs,test_jsons):
             obj_imgs = get_obj_imgs(img, json_data)
+            y_true = [data["group_id"] for data in json_data["img_data"]]
             patch_sets, positions, sizes = preprocess_rgb_image_to_patch_set_batch(obj_imgs)
+            if principle == "similarity":
+                # only keep position and color
+                patch_sets = [ps[:, :, :5] for ps in patch_sets]
 
 
+            grp_ids = group_objects_with_model(grp_model, patch_sets, device)
+            grp_ids = group_list_to_labels(grp_ids, len(y_true))
+            y_pred_aligned = match_group_labels(y_true, grp_ids)
+            accs.append(accuracy_score(y_true, y_pred_aligned))
+            f1s.append(f1_score(y_true, y_pred_aligned, average="macro"))
+            precs.append(precision_score(y_true, y_pred_aligned, average="macro", zero_division=0))
+            recs.append(recall_score(y_true, y_pred_aligned, average="macro", zero_division=0))
 
-        grp_ids = group_objects_with_model(grp_model, objects, device)
+        accuracy = np.mean(accs) * 100
+        f1 = np.mean(f1s)
+        precision = np.mean(precs)
+        recall = np.mean(recs)
 
-        train_croped_paths = [crop_objs(img, json_data) for img, json_data in zip(train_imgs, train_jsons)]
-        test_croped_paths = [crop_objs(img, json_data) for img, json_data in zip(test_imgs, test_jsons)]
-        # get obj positions and group ids from json files
-        train_bxs = []
-        train_ids = []
-        for json_data in train_jsons:
-            bxs, g_ids = bxs_from_json(json_data, train_imgs[0].size[0], train_imgs[0].size[1])
-            train_bxs.append(bxs)
-            train_ids.append(g_ids)
-
-        test_bxs = []
-        test_ids = []
-        for json_data in test_jsons:
-            bxs, g_ids = bxs_from_json(json_data, train_imgs[0].size[0], train_imgs[0].size[1])
-            test_bxs.append(bxs)
-            test_ids.append(g_ids)
-
-        accuracy, f1, precision, recall = evaluate_gpt5_grp(client,
-                                                            train_croped_paths,
-                                                            test_croped_paths,
-                                                            train_bxs, test_bxs,
-                                                            train_ids, test_ids,
-                                                            device, principle)
-
-
+        wandb.log({f"{principle}/test_accuracy": accuracy,
+                   f"{principle}/f1_score": f1,
+                   f"{principle}/precision": precision,
+                   f"{principle}/recall": recall
+                   })
+        print(
+            f"({principle}) Test Accuracy: "
+            f"{accuracy:.2f}% | F1 Score: {f1:.4f} | Precision: {precision:.4f} | Recall: {recall:.4f}"
+        )
         results[pattern_folder.name] = {"accuracy": accuracy,
                                         "f1_score": f1,
                                         "precision": precision,
