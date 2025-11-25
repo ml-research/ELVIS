@@ -70,7 +70,7 @@ def load_grm_grp_data(img_num, principle_path, num_patches, points_per_patch):
 def train_model(args, principle, input_type, sample_size, device, log_wandb=True, n=100, epochs=10, data_num=1000):
     num_patches = args.num_patches
     points_per_patch = args.points_per_patch
-    data_path = config.get_raw_patterns_path() / f"res_{args.img_size}_pin_False" / principle
+    data_path = config.get_raw_patterns_path(args.remote) / f"res_{args.img_size}_pin_False" / principle
     model_name = config.get_proj_output_path(args.remote) / f"neural_{principle}_model.pt"
     model_path_best = str(model_name).replace(".pt", "_best.pt")
     model_path_latest = str(model_name).replace(".pt", "_latest.pt")
