@@ -9,8 +9,6 @@ import argparse
 from rtpt import RTPT
 import wandb
 from pathlib import Path
-from tqdm import tqdm
-import math
 from matplotlib import cm
 
 # add PIL for drawing visualizations

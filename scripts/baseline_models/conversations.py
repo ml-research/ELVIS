@@ -299,3 +299,33 @@ def llama_eval_conversation(positive_imgs, principle):
         },
     ]
     return messages
+
+
+def gpt_grp_prompts(principle, train_blocks, test_blocks):
+    prompt = f"""
+You are given a few-shot grouping task.
+Each object is shown as a cropped patch along with its bounding box.
+
+Your goal is to assign a group ID to each object in the TEST images.
+Group IDs are arbitrary integers but must be consistent *within each image*.
+
+====================================================
+### PRINCIPLE: {principle}
+
+### TRAIN SET
+{chr(10).join(train_blocks)}
+
+====================================================
+### TEST SET
+{chr(10).join(test_blocks)}
+
+====================================================
+Output ONLY in the format:
+IMAGE k:
+object_id → group_id
+object_id → group_id
+...
+
+Do not explain anything else.
+"""
+    return prompt

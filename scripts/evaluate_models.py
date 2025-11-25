@@ -13,6 +13,7 @@ import os
 baseline_models = {
     "vit": vit.run_vit,
     "gpt5": gpt5.run_gpt5,
+    "gpt5_grp": gpt5.run_gpt5_grouping,
     "internVL": internVL.run_internVL,
     "internVL_X": internVL.run_internVL_X,
     "llava": llava.run_llava,
