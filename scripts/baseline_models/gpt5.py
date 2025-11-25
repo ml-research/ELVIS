@@ -238,22 +238,20 @@ def match_group_labels(y_true, y_pred):
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 
 
-def compute_grouping_metrics(y_true, y_pred):
+def compute_grouping_metrics(y_true_list, y_pred_list):
     """
     y_true, y_pred: lists of group ids for a single image
     (length = number of objects in that test image)
     """
 
-    # 1) first align labels with Hungarian matching
-    y_pred_aligned = match_group_labels(y_true, y_pred)
-
-    # 2) compute metrics
-    acc = accuracy_score(y_true, y_pred_aligned)
-    f1 = f1_score(y_true, y_pred_aligned, average="macro")
-    prec = precision_score(y_true, y_pred_aligned, average="macro", zero_division=0)
-    rec = recall_score(y_true, y_pred_aligned, average="macro", zero_division=0)
-
-    return acc, f1, prec, rec
+    accs, f1s, precs, recs = [], [], [], []
+    for y_true, y_pred in zip(y_true_list, y_pred_list):
+        y_pred_aligned = match_group_labels(y_true, y_pred)
+        accs.append(accuracy_score(y_true, y_pred_aligned))
+        f1s.append(f1_score(y_true, y_pred_aligned, average="macro"))
+        precs.append(precision_score(y_true, y_pred_aligned, average="macro", zero_division=0))
+        recs.append(recall_score(y_true, y_pred_aligned, average="macro", zero_division=0))
+    return np.mean(accs), np.mean(f1s), np.mean(precs), np.mean(recs)
 
 
 def evaluate_gpt5_grp(client, train_imgs, test_imgs, train_bxs, test_bxs, train_ids, test_ids, device, principle):
@@ -284,7 +282,8 @@ def evaluate_gpt5_grp(client, train_imgs, test_imgs, train_bxs, test_bxs, train_
     pred_ids = parse_gpt_output(prediction_label)
 
     # 6. compute metrics
-
+    print(f"test_ids: {test_ids}")
+    print(f"pred_ids: {pred_ids}")
     acc, f1, prec, rec = compute_grouping_metrics(test_ids, pred_ids)
 
     wandb.log({f"{principle}/test_accuracy": acc,
