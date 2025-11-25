@@ -16,8 +16,10 @@ from scripts import config
 from scripts.baseline_models.bm_utils import load_images, load_jsons, load_patterns, get_obj_imgs, preprocess_rgb_image_to_patch_set_batch, process_object_pairs
 
 
-def load_grm_grp_data(img_num, principle_path, num_patches, points_per_patch):
+def load_grm_grp_data(task_num, img_num, principle_path, num_patches, points_per_patch):
     pattern_folders = load_patterns(principle_path, 0, "end")
+    random.shuffle(pattern_folders)
+    pattern_folders = pattern_folders[:task_num]
     train_data = []
     test_data = []
     task_names = []
@@ -90,7 +92,7 @@ def train_model(args, principle, input_type, device, log_wandb=True, n=100, epoc
     random.shuffle(orders)  # Randomly shuffle task orders
     criterion = nn.BCEWithLogitsLoss()
     optimizer = optim.Adam(model.parameters(), lr=1e-3)
-    train_datas, test_datas, task_names = load_grm_grp_data(args.img_num, data_path, num_patches, points_per_patch)
+    train_datas, test_datas, task_names = load_grm_grp_data(args.task_num, args.img_num, data_path, num_patches, points_per_patch)
 
     # shuffle data
     random.shuffle(train_datas)
@@ -111,26 +113,24 @@ def train_model(args, principle, input_type, device, log_wandb=True, n=100, epoc
             others_tensor = others_tensor.unsqueeze(0).to(device)
             label_tensor = torch.tensor([label], device=device).float()
 
-            try:
-                logits = model(c_i, c_j, others_tensor)
-            except RuntimeError:
-                logits = model(c_i, c_j, others_tensor)
-                print("RuntimeError occurred during model forward pass. Skipping this sample.")
-                continue
-
-
-            loss = criterion(logits, label_tensor.unsqueeze(0))
+            logits = model(c_i, c_j, others_tensor)
+            loss = criterion(logits.squeeze(), label_tensor.squeeze())
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+
+            total_loss += loss.item()
             pred = (torch.sigmoid(logits) > 0.5).float()
             correct += (pred == label_tensor).sum().item()
             total += 1
 
+        train_loss = total_loss / total
+        train_acc = correct / total
+
         ## Test loop
         model.eval()
-        test_loss, test_correct, test_total = 0, 0, 0
-        test_one_correct, test_zero_correct = 0, 0
+        test_loss, test_correct, test_total = 0.0, 0, 0
+        test_one_count, test_zero_count = 0, 0
         with torch.no_grad():
             for test_pair in test_datas:
                 c_i, c_j, others_tensor, label = test_pair
@@ -139,34 +139,40 @@ def train_model(args, principle, input_type, device, log_wandb=True, n=100, epoc
                 label_tensor = torch.tensor([label], device=device).float()
 
                 logits = model(c_i, c_j, others_tensor)
-                loss = criterion(logits, label_tensor.unsqueeze(0))
-                test_loss += loss.item() * 1
+                loss = criterion(logits.squeeze(), label_tensor.squeeze())
+                test_loss += loss.item()
                 pred = (torch.sigmoid(logits) > 0.5).float()
                 test_correct += (pred == label_tensor).sum().item()
-                test_one_correct += (1 == label_tensor).sum().item()
-                test_zero_correct += (0 == label_tensor).sum().item()
+                test_one_count += (1 == label_tensor).sum().item()
+                test_zero_count += (0 == label_tensor).sum().item()
                 test_total += 1
 
-
-        train_acc = correct / total
+        test_loss = test_loss / test_total
         test_acc = test_correct / test_total
-        test_one_acc = test_one_correct/test_total
-        test_zero_acc = test_zero_correct/test_total
-        print(f"[][Epoch {epoch + 1}] Train Acc: {train_acc:.4f} | Test Acc: {test_acc:.4f} | Test 1 Acc: {test_one_acc:.4f} | Test 0 Acc: {test_zero_acc:.4f}")
+        test_one_ratio = test_one_count / test_total
+        test_zero_ratio = test_zero_count / test_total
+
+        print(f"[Epoch {epoch + 1}] Train/Test Loss: {train_loss:.4f}/{test_loss:.4f} | "
+              f"Train/Test Acc: {train_acc:.4f}/{test_acc:.4f} | "
+              f"Label Ratio-1:0 {test_one_ratio:.4f}:{test_zero_ratio:.4f}")
+
         if log_wandb:
             wandb.log({
                 "epoch": epoch + 1,
+                "train_loss": train_loss,
                 "train_accuracy": train_acc,
+                "test_loss": test_loss,
                 "test_accuracy": test_acc,
-                "test_one_accuracy": test_one_acc,
-                "test_zero_accuracy": test_zero_acc
+                "test_one_ratio": test_one_ratio,
+                "test_zero_ratio": test_zero_ratio
             })
+
         # Save best model
         torch.save(model.state_dict(), model_path_latest)
         if test_acc > best_acc:
             best_acc = test_acc
             torch.save(model.state_dict(), model_path_best)
-        print(f"Model saved to {model_name}")
+            print(f"Best model saved to {model_path_best}")
 
 
 
@@ -181,6 +187,7 @@ if __name__ == "__main__":
     parser.add_argument("--remove_cache", action="store_true", help="Remove cache before training")
     parser.add_argument("--data_num", type=int, default=3, help="Number of data samples to use")
     parser.add_argument("--epochs", type=int, default=10, help="Number of training epochs")
+    parser.add_argument("--task_num", type=int, default=10, help="Number of training tasks")
     parser.add_argument("--num_patches", type=int, default=3, help="Number of patches per object")
     parser.add_argument("--points_per_patch", type=int, default=8, help="Number of points per patch")
     parser.add_argument("--device", type=str, default="0", help="Device to use for training")
