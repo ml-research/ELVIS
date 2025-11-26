@@ -90,8 +90,10 @@ def train_model(args, principle, input_type, device, log_wandb=True, n=100, epoc
         model = ContextContourScorer(input_dim=input_dim, patch_len=points_per_patch).to(device)
     orders = list(range(n))
     random.shuffle(orders)  # Randomly shuffle task orders
-    criterion = nn.BCEWithLogitsLoss()
-    optimizer = optim.Adam(model.parameters(), lr=1e-3)
+    pos_weight = torch.tensor([1.8])  # 0.6426/0.3574 ≈ 1.8
+
+    criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight.to(device))
+    optimizer = optim.Adam(model.parameters(), lr=5e-4)
     train_datas, test_datas, task_names = load_grm_grp_data(args.task_num, args.img_num, data_path, num_patches, points_per_patch)
 
     # shuffle data
@@ -188,8 +190,8 @@ if __name__ == "__main__":
     parser.add_argument("--data_num", type=int, default=3, help="Number of data samples to use")
     parser.add_argument("--epochs", type=int, default=10, help="Number of training epochs")
     parser.add_argument("--task_num", type=int, default=10, help="Number of training tasks")
-    parser.add_argument("--num_patches", type=int, default=3, help="Number of patches per object")
-    parser.add_argument("--points_per_patch", type=int, default=8, help="Number of points per patch")
+    parser.add_argument("--num_patches", type=int, default=4, help="Number of patches per object")
+    parser.add_argument("--points_per_patch", type=int, default=6, help="Number of points per patch")
     parser.add_argument("--device", type=str, default="0", help="Device to use for training")
     parser.add_argument("--backbone", type=str, default="transformer", help="Backbone model to use", choices=["mlp", "transformer"])
     args = parser.parse_args()
