@@ -117,8 +117,9 @@ def train_model(args, principle, input_type, device, log_wandb=True, n=100, epoc
     train_datas, test_datas, task_names = load_grm_grp_data(args.task_num, args.img_num, data_path, num_patches, points_per_patch)
 
     # shuffle data
-    # random.shuffle(train_datas)
-    # random.shuffle(test_datas)
+    random.seed(42)
+    random.shuffle(train_datas)
+    random.shuffle(test_datas)
 
     train_datas = train_datas[:data_num]
     test_datas = test_datas[:data_num]
