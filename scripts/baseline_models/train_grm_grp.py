@@ -11,7 +11,7 @@ import argparse
 from rtpt import RTPT
 from typing import List
 
-from scripts.baseline_models.grm import ContextContourScorer, GroupingTransformer, debug_tiny_mlp
+from scripts.baseline_models.grm import ContextContourScorer, GroupingTransformer, debug_tiny_mlp, PairOnlyTransformer
 from scripts import config
 from scripts.baseline_models.bm_utils import load_images, load_jsons, load_patterns, get_obj_imgs, preprocess_rgb_image_to_patch_set_batch, process_object_pairs
 
@@ -100,6 +100,12 @@ def train_model(args, principle, input_type, device, log_wandb=True, n=100, epoc
     # Setup
     if args.backbone == "transformer":
         model = GroupingTransformer(num_patches=args.num_patches, points_per_patch=points_per_patch).to(device)
+    elif args.backbone == "transformer_pair_only":
+        model = PairOnlyTransformer(
+            num_patches=args.num_patches,
+            points_per_patch=points_per_patch,
+            feat_dim=input_dim
+        ).to(device)
     else:
         model = ContextContourScorer(input_dim=input_dim, patch_len=points_per_patch).to(device)
     orders = list(range(n))
@@ -117,7 +123,7 @@ def train_model(args, principle, input_type, device, log_wandb=True, n=100, epoc
     train_datas = train_datas[:data_num]
     test_datas = test_datas[:data_num]
 
-    debug_tiny_mlp(train_datas,device)
+    debug_tiny_mlp(train_datas, device)
 
     # --- Data sanity check ---
     labels = [lbl for (_, _, _, lbl) in train_datas]
@@ -134,19 +140,14 @@ def train_model(args, principle, input_type, device, log_wandb=True, n=100, epoc
               f"c_j.mean={c_j.mean().item():.3f}, "
               f"others.shape={tuple(others.shape)}")
 
-
     best_acc = 0.0
     print(f"Training on principle: {principle} with {len(train_datas)} samples.")
     print(f"Testing on principle: {principle} with {len(test_datas)} samples.")
     for epoch in range(epochs):
 
-
         model.train()
         total_loss, correct, total = 0.0, 0.0, 0.0
         for t_i, train_pair in enumerate(train_datas):
-
-
-
 
             c_i, c_j, others_tensor, label = train_pair
             c_i, c_j = c_i.unsqueeze(0).to(device), c_j.unsqueeze(0).to(device)
@@ -180,8 +181,6 @@ def train_model(args, principle, input_type, device, log_wandb=True, n=100, epoc
                       f"loss={loss.item():.4f}")
                 continue
 
-
-
             logits = model(c_i, c_j, others_tensor)
             loss = criterion(logits.squeeze(), label_tensor.squeeze())
             optimizer.zero_grad()
@@ -198,8 +197,8 @@ def train_model(args, principle, input_type, device, log_wandb=True, n=100, epoc
 
         model.eval()
         test_loss, test_correct, test_total = 0.0, 0, 0
-        test_one_count, test_zero_count = 0, 0   # label 统计
-        pred_one_count, pred_zero_count = 0, 0   # 预测统计
+        test_one_count, test_zero_count = 0, 0  # label 统计
+        pred_one_count, pred_zero_count = 0, 0  # 预测统计
         tp = tn = fp = fn = 0
 
         with torch.no_grad():
@@ -290,7 +289,8 @@ if __name__ == "__main__":
     parser.add_argument("--num_patches", type=int, default=4, help="Number of patches per object")
     parser.add_argument("--points_per_patch", type=int, default=6, help="Number of points per patch")
     parser.add_argument("--device", type=str, default="0", help="Device to use for training")
-    parser.add_argument("--backbone", type=str, default="transformer", help="Backbone model to use", choices=["mlp", "transformer"])
+    parser.add_argument("--backbone", type=str, default="transformer", help="Backbone model to use", choices=["mlp", "transformer",
+                                                                                                              "transformer_pair_only"])
     args = parser.parse_args()
 
     device = torch.device(f"cuda:{args.device}" if torch.cuda.is_available() else "cpu")

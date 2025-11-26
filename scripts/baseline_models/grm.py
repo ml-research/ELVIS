@@ -259,7 +259,53 @@ class TransformerBlock(nn.Module):
         x = x + self.mlp(self.ln2(x))
         return x
 
+class PairOnlyTransformer(nn.Module):
+    def __init__(self, num_patches=4, points_per_patch=6,
+                 feat_dim=7, hidden_dim=256,
+                 num_heads=4, num_layers=2):
+        super().__init__()
+        self.num_patches = num_patches
+        self.points_per_patch = points_per_patch
+        self.feat_dim = feat_dim
+        self.num_tokens = num_patches * points_per_patch  # 比如 4*6=24
 
+        self.token_proj = nn.Linear(feat_dim, hidden_dim)
+        self.pos_embed_obj = nn.Parameter(
+            torch.randn(1, self.num_tokens, hidden_dim)
+        )
+
+        self.cls_i = nn.Parameter(torch.randn(1, 1, hidden_dim))
+        self.cls_j = nn.Parameter(torch.randn(1, 1, hidden_dim))
+
+        enc_layer = nn.TransformerEncoderLayer(
+            d_model=hidden_dim,
+            nhead=num_heads,
+            dim_feedforward=hidden_dim * 4,
+            batch_first=True,
+            activation="gelu"
+        )
+        self.encoder = nn.TransformerEncoder(enc_layer, num_layers=num_layers)
+
+        self.fc_out = nn.Linear(hidden_dim * 3, 1)
+
+    def _encode_obj(self, obj):
+        # obj: (B, P, K, F)
+        B, P, K, F = obj.shape
+        x = obj.view(B, P * K, F)         # (B, tokens, F)
+        x = self.token_proj(x)            # (B, tokens, H)
+        x = x + self.pos_embed_obj[:, :x.size(1), :]
+        h = self.encoder(x)               # (B, tokens, H)
+        obj_emb = h.mean(dim=1)           # (B, H), 也可以用 CLS
+        return obj_emb
+
+    def forward(self, c_i, c_j, others_tensor=None):
+        # 只用 c_i, c_j
+        e_i = self._encode_obj(c_i)   # (B, H)
+        e_j = self._encode_obj(c_j)   # (B, H)
+
+        pair = torch.cat([e_i, e_j, torch.abs(e_i - e_j)], dim=-1)  # (B, 3H)
+        logits = self.fc_out(pair)                                  # (B,1)
+        return logits
 class GroupingTransformer(nn.Module):
     def __init__(self,
                  num_patches=3,
