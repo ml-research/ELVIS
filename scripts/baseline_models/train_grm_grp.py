@@ -99,7 +99,7 @@ def train_model(args, principle, input_type, device, log_wandb=True, n=100, epoc
 
     # Setup
     if args.backbone == "transformer":
-        model = GroupingTransformer(patch_dim=args.num_patches, H=points_per_patch).to(device)
+        model = GroupingTransformer(C=args.num_patches, H=points_per_patch).to(device)
     else:
         model = ContextContourScorer(input_dim=input_dim, patch_len=points_per_patch).to(device)
     orders = list(range(n))
