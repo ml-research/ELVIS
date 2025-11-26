@@ -90,7 +90,7 @@ def train_model(args, principle, input_type, device, log_wandb=True, n=100, epoc
         model = ContextContourScorer(input_dim=input_dim, patch_len=points_per_patch).to(device)
     orders = list(range(n))
     random.shuffle(orders)  # Randomly shuffle task orders
-    pos_weight = torch.tensor([1.8])  # 0.6426/0.3574 ≈ 1.8
+    pos_weight = torch.tensor(1.8)  # 0.6426/0.3574 ≈ 1.8
 
     criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight.to(device))
     optimizer = optim.Adam(model.parameters(), lr=5e-4)
