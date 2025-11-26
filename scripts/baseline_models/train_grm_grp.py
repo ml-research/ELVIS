@@ -159,10 +159,12 @@ def train_model(args, principle, input_type, device, log_wandb=True, n=100, epoc
         train_loss = total_loss / total
         train_acc = correct / total
 
-        ## Test loop
         model.eval()
         test_loss, test_correct, test_total = 0.0, 0, 0
-        test_one_count, test_zero_count = 0, 0
+        test_one_count, test_zero_count = 0, 0   # label 统计
+        pred_one_count, pred_zero_count = 0, 0   # 预测统计
+        tp = tn = fp = fn = 0
+
         with torch.no_grad():
             for test_pair in test_datas:
                 c_i, c_j, others_tensor, label = test_pair
@@ -173,20 +175,49 @@ def train_model(args, principle, input_type, device, log_wandb=True, n=100, epoc
                 logits = model(c_i, c_j, others_tensor)
                 loss = criterion(logits.squeeze(), label_tensor.squeeze())
                 test_loss += loss.item()
-                pred = (torch.sigmoid(logits) > 0.5).float()
+
+                prob = torch.sigmoid(logits)
+                pred = (prob > 0.5).float()
+
+                # overall acc
                 test_correct += (pred == label_tensor).sum().item()
-                test_one_count += (1 == label_tensor).sum().item()
-                test_zero_count += (0 == label_tensor).sum().item()
                 test_total += 1
+
+                # label 分布
+                if label == 1:
+                    test_one_count += 1
+                else:
+                    test_zero_count += 1
+
+                # 预测分布
+                if pred.item() == 1.0:
+                    pred_one_count += 1
+                else:
+                    pred_zero_count += 1
+
+                # confusion matrix
+                if label == 1 and pred.item() == 1.0:
+                    tp += 1
+                elif label == 0 and pred.item() == 0.0:
+                    tn += 1
+                elif label == 0 and pred.item() == 1.0:
+                    fp += 1
+                elif label == 1 and pred.item() == 0.0:
+                    fn += 1
 
         test_loss = test_loss / test_total
         test_acc = test_correct / test_total
         test_one_ratio = test_one_count / test_total
         test_zero_ratio = test_zero_count / test_total
+        pred_one_ratio = pred_one_count / test_total
+        pred_zero_ratio = pred_zero_count / test_total
 
-        print(f"[Epoch {epoch + 1}] Train/Test Loss: {train_loss:.4f}/{test_loss:.4f} | "
+        print(f"[Epoch {epoch + 1}] "
+              f"Train/Test Loss: {train_loss:.4f}/{test_loss:.4f} | "
               f"Train/Test Acc: {train_acc:.4f}/{test_acc:.4f} | "
-              f"Label Ratio-1:0 {test_one_ratio:.4f}:{test_zero_ratio:.4f}")
+              f"Label Ratio-1:0 {test_one_ratio:.4f}:{test_zero_ratio:.4f} | "
+              f"Pred Ratio-1:0 {pred_one_ratio:.4f}:{pred_zero_ratio:.4f} | "
+              f"TP={tp}, TN={tn}, FP={fp}, FN={fn}")
 
         if log_wandb:
             wandb.log({
