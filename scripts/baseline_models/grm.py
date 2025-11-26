@@ -216,23 +216,27 @@ class TransformerBlock(nn.Module):
 
 
 class GroupingTransformer(nn.Module):
-    def __init__(self, patch_dim=3, H=8, W=7, hidden_dim=256,
+    def __init__(self, feature_dim=7, C=3, H=8, hidden_dim=256,
                  num_heads=4, num_layers=4):
         super().__init__()
 
-        self.patch_dim = patch_dim
+        self.feature_dim = feature_dim
+        self.C = C
         self.H = H
-        self.W = W
-        self.num_tokens = patch_dim * H * W   # 168 for (3,8,7)
+        self.num_tokens_per_obj = C * H   # 24
 
-        # project each patch token to hidden_dim
-        self.token_proj = nn.Linear(patch_dim, hidden_dim)
+        # project each feature vector (x,y,color,w,h) to hidden_dim
+        self.token_proj = nn.Linear(feature_dim, hidden_dim)
 
-        # object CLS tokens (2 objects: c_i and c_j)
+        # CLS tokens for the two target objects
         self.obj_cls_i = nn.Parameter(torch.randn(1, 1, hidden_dim))
         self.obj_cls_j = nn.Parameter(torch.randn(1, 1, hidden_dim))
 
-        # transformer encoder
+        # optional: positional embedding over the 24 slots per object
+        self.pos_embed_obj = nn.Parameter(
+            torch.randn(1, self.num_tokens_per_obj, hidden_dim)
+        )
+
         encoder_layer = nn.TransformerEncoderLayer(
             d_model=hidden_dim,
             nhead=num_heads,
@@ -242,61 +246,66 @@ class GroupingTransformer(nn.Module):
         )
         self.encoder = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
 
-        # output classifier
-        self.fc_out = nn.Linear(hidden_dim, 1)
+        # pair classifier: [h_i, h_j, |h_i - h_j|] -> 1 logit
+        self.fc_out = nn.Linear(hidden_dim * 3, 1)
 
-    def _flatten_patches(self, obj):
-        # obj shape = (B, 3, H, W)
-        B = obj.shape[0]
-        x = obj.view(B, self.patch_dim, -1).permute(0, 2, 1)  # (B, tokens, patch_dim)
-        x = self.token_proj(x)                                # (B, tokens, hidden_dim)
+    def _flatten_object(self, obj):
+        """
+        obj: (B, 3, 8, 7)
+        last dim = 7-dim feature vector (x,y,color,w,h)
+        """
+        B, C, H, F = obj.shape  # F=7
+
+        # tokens: (B, C*H, F)
+        x = obj.permute(0, 2, 1, 3).reshape(B, C * H, F)
+
+        x = self.token_proj(x)  # (B, C*H, hidden_dim)
+        x = x + self.pos_embed_obj[:, :x.size(1), :]  # (B, C*H, hidden_dim)
+
         return x
 
     def forward(self, c_i, c_j, others_tensor):
         """
-        c_i: (1, 3, 8, 7)
-        c_j: (1, 3, 8, 7)
-        others_tensor: (1, N, 3, 8, 7)
+        c_i: (B, 3, 8, 7)
+        c_j: (B, 3, 8, 7)
+        others_tensor: (B, N, 3, 8, 7) or None
         """
-
         B = c_i.shape[0]
 
-        # flatten patch tokens
-        i_tokens = self._flatten_patches(c_i)    # (B, 168, hidden_dim)
-        j_tokens = self._flatten_patches(c_j)
+        # 1) encode main objects
+        i_tokens = self._flatten_object(c_i)  # (B, 24, hidden)
+        j_tokens = self._flatten_object(c_j)  # (B, 24, hidden)
 
-        # prepare CLS tokens
-        cls_i = self.obj_cls_i.expand(B, -1, -1)
-        cls_j = self.obj_cls_j.expand(B, -1, -1)
+        cls_i = self.obj_cls_i.expand(B, 1, -1)  # (B,1,H)
+        cls_j = self.obj_cls_j.expand(B, 1, -1)
 
-        # concatenate 2 objects
-        seq = torch.cat([
-            cls_i, i_tokens,
-            cls_j, j_tokens,
-        ], dim=1)  # shape e.g. (1, 338, hidden_dim)
+        seq = torch.cat([cls_i, i_tokens, cls_j, j_tokens], dim=1)
+        # seq shape: (B, 1+24+1+24, hidden) = (B, 50, hidden)
 
-        # include other objects as well
-        # others_tensor: (B, N, 3, H, W)
+        # 2) encode others if provided
         if others_tensor is not None:
-            B, N, C, H, W = others_tensor.shape
-            others = others_tensor.view(B * N, C, H, W)
-            others_flat = self._flatten_patches(others)          # (B*N, 168, hidden)
-            others_flat = others_flat.view(B, N * others_flat.shape[1], -1)  # (B, N*168, hidden)
-            seq = torch.cat([seq, others_flat], dim=1)           # final sequence
+            B, N, C, H, F = others_tensor.shape
+            others = others_tensor.view(B * N, C, H, F)
+            others_flat = self._flatten_object(others)             # (B*N, 24, hidden)
+            others_flat = others_flat.view(B, N * 24, -1)          # (B, N*24, hidden)
+            seq = torch.cat([seq, others_flat], dim=1)             # (B, 50 + N*24, hidden)
 
-        # transformer encoding
-        h = self.encoder(seq)   # (B, seq_len, hidden_dim)
+        # 3) transformer
+        h = self.encoder(seq)  # (B, seq_len, hidden)
 
-        # use the two object CLS tokens
-        h_i = h[:, 0, :]                    # CLS_i
-        h_j = h[:, 1 + i_tokens.size(1), :] # CLS_j
+        # positions of CLS tokens
+        Ti = i_tokens.size(1)  # 24
+        CLS_i_idx = 0
+        CLS_j_idx = 1 + Ti
 
-        # combine for binary classification
-        h_pair = (h_i + h_j) / 2
-        logits = self.fc_out(h_pair)
+        h_i = h[:, CLS_i_idx, :]  # (B, hidden)
+        h_j = h[:, CLS_j_idx, :]  # (B, hidden)
+
+        # 4) pair representation
+        h_pair = torch.cat([h_i, h_j, torch.abs(h_i - h_j)], dim=-1)  # (B, 3*hidden)
+        logits = self.fc_out(h_pair)                                  # (B, 1)
 
         return logits
-
 def load_group_transformer(model_path, device="cuda", shape_dim=16, app_dim=0, d_model=128, num_heads=4, depth=4, rel_dim=64):
     """
     Load a trained GroupingTransformer model from checkpoint
