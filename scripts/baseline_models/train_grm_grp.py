@@ -11,7 +11,7 @@ import argparse
 from rtpt import RTPT
 from typing import List
 
-from scripts.baseline_models.grm import ContextContourScorer, GroupingTransformer
+from scripts.baseline_models.grm import ContextContourScorer, GroupingTransformer, debug_tiny_mlp
 from scripts import config
 from scripts.baseline_models.bm_utils import load_images, load_jsons, load_patterns, get_obj_imgs, preprocess_rgb_image_to_patch_set_batch, process_object_pairs
 
@@ -116,6 +116,8 @@ def train_model(args, principle, input_type, device, log_wandb=True, n=100, epoc
 
     train_datas = train_datas[:data_num]
     test_datas = test_datas[:data_num]
+
+    debug_tiny_mlp(train_datas,device)
 
     # --- Data sanity check ---
     labels = [lbl for (_, _, _, lbl) in train_datas]

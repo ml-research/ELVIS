@@ -14,6 +14,7 @@ import torch
 import torch.nn as nn
 from typing import List, Tuple, Union
 from torch import Tensor
+import random
 
 from scripts.baseline_models import bm_utils
 from scripts.baseline_models.bm_utils import load_jsons, load_images
@@ -21,7 +22,51 @@ from scripts import config
 
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
+class TinyMLP(nn.Module):
+    def __init__(self, feat_dim=7):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(feat_dim * 2, 64),
+            nn.ReLU(),
+            nn.Linear(64, 1)
+        )
 
+    def forward(self, c_i, c_j):
+        # c_i, c_j: (B, P, K, F)
+        # 对 P,K 做 mean，得到 object-level 向量
+        ci_vec = c_i.mean(dim=(1, 2))  # (B, F)
+        cj_vec = c_j.mean(dim=(1, 2))  # (B, F)
+        x = torch.cat([ci_vec, cj_vec], dim=-1)  # (B, 2F)
+        return self.net(x)
+
+
+def debug_tiny_mlp(train_datas, device):
+    model = TinyMLP(feat_dim=7).to(device)
+    opt = torch.optim.Adam(model.parameters(), lr=1e-3)
+    crit = nn.BCEWithLogitsLoss()
+
+    data = train_datas[:200]  # 200 个 closure 样本
+    for epoch in range(100):
+        random.shuffle(data)
+        total_loss, correct = 0.0, 0
+        for c_i, c_j, others, lbl in data:
+            c_i = c_i.unsqueeze(0).to(device)
+            c_j = c_j.unsqueeze(0).to(device)
+            y = torch.tensor([lbl], dtype=torch.float32, device=device)
+
+            logits = model(c_i, c_j)
+            loss = crit(logits.squeeze(), y.squeeze())
+            opt.zero_grad()
+            loss.backward()
+            opt.step()
+
+            total_loss += loss.item()
+            pred = (torch.sigmoid(logits) > 0.5).float()
+            correct += (pred == y).sum().item()
+
+        acc = correct / len(data)
+        if epoch % 10 == 0:
+            print(f"[TinyMLP] epoch={epoch}, loss={total_loss / len(data):.4f}, acc={acc:.3f}")
 class ContextContourScorer(nn.Module):
     def __init__(
             self,
