@@ -216,27 +216,33 @@ class TransformerBlock(nn.Module):
 
 
 class GroupingTransformer(nn.Module):
-    def __init__(self, feature_dim=7, C=3, H=8, hidden_dim=256,
-                 num_heads=4, num_layers=4):
+    def __init__(self,
+                 num_patches=3,
+                 points_per_patch=8,
+                 feat_dim=7,          # x, y, color(3), w, h
+                 hidden_dim=256,
+                 num_heads=4,
+                 num_layers=4):
         super().__init__()
 
-        self.feature_dim = feature_dim
-        self.C = C
-        self.H = H
-        self.num_tokens_per_obj = C * H   # 24
+        self.num_patches = num_patches        # 3
+        self.points_per_patch = points_per_patch  # 8
+        self.feat_dim = feat_dim              # 7
+        self.num_tokens = num_patches * points_per_patch  # 24
 
-        # project each feature vector (x,y,color,w,h) to hidden_dim
-        self.token_proj = nn.Linear(feature_dim, hidden_dim)
+        # 每个 point 的 7 维特征 -> hidden_dim
+        self.token_proj = nn.Linear(feat_dim, hidden_dim)
 
-        # CLS tokens for the two target objects
+        # object CLS tokens (2 objects: c_i and c_j)
         self.obj_cls_i = nn.Parameter(torch.randn(1, 1, hidden_dim))
         self.obj_cls_j = nn.Parameter(torch.randn(1, 1, hidden_dim))
 
-        # optional: positional embedding over the 24 slots per object
+        # 可选：为 24 个 point 加位置编码（patch idx + point idx 的顺序）
         self.pos_embed_obj = nn.Parameter(
-            torch.randn(1, self.num_tokens_per_obj, hidden_dim)
+            torch.randn(1, self.num_tokens, hidden_dim)
         )
 
+        # transformer encoder
         encoder_layer = nn.TransformerEncoderLayer(
             d_model=hidden_dim,
             nhead=num_heads,
@@ -246,23 +252,28 @@ class GroupingTransformer(nn.Module):
         )
         self.encoder = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
 
-        # pair classifier: [h_i, h_j, |h_i - h_j|] -> 1 logit
+        # 输出分类器：拼 [h_i, h_j, |h_i - h_j|] -> 1 logit
         self.fc_out = nn.Linear(hidden_dim * 3, 1)
 
     def _flatten_object(self, obj):
         """
-        obj: (B, 3, 8, 7)
-        last dim = 7-dim feature vector (x,y,color,w,h)
+        obj: (B, P, K, F) = (B, 3, 8, 7)
+        其中最后一维 F=7 是真正的 feature 向量
         """
-        B, C, H, F = obj.shape  # F=7
+        B, P, K, F = obj.shape
+        assert P == self.num_patches and K == self.points_per_patch and F == self.feat_dim
 
-        # tokens: (B, C*H, F)
-        x = obj.permute(0, 2, 1, 3).reshape(B, C * H, F)
+        # 把所有 point 展开成一个序列：tokens = P * K
+        # 形状: (B, P*K, F)
+        x = obj.view(B, P * K, F)
 
-        x = self.token_proj(x)  # (B, C*H, hidden_dim)
-        x = x + self.pos_embed_obj[:, :x.size(1), :]  # (B, C*H, hidden_dim)
+        # 投到 hidden 维度
+        x = self.token_proj(x)  # (B, P*K, hidden_dim)
 
-        return x
+        # 加位置编码，保留 patch / point 的顺序信息
+        x = x + self.pos_embed_obj[:, :x.size(1), :]
+
+        return x  # (B, 24, hidden_dim)
 
     def forward(self, c_i, c_j, others_tensor):
         """
@@ -273,36 +284,43 @@ class GroupingTransformer(nn.Module):
         B = c_i.shape[0]
 
         # 1) encode main objects
-        i_tokens = self._flatten_object(c_i)  # (B, 24, hidden)
-        j_tokens = self._flatten_object(c_j)  # (B, 24, hidden)
+        i_tokens = self._flatten_object(c_i)   # (B, 24, hidden_dim)
+        j_tokens = self._flatten_object(c_j)   # (B, 24, hidden_dim)
 
-        cls_i = self.obj_cls_i.expand(B, 1, -1)  # (B,1,H)
+        # CLS tokens
+        cls_i = self.obj_cls_i.expand(B, 1, -1)  # (B, 1, hidden_dim)
         cls_j = self.obj_cls_j.expand(B, 1, -1)
 
+        # sequence: [CLS_i, i_points(24), CLS_j, j_points(24)]
         seq = torch.cat([cls_i, i_tokens, cls_j, j_tokens], dim=1)
-        # seq shape: (B, 1+24+1+24, hidden) = (B, 50, hidden)
+        # 现在 seq.shape = (B, 1+24+1+24 = 50, hidden_dim)
 
-        # 2) encode others if provided
+        # 2) include other objects if provided
         if others_tensor is not None:
-            B, N, C, H, F = others_tensor.shape
-            others = others_tensor.view(B * N, C, H, F)
-            others_flat = self._flatten_object(others)             # (B*N, 24, hidden)
-            others_flat = others_flat.view(B, N * 24, -1)          # (B, N*24, hidden)
-            seq = torch.cat([seq, others_flat], dim=1)             # (B, 50 + N*24, hidden)
+            # others_tensor: (B, N, 3, 8, 7)
+            B, N, P, K, F = others_tensor.shape
+            assert P == self.num_patches and K == self.points_per_patch and F == self.feat_dim
 
-        # 3) transformer
-        h = self.encoder(seq)  # (B, seq_len, hidden)
+            # 合并 B, N 维，逐个 object 编码
+            others = others_tensor.view(B * N, P, K, F)         # (B*N, 3, 8, 7)
+            others_flat = self._flatten_object(others)          # (B*N, 24, hidden_dim)
+            others_flat = others_flat.view(B, N * self.num_tokens, -1)  # (B, N*24, hidden_dim)
 
-        # positions of CLS tokens
-        Ti = i_tokens.size(1)  # 24
+            seq = torch.cat([seq, others_flat], dim=1)          # (B, 50 + N*24, hidden_dim)
+
+        # 3) transformer encoding
+        h = self.encoder(seq)   # (B, seq_len, hidden_dim)
+
+        # 4) use the two object CLS tokens
+        Ti = i_tokens.size(1)          # 24
         CLS_i_idx = 0
-        CLS_j_idx = 1 + Ti
+        CLS_j_idx = 1 + Ti             # index of CLS_j
 
-        h_i = h[:, CLS_i_idx, :]  # (B, hidden)
-        h_j = h[:, CLS_j_idx, :]  # (B, hidden)
+        h_i = h[:, CLS_i_idx, :]       # (B, hidden_dim)
+        h_j = h[:, CLS_j_idx, :]       # (B, hidden_dim)
 
-        # 4) pair representation
-        h_pair = torch.cat([h_i, h_j, torch.abs(h_i - h_j)], dim=-1)  # (B, 3*hidden)
+        # 5) combine for binary classification
+        h_pair = torch.cat([h_i, h_j, torch.abs(h_i - h_j)], dim=-1)  # (B, 3*hidden_dim)
         logits = self.fc_out(h_pair)                                  # (B, 1)
 
         return logits
