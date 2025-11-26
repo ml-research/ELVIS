@@ -297,7 +297,6 @@ class GroupingTransformer(nn.Module):
 
         return logits
 
-
 def load_group_transformer(model_path, device="cuda", shape_dim=16, app_dim=0, d_model=128, num_heads=4, depth=4, rel_dim=64):
     """
     Load a trained GroupingTransformer model from checkpoint
