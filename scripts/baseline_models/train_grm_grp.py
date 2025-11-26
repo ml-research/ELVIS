@@ -33,8 +33,8 @@ def balance_data(data_pairs):
 
 def load_grm_grp_data(task_num, img_num, principle_path, num_patches, points_per_patch):
     pattern_folders = load_patterns(principle_path, 0, "end")
-    random.seed(42)
-    random.shuffle(pattern_folders)
+    # random.seed(42)
+    # random.shuffle(pattern_folders)
     pattern_folders = pattern_folders[:task_num]
     train_data = []
     test_data = []
