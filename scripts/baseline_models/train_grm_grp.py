@@ -33,7 +33,7 @@ def balance_data(data_pairs):
 
 def load_grm_grp_data(task_num, img_num, principle_path, num_patches, points_per_patch):
     pattern_folders = load_patterns(principle_path, 0, "end")
-    random.shuffle(pattern_folders)
+    # random.shuffle(pattern_folders)
     pattern_folders = pattern_folders[:task_num]
     train_data = []
     test_data = []
@@ -108,8 +108,8 @@ def train_model(args, principle, input_type, device, log_wandb=True, n=100, epoc
         ).to(device)
     else:
         model = ContextContourScorer(input_dim=input_dim, patch_len=points_per_patch).to(device)
-    orders = list(range(n))
-    random.shuffle(orders)  # Randomly shuffle task orders
+    # orders = list(range(n))
+    # random.shuffle(orders)  # Randomly shuffle task orders
     # pos_weight = torch.tensor(1.8)  # 0.6426/0.3574 ≈ 1.8
     #
     criterion = nn.BCEWithLogitsLoss()
@@ -117,8 +117,8 @@ def train_model(args, principle, input_type, device, log_wandb=True, n=100, epoc
     train_datas, test_datas, task_names = load_grm_grp_data(args.task_num, args.img_num, data_path, num_patches, points_per_patch)
 
     # shuffle data
-    random.shuffle(train_datas)
-    random.shuffle(test_datas)
+    # random.shuffle(train_datas)
+    # random.shuffle(test_datas)
 
     train_datas = train_datas[:data_num]
     test_datas = test_datas[:data_num]
@@ -272,6 +272,8 @@ def train_model(args, principle, input_type, device, log_wandb=True, n=100, epoc
             best_acc = test_acc
             torch.save(model.state_dict(), model_path_best)
             print(f"Best model saved to {model_path_best}")
+
+
 
 
 if __name__ == "__main__":
