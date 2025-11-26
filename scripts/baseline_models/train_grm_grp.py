@@ -117,6 +117,22 @@ def train_model(args, principle, input_type, device, log_wandb=True, n=100, epoc
     train_datas = train_datas[:data_num]
     test_datas = test_datas[:data_num]
 
+    # --- Data sanity check ---
+    labels = [lbl for (_, _, _, lbl) in train_datas]
+    print("Train size:", len(labels),
+          "pos:", sum(labels),
+          "neg:", len(labels) - sum(labels))
+
+    print("First 5 samples (closure labels + some stats):")
+    for k in range(min(5, len(train_datas))):
+        c_i, c_j, others, lbl = train_datas[k]
+        # c_i: (3, num_patches, points_per_patch, feat_dim 已经 unsqueeze 之前)
+        print(f"  idx={k}, label={lbl}, "
+              f"c_i.mean={c_i.mean().item():.3f}, "
+              f"c_j.mean={c_j.mean().item():.3f}, "
+              f"others.shape={tuple(others.shape)}")
+
+
     best_acc = 0.0
     print(f"Training on principle: {principle} with {len(train_datas)} samples.")
     print(f"Testing on principle: {principle} with {len(test_datas)} samples.")
