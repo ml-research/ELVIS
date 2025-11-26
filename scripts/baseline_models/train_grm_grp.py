@@ -16,6 +16,21 @@ from scripts import config
 from scripts.baseline_models.bm_utils import load_images, load_jsons, load_patterns, get_obj_imgs, preprocess_rgb_image_to_patch_set_batch, process_object_pairs
 
 
+def balance_data(data_pairs):
+    """Balance positive and negative pairs"""
+    pos_pairs = [p for p in data_pairs if p[3] == 1]
+    neg_pairs = [p for p in data_pairs if p[3] == 0]
+    min_size = min(len(pos_pairs), len(neg_pairs))
+
+    if min_size == 0:
+        print(f"Warning: No positive or negative pairs found!")
+        return data_pairs
+
+    balanced = random.sample(pos_pairs, min_size) + random.sample(neg_pairs, min_size)
+    print(f"Balanced data: {min_size} pos + {min_size} neg = {len(balanced)} total")
+    return balanced
+
+
 def load_grm_grp_data(task_num, img_num, principle_path, num_patches, points_per_patch):
     pattern_folders = load_patterns(principle_path, 0, "end")
     random.shuffle(pattern_folders)
@@ -51,22 +66,21 @@ def load_grm_grp_data(task_num, img_num, principle_path, num_patches, points_per
 
         train_pairs = []
         for patch_sets, positions, sizes, y_true in pattern_data_train:
-            pair_data = process_object_pairs(patch_sets,y_true, device,  points_per_patch, num_patches)
+            pair_data = process_object_pairs(patch_sets, y_true, device, points_per_patch, num_patches)
             train_pairs.extend(pair_data)
 
-        test_pairs= []
+        test_pairs = []
         for patch_sets, positions, sizes, y_true in pattern_data_test:
-            pair_data = process_object_pairs(patch_sets,y_true, device,  points_per_patch, num_patches)
+            pair_data = process_object_pairs(patch_sets, y_true, device, points_per_patch, num_patches)
             test_pairs.extend(pair_data)
-
 
         train_data.extend(train_pairs)
         test_data.extend(test_pairs)
         task_names.append(pattern_folder.name)
+
+    train_data = balance_data(train_data)
+    test_data = balance_data(test_data)
     return train_data, test_data, task_names
-
-
-
 
 
 def train_model(args, principle, input_type, device, log_wandb=True, n=100, epochs=10, data_num=1000):
@@ -85,15 +99,15 @@ def train_model(args, principle, input_type, device, log_wandb=True, n=100, epoc
 
     # Setup
     if args.backbone == "transformer":
-        model = GroupingTransformer(patch_dim=args.num_patches, H=args.points_per_patch).to(device)
+        model = GroupingTransformer(patch_dim=args.num_patches, H=points_per_patch).to(device)
     else:
-        model = ContextContourScorer(input_dim=input_dim, patch_len=points_per_patch).to(device)
+        model = ContextContourScorer(input_dim=input_dim, patch_len=points_per_patch + args.num_patches).to(device)
     orders = list(range(n))
     random.shuffle(orders)  # Randomly shuffle task orders
     pos_weight = torch.tensor(1.8)  # 0.6426/0.3574 ≈ 1.8
 
     criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight.to(device))
-    optimizer = optim.Adam(model.parameters(), lr=5e-4)
+    optimizer = optim.Adam(model.parameters(), lr=1e-4)
     train_datas, test_datas, task_names = load_grm_grp_data(args.task_num, args.img_num, data_path, num_patches, points_per_patch)
 
     # shuffle data
@@ -175,7 +189,6 @@ def train_model(args, principle, input_type, device, log_wandb=True, n=100, epoc
             best_acc = test_acc
             torch.save(model.state_dict(), model_path_best)
             print(f"Best model saved to {model_path_best}")
-
 
 
 if __name__ == "__main__":
