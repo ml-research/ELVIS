@@ -137,6 +137,33 @@ def train_model(args, principle, input_type, device, log_wandb=True, n=100, epoc
     print(f"Training on principle: {principle} with {len(train_datas)} samples.")
     print(f"Testing on principle: {principle} with {len(test_datas)} samples.")
     for epoch in range(epochs):
+        if epoch == 0 and t_i < 5:
+            # update 前
+            model.eval()
+            with torch.no_grad():
+                logit_before = model(c_i, c_j, others_tensor)
+                prob_before = torch.sigmoid(logit_before).item()
+            model.train()
+
+            # 正常训练
+            logits = model(c_i, c_j, others_tensor)
+            loss = criterion(logits.squeeze(), label_tensor.squeeze())
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            # update 后
+            model.eval()
+            with torch.no_grad():
+                logit_after = model(c_i, c_j, others_tensor)
+                prob_after = torch.sigmoid(logit_after).item()
+            model.train()
+
+            print(f"[DEBUG step] sample={t_i}, label={label}, "
+                  f"prob_before={prob_before:.3f}, prob_after={prob_after:.3f}, "
+                  f"loss={loss.item():.4f}")
+            continue
+
         model.train()
         total_loss, correct, total = 0.0, 0.0, 0.0
         for t_i, train_pair in enumerate(train_datas):
