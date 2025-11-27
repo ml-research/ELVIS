@@ -84,6 +84,16 @@ def get_out_dir(principle, remote=False):
 
     return out_dir
 
+def get_coco_path(remote=False):
+    if remote:
+        coco_path = Path(os.getenv("DATA_ROOT", "/gen_data"))
+    else:
+        coco_path = root / 'storage' / 'coco'
+
+    if not os.path.exists(coco_path):
+        raise FileNotFoundError(f"Coco annotation file not found at {coco_path}")
+    return coco_path
+
 
 def get_raw_patterns_path(remote=False):
     if remote:

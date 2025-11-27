@@ -198,7 +198,7 @@ python -m scripts.baseline_models.train_grm_grp --remote --principle proximity -
 python -m scripts.baseline_models.train_grm_grp --remote --principle similarity --device 7 --backbone transformer
 python -m scripts.baseline_models.train_grm_grp --remote --principle symmetry --device 0 --backbone mlp
 python -m scripts.baseline_models.train_grm_grp --remote --principle continuity --device 1 --backbone mlp
-python -m scripts.baseline_models.train_grm_grp --remote --principle continuity --device 2 --backbone transformer_pair_only
+python -m scripts.baseline_models.train_grm_grp --remote --principle proximity --device 0 --backbone mlp
 ##### Analysis Results
 ``` 
 python -m scripts.analysis_results --principle proximity --remote --model vit
