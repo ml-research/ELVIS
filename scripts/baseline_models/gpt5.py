@@ -1,4 +1,5 @@
 # Created by MacBook Pro at 24.08.25
+import random
 
 # from transformers import AutoProcessor, GPT5ForConditionalGeneration
 import torch
@@ -497,6 +498,10 @@ def run_gpt5_grouping_zero_shot(data_path, img_size, principle, batch_size, devi
     init_wandb(batch_size, principle)
     principle_path = Path(data_path)
     pattern_folders = sorted([p for p in (principle_path / "train").iterdir() if p.is_dir()], key=lambda x: x.stem)
+
+    random.seed(42)
+    random.shuffle(pattern_folders)
+
     if not pattern_folders:
         print("No pattern folders found in", principle_path)
         return

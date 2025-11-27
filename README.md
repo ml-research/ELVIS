@@ -176,6 +176,7 @@ python -m scripts.evaluate_models --batch_size 1 --principle symmetry --model gp
 python -m scripts.evaluate_models --batch_size 1 --principle continuity --model gpt5 --img_num 3 --start_num 147 --task_num end --device_id 15
 
 python -m scripts.evaluate_models --batch_size 1 --principle similarity --model gpt5_grp --img_num 3 --device_id 5 --start_num 0 --task_num end
+python -m scripts.evaluate_models --batch_size 1 --principle closure --model gpt5_grp --img_num 3 --device_id 4 --start_num 0 --task_num end
 
 # pure principle evaluation
 
@@ -193,7 +194,11 @@ python -m pure_perception.models.all_tasks_evaluation --remote --model vit --img
 
 python -m scripts.baseline_models.train_grm_grp --remote --img_size 224 --principle similarity --device 5
 python -m scripts.baseline_models.train_grm_grp --remote --principle closure --device 5 --backbone transformer --points_per_path 6 --num_patches 4 --task_num end
-python -m scripts.baseline_models.train_grm_grp --remote --principle proximity --device 5 --points_per_patch 6 --num_patches 4 --task_num 5 --data_num 1000000 --epochs 100 --backbone transformer_pair_only
+python -m scripts.baseline_models.train_grm_grp --remote --principle proximity --device 6 --backbone transformer_pair_only
+python -m scripts.baseline_models.train_grm_grp --remote --principle similarity --device 7 --backbone transformer
+python -m scripts.baseline_models.train_grm_grp --remote --principle symmetry --device 0 --backbone mlp
+python -m scripts.baseline_models.train_grm_grp --remote --principle continuity --device 1 --backbone mlp
+python -m scripts.baseline_models.train_grm_grp --remote --principle continuity --device 2 --backbone transformer_pair_only
 ##### Analysis Results
 ``` 
 python -m scripts.analysis_results --principle proximity --remote --model vit

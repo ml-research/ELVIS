@@ -296,7 +296,6 @@ if __name__ == "__main__":
     parser.add_argument("--backbone", type=str, default="transformer", help="Backbone model to use", choices=["mlp", "transformer",
                                                                                                               "transformer_pair_only"])
     args = parser.parse_args()
-
     device = torch.device(f"cuda:{args.device}" if torch.cuda.is_available() else "cpu")
 
     wandb.init(project="grm_grp_training", name=f"{args.principle}_{args.input_type}_size{args.sample_size}")
