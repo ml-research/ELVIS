@@ -203,6 +203,21 @@ def match_group_labels(y_true, y_pred):
     # Hungarian matching to align predicted group labels to true group labels
     y_true = np.array(y_true)
     y_pred = np.array(y_pred)
+
+    # Handle length mismatch
+    if len(y_true) != len(y_pred):
+        print(f"Warning: Length mismatch - y_true: {len(y_true)}, y_pred: {len(y_pred)}")
+        min_len = min(len(y_true), len(y_pred))
+        max_len = max(len(y_true), len(y_pred))
+
+        # Pad the shorter array with a unique "unmatched" label
+        if len(y_true) < max_len:
+            pad_value = -1  # Use -1 for missing ground truth objects
+            y_true = np.pad(y_true, (0, max_len - len(y_true)), constant_values=pad_value)
+        if len(y_pred) < max_len:
+            pad_value = -2  # Use -2 for missing predictions
+            y_pred = np.pad(y_pred, (0, max_len - len(y_pred)), constant_values=pad_value)
+
     true_labels = np.unique(y_true)
     pred_labels = np.unique(y_pred)
     cost_matrix = np.zeros((len(true_labels), len(pred_labels)))
@@ -442,8 +457,7 @@ def run_gpt5_grouping(data_path, img_size, principle, batch_size, device, img_nu
 
         test_imgs = load_images((principle_path / "test" / pattern_folder.name) / "positive", img_num) + load_images((principle_path / "test" / pattern_folder.name) / "negative",
                                                                                                                      img_num)
-        test_jsons = load_jsons((principle_path / "test" / pattern_folder.name) / "positive", img_num) + load_jsons((principle_path / "test" / pattern_folder.name) / "negative",
-                                                                                                                    img_num)
+        test_jsons = load_jsons((principle_path / "test" / pattern_folder.name) / "positive", img_num) + load_jsons(pattern_folder / "test" / "negative", img_num)
 
         train_croped_paths = [crop_objs(img, json_data) for img, json_data in zip(train_imgs, train_jsons)]
         test_croped_paths = [crop_objs(img, json_data) for img, json_data in zip(test_imgs, test_jsons)]
