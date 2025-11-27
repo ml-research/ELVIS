@@ -242,11 +242,29 @@ def compute_grouping_metrics(y_true_list, y_pred_list):
 
     accs, f1s, precs, recs = [], [], [], []
     for y_true, y_pred in zip(y_true_list, y_pred_list):
-        y_pred_aligned = match_group_labels(y_true, y_pred)
-        accs.append(accuracy_score(y_true, y_pred_aligned))
-        f1s.append(f1_score(y_true, y_pred_aligned, average="macro"))
-        precs.append(precision_score(y_true, y_pred_aligned, average="macro", zero_division=0))
-        recs.append(recall_score(y_true, y_pred_aligned, average="macro", zero_division=0))
+        # Convert to numpy arrays
+        y_true = np.array(y_true)
+        y_pred = np.array(y_pred)
+
+        # Truncate to minimum length before alignment
+        min_len = min(len(y_true), len(y_pred))
+        y_true_trunc = y_true[:min_len]
+        y_pred_trunc = y_pred[:min_len]
+
+        # Align labels using Hungarian matching
+        y_pred_aligned = match_group_labels(y_true_trunc, y_pred_trunc)
+
+        # Ensure both have same length after alignment
+        if len(y_true_trunc) != len(y_pred_aligned):
+            print(f"Warning: Alignment produced mismatched lengths: {len(y_true_trunc)} vs {len(y_pred_aligned)}")
+            min_len_final = min(len(y_true_trunc), len(y_pred_aligned))
+            y_true_trunc = y_true_trunc[:min_len_final]
+            y_pred_aligned = y_pred_aligned[:min_len_final]
+
+        accs.append(accuracy_score(y_true_trunc, y_pred_aligned))
+        f1s.append(f1_score(y_true_trunc, y_pred_aligned, average="macro", zero_division=0))
+        precs.append(precision_score(y_true_trunc, y_pred_aligned, average="macro", zero_division=0))
+        recs.append(recall_score(y_true_trunc, y_pred_aligned, average="macro", zero_division=0))
     return np.mean(accs), np.mean(f1s), np.mean(precs), np.mean(recs)
 
 
