@@ -110,6 +110,18 @@ def train_model(args, principle, input_type, device, log_wandb=True, n=100, epoc
         ).to(device)
     else:
         model = ContextContourScorer(input_dim=input_dim, patch_len=points_per_patch).to(device)
+    # Count parameters
+    total_params = sum(p.numel() for p in model.parameters())
+    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+    print(f"GroupingTransformer Parameters:")
+    print(f"  Total: {total_params:,}")
+    print(f"  Trainable: {trainable_params:,}")
+
+    # Breakdown by layer (optional)
+    for name, param in model.named_parameters():
+        print(f"  {name}: {param.numel():,} params, shape: {param.shape}")
+
     # orders = list(range(n))
     # random.shuffle(orders)  # Randomly shuffle task orders
     # pos_weight = torch.tensor(1.8)  # 0.6426/0.3574 ≈ 1.8
