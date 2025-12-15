@@ -16,6 +16,7 @@ baseline_models = {
     "gpt5": gpt5.run_gpt5,
     "gpt5_grp": gpt5.run_gpt5_grouping_zero_shot,
     "grm_grp": grm.run_grm_grouping,
+    "neumann":grm.run_neumann,
     "internVL": internVL.run_internVL,
     "internVL_X": internVL.run_internVL_X,
     "llava": llava.run_llava,

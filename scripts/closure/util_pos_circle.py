@@ -106,7 +106,7 @@ def get_logic_rules(is_positive, params, cf_params, irrel_params):
     return logic
 
 
-def non_overlap_big_circle(params, irrel_params, is_positive, clu_num, obj_quantity, pin):
+def separate_big_circle(params, irrel_params, is_positive, clu_num, obj_quantity, pin):
     obj_size = 0.05
     cf_params = data_utils.get_proper_sublist(params + ["closure"])
     objs = closure_big_circle(obj_size, is_positive, clu_num, params, irrel_params, cf_params, obj_quantity, pin)

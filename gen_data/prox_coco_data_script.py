@@ -41,7 +41,7 @@ else:
 # 你可以只选一部分 image_id，比如之前的 coco_prox_100 那批
 img_ids = coco.getImgIds()
 random.shuffle(img_ids)  # Randomize the order
-img_ids = img_ids[:100]   # 先标 50 张玩玩
+img_ids = img_ids[:1000]   # 先标 50 张玩玩
 
 for img_id in img_ids:
     # Skip already annotated images
@@ -62,7 +62,7 @@ for img_id in img_ids:
     anns = coco.loadAnns(ann_ids)
 
     # 只标注物体数量在5-15的图片
-    if len(anns) < 5 or len(anns) > 15:
+    if len(anns) < 3 or len(anns) > 10:
         continue
 
     # 可选：只显示某些类别
@@ -78,8 +78,8 @@ for img_id in img_ids:
         rect = patches.Rectangle((x, y), w, h, linewidth=1.5,
                                  edgecolor='lime', facecolor='none')
         ax.add_patch(rect)
-        # 在框旁边打 idx 编号 - 增大字体
-        ax.text(x, y, str(idx), color='yellow', fontsize=18, weight='bold',
+        # 在框内左上角打 idx 编号
+        ax.text(x + 5, y + 20, str(idx), color='yellow', fontsize=18, weight='bold',
                 bbox=dict(facecolor='black', alpha=0.7, pad=2))
 
     # 在左上角显示总物体数

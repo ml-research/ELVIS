@@ -161,10 +161,10 @@ python -m scripts.evaluate_models --batch_size 4 --principle continuity --img_nu
 
 # train Llava
 
-python -m scripts.evaluate_models --batch_size 1 --principle proximity --img_num 3 --model llava --device_id 7
+python -m scripts.evaluate_models --batch_size 1 --principle proximity --img_num 3 --model llava --device_id 0
 python -m scripts.evaluate_models --batch_size 1 --principle similarity --img_num 3 --model llava --device_id 2
 python -m scripts.evaluate_models --batch_size 1 --principle closure --img_num 3 --model llava --device_id 6
-python -m scripts.evaluate_models --batch_size 1 --principle symmetry --img_num 3 --model llava --device_id 5
+python -m scripts.evaluate_models --batch_size 1 --principle symmetry --img_num 3 --model llava --device_id 7
 python -m scripts.evaluate_models --batch_size 1 --principle continuity --img_num 3 --model llava --device_id 5
 
 # train gpt5
@@ -183,7 +183,7 @@ python -m scripts.evaluate_models --batch_size 1 --principle closure --model gpt
 python -m pure_perception.models.pure_principle_vit --remote --model vit --img_size 224 --principle proximity --device 7
 python -m pure_perception.models.pure_principle_vit --remote --model vit --img_size 224 --principle similarity --device 6
 python -m pure_perception.models.pure_principle_vit --remote --model vit --img_size 224 --principle closure --device 5
-python -m pure_perception.models.pure_principle_vit --remote --model vit --img_size 224 --principle symmetry --device 4
+python -m pure_perception.models.pure_principle_vit --remote --model vit --img_size 224 --principle symmetry --device 7
 python -m pure_perception.models.pure_principle_vit --remote --model vit --img_size 224 --principle continuity --device 3
 
 

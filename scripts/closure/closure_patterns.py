@@ -4,7 +4,7 @@ from scripts.utils.encode_utils import create_tasks_v2, create_tasks_v3
 
 from scripts.closure.util_pos_triangle import separate_big_triangle
 from scripts.closure.util_pos_square import separate_big_square
-from scripts.closure.util_pos_circle import non_overlap_big_circle
+from scripts.closure.util_pos_circle import separate_big_circle
 from scripts.closure.util_feature_triangle import non_overlap_feature_triangle
 from scripts.closure.util_feature_square import non_overlap_feature_square
 from scripts.closure.util_feature_circle import non_overlap_feature_circle
@@ -49,7 +49,7 @@ def get_patterns(lite=False):
     all_tasks.extend(tasks)
     all_names.extend(names)
 
-    tasks, names = create_tasks_v3(non_overlap_big_circle, separate_props, grp_num_range, size_list, pin)
+    tasks, names = create_tasks_v3(separate_big_circle, separate_props, grp_num_range, size_list, pin)
     all_tasks.extend(tasks)
     all_names.extend(names)
 

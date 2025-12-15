@@ -775,6 +775,87 @@ def run_grm_grouping(data_path, img_size, principle, batch_size, device, img_num
     return avg_accuracy, avg_f1
 
 
+def run_neumann(data_path, img_size, principle, batch_size, device, img_num, epochs, start_num, task_num):
+    principle_path = Path(data_path)
+
+    # client = None
+    total_accuracy, total_f1 = [], []
+    results = {}
+    total_precision_scores = []
+    total_recall_scores = []
+
+    pattern_folders = bm_utils.load_patterns(principle_path, start_num, task_num)
+
+    rtpt = RTPT(name_initials='JIS', experiment_name=f'Elvis-NM-{principle}', max_iterations=len(pattern_folders))
+    rtpt.start()
+
+    for pattern_folder in pattern_folders:
+        rtpt.step()
+        print(f"Processing pattern: {pattern_folder.name}")
+
+        train_imgs = load_images(pattern_folder / "positive", img_num) + load_images(pattern_folder / "negative", img_num)
+        train_jsons = load_jsons(pattern_folder / "positive", img_num) + load_jsons(pattern_folder / "negative", img_num)
+
+        test_imgs = load_images((principle_path / "test" / pattern_folder.name) / "positive", img_num) + load_images((principle_path / "test" / pattern_folder.name) / "negative",
+                                                                                                                     img_num)
+        test_jsons = load_jsons((principle_path / "test" / pattern_folder.name) / "positive", img_num) + load_jsons((principle_path / "test" / pattern_folder.name) / "negative",
+                                                                                                                    img_num)
+
+        accs, f1s, precs, recs = [], [], [], []
+
+        for img, json_data in zip(test_imgs, test_jsons):
+            obj_imgs = get_obj_imgs(img, json_data)
+            y_true = [data["group_id"] for data in json_data["img_data"]]
+            patch_sets, positions, sizes = preprocess_rgb_image_to_patch_set_batch(obj_imgs)
+            if principle == "similarity":
+                # only keep position and color
+                patch_sets = [ps[:, :, :5] for ps in patch_sets]
+
+            grp_ids = group_objects_with_model(grp_model, patch_sets, device)
+            grp_ids = group_list_to_labels(grp_ids, len(y_true))
+            y_pred_aligned = match_group_labels(y_true, grp_ids)
+            accs.append(accuracy_score(y_true, y_pred_aligned))
+            f1s.append(f1_score(y_true, y_pred_aligned, average="macro"))
+            precs.append(precision_score(y_true, y_pred_aligned, average="macro", zero_division=0))
+            recs.append(recall_score(y_true, y_pred_aligned, average="macro", zero_division=0))
+
+        accuracy = np.mean(accs) * 100
+        f1 = np.mean(f1s)
+        precision = np.mean(precs)
+        recall = np.mean(recs)
+
+        wandb.log({f"{principle}/test_accuracy": accuracy,
+                   f"{principle}/f1_score": f1,
+                   f"{principle}/precision": precision,
+                   f"{principle}/recall": recall
+                   })
+        print(
+            f"({principle}) Test Accuracy: "
+            f"{accuracy:.2f}% | F1 Score: {f1:.4f} | Precision: {precision:.4f} | Recall: {recall:.4f}"
+        )
+        results[pattern_folder.name] = {"accuracy": accuracy,
+                                        "f1_score": f1,
+                                        "precision": precision,
+                                        "recall": recall
+                                        }
+
+        total_accuracy.append(accuracy)
+        total_f1.append(f1)
+        total_precision_scores.append(precision)
+        total_recall_scores.append(recall)
+        avg_accuracy = sum(total_accuracy) / len(total_accuracy) if total_accuracy else 0
+        avg_f1 = sum(total_f1) / len(total_f1) if total_f1 else 0
+        output_dir = f"/elvis_result/{principle}"
+        os.makedirs(output_dir, exist_ok=True)
+        results_path = Path(output_dir) / f"neumann_{principle}_eval_res_{img_size}_img_num_{img_num}_{timestamp}.json"
+        with open(results_path, "w") as json_file:
+            json.dump(results, json_file, indent=4)
+        print("Evaluation complete. Results saved to evaluation_results.json.")
+        print(f"Overall Average Accuracy: {avg_accuracy:.2f}% | Average F1 Score: {avg_f1:.4f}")
+    wandb.finish()
+
+    return avg_accuracy, avg_f1
+
 if __name__ == "__main__":
     img_size = 224
     principle = "similarity"
@@ -785,5 +866,5 @@ if __name__ == "__main__":
     start_num = 0
     task_num = "full"
     data_path = config.get_raw_patterns_path() / f"res_{img_size}_pin_False" / principle
-
-    run_grm_grouping(data_path, img_size, principle, batch_size, device, img_num, epochs, start_num, task_num)
+    run_neumann(data_path, img_size, principle, batch_size, device, img_num, epochs, start_num, task_num)
+    # run_grm_grouping(data_path, img_size, principle, batch_size, device, img_num, epochs, start_num, task_num)
