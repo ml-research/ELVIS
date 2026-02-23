@@ -41,6 +41,7 @@ if __name__ == "__main__":
     parser.add_argument("--task_num", type=str, default="full")
     parser.add_argument("--start_num", type=int, default=0)
     parser.add_argument("--batch_size", type=int)
+    parser.add_argument("--data_3d", action="store_true", help="Use 3D CLEVR data instead of 2D.")
     args = parser.parse_args()
     # Determine device based on device_id flag
     if args.device_id is not None and torch.cuda.is_available():
@@ -49,7 +50,10 @@ if __name__ == "__main__":
         device = "cpu"
 
     # Construct the data path based on the principle argument
-    data_path = config.get_raw_patterns_path(True) / f"res_{args.img_size}_pin_False" / args.principle
+    if args.data_3d:
+        data_path = config.get_raw_patterns_path_3d(True) / f"res_{args.img_size}_pin_False" / args.principle
+    else:
+        data_path = config.get_raw_patterns_path(True) / f"res_{args.img_size}_pin_False" / args.principle
 
     print(f"Starting model evaluations with data from {data_path}...")
     model = baseline_models[args.model]

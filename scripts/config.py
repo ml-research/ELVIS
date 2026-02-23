@@ -130,3 +130,27 @@ name_map = {
     "symmetry_circle": "axis_symmetry",
     "symmetry_pattern": "rotational_symmetry",
 }
+
+# -------------- 3D CLEVR settings -----------------------
+clevr_shapes = ["sphere", "cube", "cylinder"]
+clevr_colors = ["gray", "red", "blue", "green", "brown", "purple", "cyan", "yellow"]
+clevr_materials = ["metal", "rubber"]
+clevr_sizes = ["small", "large"]
+
+categories_3d = {
+    "proximity": ["fixed_props_3d"],
+    "similarity": ["fixed_number_3d"],
+    "closure": ["big_triangle_3d", "big_square_3d", "big_circle_3d"],
+    "symmetry": ["axis_symmetry_3d", "rotational_symmetry_3d"],
+    "continuity": ["two_splines_3d", "non_intersected_splines_3d"],
+}
+
+
+def get_raw_patterns_path_3d(remote=False):
+    if remote:
+        raw_patterns_path = Path('/gen_data_3d')
+    else:
+        raw_patterns_path = root / 'gen_data_3d'
+    if not os.path.exists(raw_patterns_path):
+        os.makedirs(raw_patterns_path)
+    return raw_patterns_path

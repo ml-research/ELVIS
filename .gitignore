@@ -1,3 +1,7 @@
+# Generated data (large, not for version control)
+gen_data/
+gen_data_3d/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
