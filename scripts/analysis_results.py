@@ -156,12 +156,24 @@ def draw_f1_heat_map(csv_files, model_names, gestalt_principles):
     heatmap_data = pd.DataFrame(category_acc_scores)
 
     # Adjust figure size dynamically based on the number of columns
-    plt.figure(figsize=(max(15, len(heatmap_data.columns) * 1.5), 4))  # Auto-scale width
-    ax = sns.heatmap(heatmap_data.T, cmap="coolwarm", annot=True, fmt=".2f", linewidths=0.8,
-                     cbar_kws={'label': 'F1 Score'}, annot_kws={'size': 20}
+    plt.figure(figsize=(max(20, len(heatmap_data.columns) * 1.5), 10))  # Auto-scale width
+    ax = sns.heatmap(heatmap_data.T, cmap="coolwarm", annot=True, fmt=".2f",
+                     linewidths=0,
+                     cbar_kws={'label': 'F1 Score', 'pad': 0.01, 'shrink': 0.95},
+                     annot_kws={'size': 20}
                      )
+
+    # Remove all spines (border lines) from main axis
+    for spine in ax.spines.values():
+        spine.set_visible(False)
+
     ax2 = ax.twiny()  # Create a secondary x-axis
-    ax.set_yticklabels(ax.get_yticklabels(), fontsize=15)  # Increase y-axis label font size
+
+    # Remove all spines (border lines) from secondary axis
+    for spine in ax2.spines.values():
+        spine.set_visible(False)
+
+    ax.set_yticklabels(ax.get_yticklabels(), fontsize=20, rotation=30)  # Increase y-axis label font size
 
     counts = 0
     principle_pos = []
@@ -176,19 +188,21 @@ def draw_f1_heat_map(csv_files, model_names, gestalt_principles):
         ax.axvline(pos, color='black', linestyle='dashed', linewidth=1.5)
         counts += len(categories)
     # Increase the font size of x ticks below the chart
-    ax.set_xticklabels(ax.get_xticklabels(), fontsize=16, rotation=30, ha="right")
+    ax.set_xticklabels(ax.get_xticklabels(), fontsize=20, rotation=60, ha="right")
 
     ax2.set_xticks(principle_pos)
-    ax2.set_xticklabels(principle_names, rotation=0, fontsize=12, fontweight="bold")
+    ax2.set_xticklabels(principle_names, rotation=0, fontsize=20, fontweight="bold")
     ax2.set_xlim(ax.get_xlim())  # Align with main x-axis
     # ax2.set_xlabel("Gestalt Principles", fontsize=12, fontweight="bold")
 
     # plt.xlabel("Category", fontsize=12)
-    plt.ylabel("Models", fontsize=12)
+    ax.set_xlabel("Category", fontsize=35)
+    ax.set_ylabel("Model", fontsize=35)
+    plt.suptitle("Average F1 score by Categories Over baseline models", fontsize=30, fontweight='bold', y=0.98)
 
     # Adjust the layout to remove extra space
     plt.tight_layout()
-    plt.subplots_adjust(left=0.15, right=0.95, top=0.9, bottom=0.2)  # Reduce right margin
+    # plt.subplots_adjust(left=0.15, right=0.95, top=0.9, bottom=0.2)  # Reduce right margin
 
     # Save the heatmap
     heat_map_filename = config.figure_path / f"f1_heat_map.pdf"
@@ -1375,8 +1389,8 @@ def analysis_ablation_performance(args):
 
             # Plot line with markers
             ax.plot(x, values, marker=markers[i], markersize=10, linewidth=2.5,
-                   color=palette[i], label=model_name, markeredgecolor='white',
-                   markeredgewidth=1.5, alpha=0.9)
+                    color=palette[i], label=model_name, markeredgecolor='white',
+                    markeredgewidth=1.5, alpha=0.9)
 
             # # Add value labels next to markers
             # for j, v in enumerate(values):
@@ -1392,7 +1406,7 @@ def analysis_ablation_performance(args):
         prop_label = "Group Number" if prop == "group_num" else "Group Size"
         ax.set_xlabel(prop_label, fontsize=22, fontweight='bold')
         ax.set_title(f"Average Performance by {prop_label}\n(Across All Principles)",
-                    fontsize=20, fontweight='bold', pad=15)
+                     fontsize=20, fontweight='bold', pad=15)
 
         if prop_idx == 0:
             ax.set_ylabel('F1 Score (%)', fontsize=22, fontweight='bold')
@@ -1413,7 +1427,7 @@ def analysis_ablation_performance(args):
                fontsize=18, frameon=True, title="Models", title_fontsize=20)
 
     plt.suptitle("Ablation Analysis: Average Performance Across All Gestalt Principles",
-                fontsize=24, fontweight='bold', y=0.98)
+                 fontsize=24, fontweight='bold', y=0.98)
     plt.tight_layout(rect=[0, 0.12, 1, 0.96])
 
     save_path = config.figure_path / f"ablation_average_across_principles.pdf"
@@ -1652,11 +1666,11 @@ def main():
         elif args.mode == "task":
             # Collect combo data across all principles for each model
             model_combo_data = {model_name: {"matrices": [], "counts": []}
-                               for model_name in model_dict.keys()}
+                                for model_name in model_dict.keys()}
 
-            print("\n" + "="*80)
+            print("\n" + "=" * 80)
             print("Collecting data for ALL models across ALL principles...")
-            print("="*80)
+            print("=" * 80)
 
             # Process each model and each principle
             for model_name, model_info in model_dict.items():
@@ -1678,9 +1692,9 @@ def main():
                         print(f"  ✗ {principle}: {str(e)}")
 
             # Generate 5-subplot figure with one heatmap per model
-            print("\n" + "="*80)
+            print("\n" + "=" * 80)
             print("Generating 5-model comparison heatmap...")
-            print("="*80)
+            print("=" * 80)
 
             fig, axes = plt.subplots(1, 5, figsize=(22, 5), sharey=True)
             factor_labels = ['Shape', 'Color', 'Size']
@@ -1704,11 +1718,11 @@ def main():
 
                     # Plot heatmap
                     sns.heatmap(mean_df, annot=True, fmt=".2f", cmap="Blues",
-                               vmin=0.0, vmax=1.0, ax=ax,
-                               cbar=(idx == 4),  # Only show colorbar on last subplot
-                               cbar_kws={'label': 'Mean F1 Score'} if idx == 4 else None,
-                               linewidths=0.8, linecolor='black', mask=upper_mask,
-                               annot_kws={'size': 22, "weight":'bold'})
+                                vmin=0.0, vmax=1.0, ax=ax,
+                                cbar=(idx == 4),  # Only show colorbar on last subplot
+                                cbar_kws={'label': 'Mean F1 Score'} if idx == 4 else None,
+                                linewidths=0.8, linecolor='black', mask=upper_mask,
+                                annot_kws={'size': 22, "weight": 'bold'})
 
                     ax.set_title(short_name, fontsize=30, fontweight='bold', pad=10)
                     # ax.set_xlabel("Factor", fontsize=11)
@@ -1741,17 +1755,17 @@ def main():
                                         text_color = 'black'
 
                                     ax.text(j + 0.5, i + 0.7, f"n={n}", ha='center', va='top',
-                                           fontsize=20, color=text_color)
+                                            fontsize=20, color=text_color)
 
                     print(f"  ✓ {short_name}: plotted {len(matrices)} matrices")
                 else:
                     ax.text(0.5, 0.5, "No data", ha='center', va='center',
-                           transform=ax.transAxes, fontsize=12)
+                            transform=ax.transAxes, fontsize=12)
                     ax.set_title(short_name, fontsize=16, fontweight='bold', pad=10)
                     print(f"  ✗ {short_name}: no data available")
 
             plt.suptitle("Mean Pairwise Factor Combination Performance Across All Principles",
-                        fontsize=25, fontweight='bold', y=1.02)
+                         fontsize=30, fontweight='bold', y=1.02)
             plt.tight_layout()
 
             multi_model_save_path = config.figure_path / "all_models_factor_combo_heatmap_all_principles.pdf"
