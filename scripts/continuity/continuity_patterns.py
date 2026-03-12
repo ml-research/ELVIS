@@ -26,7 +26,7 @@ def get_patterns(lite=False):
     all_tasks = []
     all_names = []
 
-    tasks, names = create_tasks_v3(non_overlap_one_split_n, prop_list, grp_num_range, size_list, prin_in_neg)
+    tasks, names = create_tasks_v3(non_overlap_one_split_n, prop_list, grp_num_range, [3, 4, 5, 6], prin_in_neg)
     all_tasks.extend(tasks)
     all_names.extend(names)
 
@@ -41,8 +41,6 @@ def get_patterns(lite=False):
     tasks, names = create_tasks_v3(feature_continuity_overlap_splines, prop_list, range(2, 4), size_list[1:], prin_in_neg)
     all_tasks.extend(tasks)
     all_names.extend(names)
-
-
 
     # Convert tasks to pattern dictionary
     pattern_dicts = [{"name": key, "module": task} for key, task in zip(all_names, all_tasks)]

@@ -19,6 +19,7 @@ baseline_models = {
     "neumann":grm.run_neumann,
     "internVL": internVL.run_internVL,
     "internVL_X": internVL.run_internVL_X,
+    "internVL_X_no_principle": internVL.run_internVL_X_no_principle_given,
     "llava": llava.run_llava,
     "llama": llama.run_llama
 }

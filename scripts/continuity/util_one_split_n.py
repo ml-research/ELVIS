@@ -30,8 +30,8 @@ def get_main_split_positions(split_road_length, minx, dx, main_y, dy):
 
 
 def continuity_one_splits_n(clu_num, obj_size, is_positive, params, irrel_params, obj_quantity, prin_in_neg):
-    main_road_length = int(config.standard_quantity_dict[obj_quantity] * 0.4)
-    split_road_length = int(config.standard_quantity_dict[obj_quantity] * 0.4)
+    main_road_length = int(obj_quantity)
+    split_road_length = int(obj_quantity)
     logic = {
         "shape": ["square", "circle"],
         "color": ["green", "yellow"],
