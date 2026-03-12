@@ -2,6 +2,14 @@
 __pycache__/
 *.py[cod]
 *$py.class
+data/
+.idea/
+baseline_results/
+gen_data/
+gen_data/res_224_pin_False
+grb/
+results/
+storage/
 
 # C extensions
 *.so
