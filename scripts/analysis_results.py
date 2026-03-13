@@ -1036,6 +1036,8 @@ def analysis_average_performance(json_path, principle, model_name, img_num):
         per_task_data = data
         per_task_data.pop("average", None)  # Remove 'average' if it exists
 
+    # take only first 100 tasks if more than 100 tasks
+    per_task_data = dict(list(per_task_data.items())[:100])
     avg_acc = np.mean([v['accuracy'] for v in per_task_data.values()])
     avg_f1 = np.mean([v['f1_score'] for v in per_task_data.values()])
     avg_precision = np.mean([v['precision'] for v in per_task_data.values()])
