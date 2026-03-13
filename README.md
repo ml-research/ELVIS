@@ -178,6 +178,9 @@ python -m scripts.evaluate_models --batch_size 1 --principle continuity --model 
 python -m scripts.evaluate_models --batch_size 1 --principle similarity --model gpt5_grp --img_num 3 --device_id 5 --start_num 0 --task_num 5
 python -m scripts.evaluate_models --batch_size 1 --principle closure --model gpt5_grp --img_num 3 --device_id 4 --start_num 0 --task_num end
 
+# given principle vs not given principle (gpt5)
+python -m scripts.evaluate_models --batch_size 1 --principle proximity --model gpt5_no_principle --img_num 3 --device_id 3 --start_num 0 --task_num 100
+
 # pure principle evaluation
 
 python -m pure_perception.models.pure_principle_vit --remote --model vit --img_size 224 --principle proximity --device 7

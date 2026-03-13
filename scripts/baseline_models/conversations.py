@@ -1,33 +1,60 @@
 # Created by MacBook Pro at 17.07.25
 
 def gpt_conversation(train_positive, train_negative, principle):
-    conversation = [
-        {
-            "role": "user",
-            "content": [
-                # Provide example images
-                {"type": "input_text", "text": "Here are three Positive examples:"},
-                {"type": "input_image", "image_url": f"data:image/jpeg;base64,{train_positive[0]}"},
-                {"type": "input_image", "image_url": f"data:image/jpeg;base64,{train_positive[1]}"},
-                {"type": "input_image", "image_url": f"data:image/jpeg;base64,{train_positive[2]}"},
+    
+    if principle is not None:
+        conversation = [
+            {
+                "role": "user",
+                "content": [
+                    # Provide example images
+                    {"type": "input_text", "text": "Here are three Positive examples:"},
+                    {"type": "input_image", "image_url": f"data:image/jpeg;base64,{train_positive[0]}"},
+                    {"type": "input_image", "image_url": f"data:image/jpeg;base64,{train_positive[1]}"},
+                    {"type": "input_image", "image_url": f"data:image/jpeg;base64,{train_positive[2]}"},
 
-                {"type": "input_text", "text": "Here are three Negative examples:"},
-                {"type": "input_image", "image_url": f"data:image/jpeg;base64,{train_negative[0]}"},
-                {"type": "input_image", "image_url": f"data:image/jpeg;base64,{train_negative[1]}"},
-                {"type": "input_image", "image_url": f"data:image/jpeg;base64,{train_negative[2]}"},
+                    {"type": "input_text", "text": "Here are three Negative examples:"},
+                    {"type": "input_image", "image_url": f"data:image/jpeg;base64,{train_negative[0]}"},
+                    {"type": "input_image", "image_url": f"data:image/jpeg;base64,{train_negative[1]}"},
+                    {"type": "input_image", "image_url": f"data:image/jpeg;base64,{train_negative[2]}"},
 
-                # Task instruction
-                {"type": "input_text", "text": (
-                    f"You are an AI reasoning about visual patterns using Gestalt principles.\n\n"
-                    f"Principle under consideration: {principle}.\n\n"
-                    "Based on the Positive and Negative examples, infer the logic rules "
-                    "that distinguishes them.\n\n"
-                    "Output ONLY the rules."
-                )},
-            ],
-        }
-    ]
+                    # Task instruction
+                    {"type": "input_text", "text": (
+                        f"You are an AI reasoning about visual patterns using Gestalt principles.\n\n"
+                        f"Principle under consideration: {principle}.\n\n"
+                        "Based on the Positive and Negative examples, infer the logic rules "
+                        "that distinguishes them.\n\n"
+                        "Output ONLY the rules."
+                    )},
+                ],
+            }
+        ]
+    else:
+        conversation = [
+            {
+                "role": "user",
+                "content": [
+                    # Provide example images
+                    {"type": "input_text", "text": "Here are three Positive examples:"},
+                    {"type": "input_image", "image_url": f"data:image/jpeg;base64,{train_positive[0]}"},
+                    {"type": "input_image", "image_url": f"data:image/jpeg;base64,{train_positive[1]}"},
+                    {"type": "input_image", "image_url": f"data:image/jpeg;base64,{train_positive[2]}"},
 
+                    {"type": "input_text", "text": "Here are three Negative examples:"},
+                    {"type": "input_image", "image_url": f"data:image/jpeg;base64,{train_negative[0]}"},
+                    {"type": "input_image", "image_url": f"data:image/jpeg;base64,{train_negative[1]}"},
+                    {"type": "input_image", "image_url": f"data:image/jpeg;base64,{train_negative[2]}"},
+
+                    # Task instruction
+                    {"type": "input_text", "text": (
+                        f"You are an AI reasoning about visual patterns.\n\n"
+                        f"Based on the Positive and Negative examples, infer the logic rules "
+                        "that distinguishes them.\n\n"
+                        "Output ONLY the rules."
+                    )},
+                ],
+            }
+        ]
     return conversation
 
 

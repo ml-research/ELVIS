@@ -411,6 +411,70 @@ def run_gpt5(data_path, img_size, principle, batch_size, device, img_num, epochs
     return avg_accuracy, avg_f1
 
 
+def run_gpt5_no_principle(data_path, img_size, principle, batch_size, device, img_num, epochs, start_num, task_num):
+    init_wandb(batch_size, principle)
+    # model, processor = load_gpt5_model(device)
+    principle_path = Path(data_path)
+    # pattern_folders = sorted((principle_path / "train").iterdir())
+    pattern_folders = sorted([p for p in (principle_path / "train").iterdir() if p.is_dir()], key=lambda x: x.stem)
+    if not pattern_folders:
+        print("No pattern folders found in", principle_path)
+        return
+
+    client = init_openai()
+    total_accuracy, total_f1 = [], []
+    results = {}
+    total_precision_scores = []
+    total_recall_scores = []
+
+    if task_num != "full":
+        if task_num != "end":
+            task_num = int(task_num)
+            pattern_folders = pattern_folders[start_num:start_num + task_num]
+        else:
+            pattern_folders = pattern_folders[start_num:]
+    rtpt = RTPT(name_initials='JIS', experiment_name=f'Elvis-gpt5-{principle}', max_iterations=len(pattern_folders))
+    rtpt.start()
+    for pattern_folder in pattern_folders:
+        rtpt.step()
+        print(f"Processing pattern: {pattern_folder.name}")
+        train_positive = load_images(pattern_folder / "positive", img_num)
+        train_negative = load_images(pattern_folder / "negative", img_num)
+
+        test_positive = load_images((principle_path / "test" / pattern_folder.name) / "positive", img_num)
+        test_negative = load_images((principle_path / "test" / pattern_folder.name) / "negative", img_num)
+
+        train_positive = [image_to_base64(img) for img in train_positive]
+        train_negative = [image_to_base64(img) for img in train_negative]
+        test_positive = [image_to_base64(img) for img in test_positive]
+        test_negative = [image_to_base64(img) for img in test_negative]
+
+        logic_rules = infer_logic_rules(client, train_positive, train_negative, device, None)
+        test_images = [(img, 1) for img in test_positive] + [(img, 0) for img in test_negative]
+        accuracy, f1, precision, recall = evaluate_gpt5(client, test_images, logic_rules, device, principle)
+        results[pattern_folder.name] = {"accuracy": accuracy,
+                                        "f1_score": f1,
+                                        "logic_rules": logic_rules,
+                                        "precision": precision,
+                                        "recall": recall
+                                        }
+        total_accuracy.append(accuracy)
+        total_f1.append(f1)
+        total_precision_scores.append(precision)
+        total_recall_scores.append(recall)
+        avg_accuracy = sum(total_accuracy) / len(total_accuracy) if total_accuracy else 0
+        avg_f1 = sum(total_f1) / len(total_f1) if total_f1 else 0
+        output_dir = f"/elvis_result/{principle}"
+        os.makedirs(output_dir, exist_ok=True)
+        results_path = Path(output_dir) / f"gpt5_{principle}_eval_res_{img_size}_img_num_{img_num}_{timestamp}.json"
+        with open(results_path, "w") as json_file:
+            json.dump(results, json_file, indent=4)
+        print("Evaluation complete. Results saved to evaluation_results.json.")
+        print(f"Overall Average Accuracy: {avg_accuracy:.2f}% | Average F1 Score: {avg_f1:.4f}")
+    wandb.finish()
+
+    return avg_accuracy, avg_f1
+
 def bxs_from_json(json_data, width, height):
     boxes = []
     g_ids = []
