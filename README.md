@@ -175,6 +175,8 @@ python -m scripts.evaluate_models --batch_size 1 --principle similarity --img_nu
 python -m scripts.evaluate_models --batch_size 1 --principle closure --img_num 3 --model llava --device_id 6
 python -m scripts.evaluate_models --batch_size 1 --principle symmetry --img_num 3 --model llava --device_id 7
 python -m scripts.evaluate_models --batch_size 1 --principle continuity --img_num 3 --model llava --device_id 5
+# llava no principle
+python -m scripts.evaluate_models --batch_size 1 --principle proximity --img_num 3 --model llava_no_principle --device_id 6
 
 # train gpt5
 

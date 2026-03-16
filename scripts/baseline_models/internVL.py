@@ -547,6 +547,68 @@ def run_internVL_X_no_principle_given(data_path, img_size, principle, batch_size
 #     wandb.finish()
 #     return avg_accuracy, avg_f1
 
+def run_internVL_no_principle_given(data_path, img_size, principle, batch_size, device, img_num, epochs,start_num, task_num):
+    init_wandb(batch_size, principle)
+
+    principle_path = Path(data_path)
+    pattern_folders = sorted(file_utils.list_folders(str(principle_path / "train")))
+    # pattern_folders = sorted((principle_path / "train").iterdir())
+    if not pattern_folders:
+        print("No pattern folders found in", principle_path)
+        return
+    total_accuracy, total_f1 = [], []
+    results = {}
+    total_precision_scores = []
+    total_recall_scores = []
+
+
+    if task_num != "full":
+        task_num = int(task_num)
+        pattern_folders = pattern_folders[start_num:start_num + task_num]
+
+    rtpt = RTPT(name_initials='JIS', experiment_name='ELV-NoPatn-Prox', max_iterations=len(pattern_folders))
+    rtpt.start()
+    model = load_intern_model(device)
+    tokenizer = AutoTokenizer.from_pretrained('OpenGVLab/InternVL3-2B', trust_remote_code=True, use_fast=False)
+
+    # for pattern_folder in pattern_folders:
+    #     print(f"Processing pattern folder: {pattern_folder.name}")
+
+    for pattern_folder in tqdm(pattern_folders):
+        rtpt.step()
+        print(f"Evaluating pattern: {pattern_folder.name}")
+        train_positive = load_images(pattern_folder / "positive", img_size, img_num)
+        train_negative = load_images(pattern_folder / "negative", img_size, img_num)
+        test_positive = load_images((principle_path / "test" / pattern_folder.name) / "positive", img_size, img_num)
+        test_negative = load_images((principle_path / "test" / pattern_folder.name) / "negative", img_size, img_num)
+        logic_rules = infer_logic_rules(model, tokenizer, train_positive, train_negative, device, None)
+
+        test_images = [(img, 1) for img in test_positive] + [(img, 0) for img in test_negative]
+        print("len test images", len(test_images))
+        accuracy, f1, precision, recall = evaluate_llm(model, tokenizer, test_images, logic_rules, device, principle)
+
+        results[pattern_folder.name] = {"accuracy": accuracy, "f1_score": f1, "logic_rules": logic_rules,
+                                        "precision": precision, "recall": recall}
+        total_accuracy.append(accuracy)
+        total_f1.append(f1)
+        total_precision_scores.append(precision)
+        total_recall_scores.append(recall)
+
+    avg_accuracy = sum(total_accuracy) / len(total_accuracy) if total_accuracy else 0
+    avg_f1 = sum(total_f1) / len(total_f1) if total_f1 else 0
+
+    # results["average"] = {"accuracy": avg_accuracy, "f1_score": avg_f1}
+
+    output_dir = f"/elvis_result/{principle}"
+    os.makedirs(output_dir, exist_ok=True)
+    results_path = Path(output_dir) / f"internVL3_2B_no_principle_{principle}_eval_res_{img_size}_{timestamp}_img_num_{img_num}.json"
+    with open(results_path, "w") as json_file:
+        json.dump(results, json_file, indent=4)
+
+    print("Evaluation complete. Results saved to evaluation_results.json.")
+    print(f"Overall Average Accuracy: {avg_accuracy:.2f}% | Average F1 Score: {avg_f1:.4f}")
+    wandb.finish()
+    return avg_accuracy, avg_f1
 
 def run_internVL(data_path, img_size, principle, batch_size, device, img_num, epochs,start_num, task_num):
     init_wandb(batch_size, principle)

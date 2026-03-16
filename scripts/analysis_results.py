@@ -1064,9 +1064,10 @@ def analysis_average_performance(json_path, principle, model_name, img_num):
     save_path = config.figure_path / f"{principle}_acc_{model_name}_{img_num}.pdf"
     draw_line_chart(x, y, x_label, y_label, title, save_path, msg)
 
-def analysis_no_principle_compare(json_file_with_principle, json_file_without_principle, principle, model_name, img_num):
+def collect_no_principle_compare_data(json_file_with_principle, json_file_without_principle, principle, max_tasks=100):
     """
-    comparing the average F1 score, percentage of tasks with F1 score above 0.99, above 0.8, above 0.6, above 0.4, above 0.3, above 0.1
+    Loads two JSON result files (with and without principle), computes average F1 and threshold stats, and prints metrics.
+    Returns a dictionary with metrics and values for plotting.
     """
     with open(json_file_with_principle, 'r') as f:
         data_with_principle = json.load(f)
@@ -1075,8 +1076,8 @@ def analysis_no_principle_compare(json_file_with_principle, json_file_without_pr
     data_with_principle.pop("average", None)
     data_without_principle.pop("average", None)
 
-    data_with_principle = dict(list(data_with_principle.items())[:100])
-    data_without_principle = dict(list(data_without_principle.items())[:100])
+    data_with_principle = dict(list(data_with_principle.items())[:max_tasks])
+    data_without_principle = dict(list(data_without_principle.items())[:max_tasks])
     avg_f1_with_principle = np.mean([v['f1_score'] for v in data_with_principle.values()])
     avg_f1_without_principle = np.mean([v['f1_score'] for v in data_without_principle.values()])
     thresholds = [0.99, 0.8, 0.6, 0.4, 0.3, 0.1]
@@ -1090,6 +1091,67 @@ def analysis_no_principle_compare(json_file_with_principle, json_file_without_pr
     print(f"Percentage of tasks with F1 score above thresholds without {principle}:")
     for t in thresholds:
         print(f"  > {t}: {percentages_without_principle[t]:.1f}%")
+
+    return {
+        "principle": principle,
+        "avg_f1_with_principle": avg_f1_with_principle,
+        "avg_f1_without_principle": avg_f1_without_principle,
+        "thresholds": thresholds,
+        "percentages_with_principle": percentages_with_principle,
+        "percentages_without_principle": percentages_without_principle,
+    }
+
+
+def draw_no_principle_compare_2x2(compare_data_list, model_name, save_path=None):
+    """
+    Draws a 2x2 subplot with threshold line chart comparisons for up to 4 principles.
+    """
+    import matplotlib.pyplot as plt
+    fig, axes = plt.subplots(2, 2, figsize=(14, 10))
+    axes = axes.flatten()
+    for idx, compare_data in enumerate(compare_data_list):
+        ax = axes[idx]
+        principle = compare_data["principle"]
+        thresholds = compare_data["thresholds"]
+        percentages_with_principle = compare_data["percentages_with_principle"]
+        percentages_without_principle = compare_data["percentages_without_principle"]
+        thresholds_sorted = sorted(thresholds)
+        y_with = [percentages_with_principle[t] for t in thresholds_sorted]
+        y_without = [percentages_without_principle[t] for t in thresholds_sorted]
+        ax.plot(thresholds_sorted, y_with, marker='o', label=f"Given Principle Name", color="#4C72B0")
+        ax.plot(thresholds_sorted, y_without, marker='s', label=f"No Principle Name Given", color="#DD8452")
+        ax.set_title(f"{principle.capitalize()}")
+        ax.set_xlabel("F1 Threshold")
+        ax.set_ylabel("% Tasks Above Threshold")
+        ax.set_ylim(0, 100)
+        ax.legend()
+        ax.grid(axis='y', linestyle='--', alpha=0.3)
+    # Remove unused axes if fewer than 4
+    for idx in range(len(compare_data_list), 4):
+        fig.delaxes(axes[idx])
+    plt.suptitle(f"Prompt Comparison for {model_name}", fontsize=16, fontweight='bold')
+    plt.tight_layout(rect=[0, 0, 1, 0.95])
+    if save_path is None:
+        save_path = config.figure_path / f"no_principle_compare_{model_name}_2x2.pdf"
+    plt.savefig(save_path, format="pdf", bbox_inches="tight")
+    print(f"Figure saved to: {save_path}")
+    plt.close(fig)
+
+
+def analysis_no_principle_compare(principle, model_name, img_num):
+    """
+    Thin wrapper: collects stats and draws single-principle line chart using draw_no_principle_compare_2x2.
+    """
+
+    compare_data_list = []
+    for model_name in ["llava","internVL3_78B", "gpt5"]:
+        json_with_principle = get_results_path(False, principle, f"{model_name}_proximity", img_num)
+        json_without_principle = get_results_path(False, principle, f"{model_name}_no_principle_proximity", img_num)
+        compare_data = collect_no_principle_compare_data(json_with_principle, json_without_principle, principle)
+        compare_data_list.append(compare_data)
+
+    save_path = config.figure_path / f"no_principle_compare_{principle}.pdf"
+    draw_no_principle_compare_2x2(compare_data_list, model_name, save_path=save_path)
 
 
 
@@ -1699,11 +1761,7 @@ def main():
         if args.mode == "principle":
             analysis_average_performance(json_path, args.principle, args.model, args.img_num)
         elif args.mode == "no_principle_compare":
-            json_with_principle = get_results_path(args.remote, args.principle, "internVL3_78B_eval_res_224", args.img_num)
-            json_with_principle = get_results_path(args.remote, args.principle, "gpt5_proximity", args.img_num)
-            json_without_principle = get_results_path(args.remote, args.principle, "internVL3_78B_no_principle_eval_res_224", args.img_num)
-            json_without_principle = get_results_path(args.remote, args.principle, "gpt5_no_principle_proximity", args.img_num)
-            analysis_no_principle_compare(json_with_principle,json_without_principle, args.principle, args.model, args.img_num)
+            analysis_no_principle_compare(args.principle, args.model, args.img_num)
         elif args.mode == "category":
             analysis_models(args)
         elif args.mode == "task":
