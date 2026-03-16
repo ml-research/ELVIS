@@ -1,7 +1,6 @@
 # Created by MacBook Pro at 17.07.25
 
 def gpt_conversation(train_positive, train_negative, principle):
-    
     if principle is not None:
         conversation = [
             {
@@ -162,18 +161,34 @@ def internVL_conversation(train_positive, train_negative, principle):
 
 
 def llava_conversation(train_positive, train_negative, principle):
+    if principle is None:
+        explain_text = (f"You are an AI reasoning about visual patterns.\n"
+                        f"We have a set of images labeled Positive and a set labeled Negative.\n"
+                        f"You will see each image one by one.\n"
+                        f"Describe each image, note any pattern features, and keep track of insights.\n"
+                        f"After seeing all images, we will derive the logic that differentiates Positive from Negative. "
+                        f"The first positive image.")
+        question_text = (f"Now we have seen all the Positive and Negative examples. "
+                         "Please state the logic/rule that distinguishes them. ")
+    else:
+        explain_text = (f"You are an AI reasoning about visual patterns based on Gestalt principles.\n"
+                        f"Principle: {principle}\n\n"
+                        f"We have a set of images labeled Positive and a set labeled Negative.\n"
+                        f"You will see each image one by one.\n"
+                        f"Describe each image, note any pattern features, and keep track of insights.\n"
+                        f"After seeing all images, we will derive the logic that differentiates Positive from Negative. "
+                        f"The first positive image.")
+        question_text = (f"Now we have seen all the Positive and Negative examples. "
+                         "Please state the logic/rule that distinguishes them. "
+                         "Focus on the Gestalt principle of "
+                         f"{principle}.")
+
     conversation = [
         {
             "role": "user",
             "content": [
                 {"type": "image", "image": train_positive[0]},
-                {"type": "text", "text": f"You are an AI reasoning about visual patterns based on Gestalt principles.\n"
-                                         f"Principle: {principle}\n\n"
-                                         f"We have a set of images labeled Positive and a set labeled Negative.\n"
-                                         f"You will see each image one by one.\n"
-                                         f"Describe each image, note any pattern features, and keep track of insights.\n"
-                                         f"After seeing all images, we will derive the logic that differentiates Positive from Negative. "
-                                         f"The first positive image."},
+                {"type": "text", "text": explain_text},
             ],
         },
         {
@@ -214,10 +229,7 @@ def llava_conversation(train_positive, train_negative, principle):
         {
             "role": "user",
             "content": [
-                {"type": "text", "text": "Now we have seen all the Positive and Negative examples. "
-                                         "Please state the logic/rule that distinguishes them. "
-                                         "Focus on the Gestalt principle of "
-                                         f"{principle}."},
+                {"type": "text", "text": question_text},
             ],
         },
 

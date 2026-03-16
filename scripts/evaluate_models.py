@@ -22,7 +22,7 @@ baseline_models = {
     "internVL_X": internVL.run_internVL_X,
     "internVL_X_no_principle": internVL.run_internVL_X_no_principle_given,
     "llava": llava.run_llava,
-    "llama": llama.run_llama
+    "llava_no_principle": llava.run_llava_no_principle,
 }
 
 

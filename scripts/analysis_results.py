@@ -1037,7 +1037,7 @@ def analysis_average_performance(json_path, principle, model_name, img_num):
         per_task_data.pop("average", None)  # Remove 'average' if it exists
 
     # take only first 100 tasks if more than 100 tasks
-    per_task_data = dict(list(per_task_data.items())[:100])
+    per_task_data = dict(list(per_task_data.items())[:])
     avg_acc = np.mean([v['accuracy'] for v in per_task_data.values()])
     avg_f1 = np.mean([v['f1_score'] for v in per_task_data.values()])
     avg_precision = np.mean([v['precision'] for v in per_task_data.values()])
@@ -1063,6 +1063,41 @@ def analysis_average_performance(json_path, principle, model_name, img_num):
     title = f"{model_name}_{img_num} Accuracy for each task in {principle}"
     save_path = config.figure_path / f"{principle}_acc_{model_name}_{img_num}.pdf"
     draw_line_chart(x, y, x_label, y_label, title, save_path, msg)
+
+def analysis_no_principle_compare(json_file_with_principle, json_file_without_principle, principle, model_name, img_num):
+    """
+    comparing the average F1 score, percentage of tasks with F1 score above 0.99, above 0.8, above 0.6, above 0.4, above 0.3, above 0.1
+    """
+    with open(json_file_with_principle, 'r') as f:
+        data_with_principle = json.load(f)
+    with open(json_file_without_principle, 'r') as f:
+        data_without_principle = json.load(f)
+    data_with_principle.pop("average", None)
+    data_without_principle.pop("average", None)
+
+    data_with_principle = dict(list(data_with_principle.items())[:100])
+    data_without_principle = dict(list(data_without_principle.items())[:100])
+    avg_f1_with_principle = np.mean([v['f1_score'] for v in data_with_principle.values()])
+    avg_f1_without_principle = np.mean([v['f1_score'] for v in data_without_principle.values()])
+    thresholds = [0.99, 0.8, 0.6, 0.4, 0.3, 0.1]
+    percentages_with_principle = {t: np.mean([v['f1_score'] > t for v in data_with_principle.values()]) * 100 for t in thresholds}
+    percentages_without_principle = {t: np.mean([v['f1_score'] > t for v in data_without_principle.values()]) * 100 for t in thresholds}
+    print(f"Average F1 score with {principle}: {avg_f1_with_principle:.3f}")
+    print(f"Average F1 score without {principle}: {avg_f1_without_principle:.3f}")
+    print(f"Percentage of tasks with F1 score above thresholds with {principle}:")
+    for t in thresholds:
+        print(f"  > {t}: {percentages_with_principle[t]:.1f}%")
+    print(f"Percentage of tasks with F1 score above thresholds without {principle}:")
+    for t in thresholds:
+        print(f"  > {t}: {percentages_without_principle[t]:.1f}%")
+
+
+
+
+
+
+
+
 
 
 def analysis_per_category(args, category_names):
@@ -1663,6 +1698,12 @@ def main():
 
         if args.mode == "principle":
             analysis_average_performance(json_path, args.principle, args.model, args.img_num)
+        elif args.mode == "no_principle_compare":
+            json_with_principle = get_results_path(args.remote, args.principle, "internVL3_78B_eval_res_224", args.img_num)
+            json_with_principle = get_results_path(args.remote, args.principle, "gpt5_proximity", args.img_num)
+            json_without_principle = get_results_path(args.remote, args.principle, "internVL3_78B_no_principle_eval_res_224", args.img_num)
+            json_without_principle = get_results_path(args.remote, args.principle, "gpt5_no_principle_proximity", args.img_num)
+            analysis_no_principle_compare(json_with_principle,json_without_principle, args.principle, args.model, args.img_num)
         elif args.mode == "category":
             analysis_models(args)
         elif args.mode == "task":
